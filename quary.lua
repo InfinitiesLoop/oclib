@@ -156,7 +156,7 @@ end
 function quary.new(o)
   o = o or {}
   setmetatable(o, { __index = Quary })
-  self.move = self.move or smartmove.new({robot=o.robot})
+  o.move = o.move or smartmove.new({robot=o.robot})
   return o
 end
 
