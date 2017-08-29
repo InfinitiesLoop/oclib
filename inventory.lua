@@ -3,7 +3,7 @@ local sides = require("sides")
 
 local inventory = {}
 
-local function inventory.dropAll(robot, side)
+function inventory.dropAll(robot, side)
 	-- tries to drop all the robot's inventory into the storage on the given side
 	-- returns true if all if it could be unloaded, false if none or only some could
 	--robot.drop([number]) -- Returns true if at least one item was dropped, false otherwise.
@@ -25,7 +25,7 @@ local function inventory.dropAll(robot, side)
 	return couldDropAll
 end
 
-local function inventory.isIdealTorchSpot(x, z)
+function inventory.isIdealTorchSpot(x, z)
 	local isZ = (z % 7) == 0
 	local isX = (x % 24) == 0 or (x % 24) == 12
 	if not isZ or not isX then
@@ -39,7 +39,7 @@ local function inventory.isIdealTorchSpot(x, z)
 	return true
 end
 
-local function inventory.selectItem(robot, name)
+function inventory.selectItem(robot, name)
 	for i=1,robot.inventorySize() do
 		local stack = component.inventory_controller.getStackInInternalSlot(i)
 		if stack ~= nil and stack.name == name then
@@ -50,7 +50,7 @@ local function inventory.selectItem(robot, name)
 	return false
 end
 
-local function inventory.placeTorch(robot, side)
+function inventory.placeTorch(robot, side)
 	if inventory.selectItem("minecraft:torch") then
 		local success, what = robot.use(side or sides.bottom)
 		if success and what == 'item_placed' then
