@@ -56,8 +56,8 @@ end
 function inventory.placeTorch(sideOfRobot, sideOfBlock)
 	-- todo: sideOfRobot
 	if inventory.selectItem("minecraft:torch") then
-		local success, what = robot.placeDown(sideOfBlock or sides.bottom)
-		if success and what == 'item_placed' then
+		local success = robot.placeDown(sideOfBlock or sides.bottom)
+		if success then
 			return true
 		end
 	end
