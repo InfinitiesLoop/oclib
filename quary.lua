@@ -1,4 +1,4 @@
-local math = require("math")
+local util = require("util")
 local smartmove = require("smartmove")
 local inv = require("inventory")
 
@@ -9,7 +9,7 @@ Quary = {
 
 function Quary:canMine()
   local d, dcurrent, dmax = self.robot.durability()
-  d = math.trunc(d or 0, 2)
+  d = util.trunc(d or 0, 2)
   if d <= 0 then
     print("lost durability on tool!")
     return false
