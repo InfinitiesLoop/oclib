@@ -1,4 +1,5 @@
 local c = require("component")
+local ic = c.inventory_controller
 local sides = require("sides")
 
 local inventory = {}
@@ -27,13 +28,14 @@ end
 
 function inventory.isIdealTorchSpot(x, z)
 	local isZ = (z % 7) == 0
-	local isX = (x % 24) == 0 or (x % 24) == 12
+	local isX = (x % 24) == 0 or (x % 24) == 11
 	if not isZ or not isX then
 		return false
 	end
-	-- we skip every other x torch in the first row
+	-- we skip every other x torch in the first row,
+	-- and the 'other' every other torch in the next row
 	local zRow = math.floor(z / 7) % 2
-	if zRow == 0 and isX == 12 then
+	if (zRow == 0 and isX == 11) or (zRow == 1 and isX == 0) then
 		return false
 	end 
 	return true
@@ -41,7 +43,7 @@ end
 
 function inventory.selectItem(robot, name)
 	for i=1,robot.inventorySize() do
-		local stack = component.inventory_controller.getStackInInternalSlot(i)
+		local stack = ic.getStackInInternalSlot(i)
 		if stack ~= nil and stack.name == name then
 			robot.select(i)
 			return true
