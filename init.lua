@@ -1,4 +1,5 @@
 local init = {}
+local shell = require("shell")
 
 function init.getfiles()
   print("initializing files...")
@@ -20,8 +21,9 @@ function init.clone(repo)
   init.getfiles()
 end
 
-if arg[1] ~= nil then
-  init.clone(arg[1])
+local args = shell.parse( ... )
+if args[1] ~= nil then
+  init.clone(args[1])
 end
   
 return init
