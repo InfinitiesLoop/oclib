@@ -1,5 +1,6 @@
 local math = require("math")
 local smartmove = require("smartmove")
+local inv = require("inventory")
 
 local quary = {}
 
@@ -32,6 +33,12 @@ function Quary:_mineAhead()
     return false
   end
   self.robot.swingDown()
+  if inv.isIdealTorchSpot(self.move.posX, self.move.posY) then
+    if not inv.placeTorch(self.robot) then
+      print("could not place a torch when needed.")
+      return false
+    end
+  end
   return true
 end
 

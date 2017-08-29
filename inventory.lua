@@ -1,3 +1,6 @@
+local c = require("component")
+local sides = require("sides")
+
 local inventory = {}
 
 local function inventory.dropAll(robot, side)
@@ -5,13 +8,13 @@ local function inventory.dropAll(robot, side)
 	-- returns true if all if it could be unloaded, false if none or only some could
 	--robot.drop([number]) -- Returns true if at least one item was dropped, false otherwise.
 	local couldDropAll = true
-	for i=0,robot.inventorySize() do
-		robot.select(i)
-		local c = robot.count()
+	for i=1,robot.inventorySize() do
+		local c = robot.count(i)
 		if c > 0 then
+			robot.select(i)
 			robot.drop()
 			-- see if all the items were successfully dropped
-			c = robot.count()
+			c = robot.count(i)
 			if c > 0 then
 				-- at least one item couldn't be dropped.
 				-- but we keep trying to drop all so we still drop as much as we can.
@@ -20,6 +23,41 @@ local function inventory.dropAll(robot, side)
 		end
 	end
 	return couldDropAll
+end
+
+local function inventory.isIdealTorchSpot(x, z)
+	local isZ = (z % 7) == 0
+	local isX = (x % 24) == 0 or (x % 24) == 12
+	if not isZ or not isX then
+		return false
+	end
+	-- we skip every other x torch in the first row
+	local zRow = math.floor(z / 7) % 2
+	if zRow == 0 and isX == 12 then
+		return false
+	end 
+	return true
+end
+
+local function inventory.selectItem(robot, name)
+	for i=1,robot.inventorySize() do
+		local stack = component.inventory_controller.getStackInInternalSlot(i)
+		if stack ~= nil and stack.name == name then
+			robot.select(i)
+			return true
+		end
+	end
+	return false
+end
+
+local function inventory.placeTorch(robot, side)
+	if inventory.selectItem("minecraft:torch") then
+		local success, what = robot.use(side or sides.bottom)
+		if success and what == 'item_placed' then
+			return true
+		end
+	end
+	return false
 end
 
 return inventory
