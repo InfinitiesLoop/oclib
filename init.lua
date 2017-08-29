@@ -3,7 +3,7 @@ local shell = require("shell")
 
 function init.getfiles()
   print("initializing files...")
-  local repo = nil
+  local repo
   for line in io.lines(os.getenv("PWD") .. "/init.files") do
     if repo == nil then
       repo = line
@@ -24,6 +24,8 @@ end
 local args = shell.parse( ... )
 if args[1] ~= nil then
   init.clone(args[1])
+else
+  init.getfiles()
 end
   
 return init
