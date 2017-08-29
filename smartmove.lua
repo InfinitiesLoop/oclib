@@ -129,7 +129,7 @@ function SmartMove:moveTo(x, y)
   end
 end
 
-local function smartmove.new(o)
+function smartmove.new(o)
   o = o or {}
   setmetatable(o, { __index = SmartMove })
   return o
