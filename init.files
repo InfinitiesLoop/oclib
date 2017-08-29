@@ -2,6 +2,6 @@ InfinitiesLoop/oclib
 init.lua
 inventory.lua
 main.lua
-math.lua
+util.lua
 quary.lua
 smartmove.lua
