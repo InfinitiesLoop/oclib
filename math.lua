@@ -4,5 +4,5 @@ local function trunc(num, numDecimalPlaces)
 end
 
 return {
-  trunc: trunc
+  trunc = trunc
 }
