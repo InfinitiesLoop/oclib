@@ -154,7 +154,7 @@ function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpo
     end
     moved = moved + 1
     invSize = ic.getInventorySize(sides.bottom);
-    if invSize > 0 then
+    if invSize ~= nil and invSize > 0 then
       break
     end
   end
