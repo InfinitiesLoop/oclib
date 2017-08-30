@@ -4,8 +4,13 @@ local inv = require("inventory")
 local robot = require("robot")
 local inventory = require("inventory")
 local sides = require("sides")
+local computer = require("computer")
+local util = require("util")
 
 local quary = {}
+
+local NEEDS_CHARGE_THRESHOLD = 0.1
+local FULL_CHARGE_THRESHOLD = 0.95
 
 Quary = {
 }
@@ -19,6 +24,10 @@ function Quary:canMine()
   end
   if inventory.isLocalFull() then
     print("inventory is full!")
+    return false
+  end
+  if util.needsCharging(NEEDS_CHARGE_THRESHOLD) then
+    print("charge level is low!")
     return false
   end
   return true
@@ -130,6 +139,13 @@ function Quary:backToStart()
   end
 
   self.move:faceDirection(1)
+
+  -- charge if needed
+  if util.needsCharging(NEEDS_CHARGE_THRESHOLD) then
+    if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 300) then
+      print("waited a long time and I didn't get charged enough :(")
+    end
+  end
 end
 
 function Quary:dumpInventory()
