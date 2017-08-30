@@ -1,6 +1,8 @@
 local util = require("util")
 local smartmove = require("smartmove")
 local inv = require("inventory")
+local robot = require("robot")
+local inventory = require("inventory")
 
 local quary = {}
 
@@ -8,7 +10,7 @@ Quary = {
 }
 
 function Quary:canMine()
-  local d, dcurrent, dmax = self.robot.durability()
+  local d, dcurrent, dmax = robot.durability()
   d = util.trunc(d or 0, 2)
   if d <= 0 then
     print("lost durability on tool!")
@@ -21,18 +23,18 @@ function Quary:_mineAhead()
   if not self:canMine() then
     return false
   end
-  self.robot.swing()
+  robot.swing()
   if not self.move:forward() then
     return false
   end 
   if not self:canMine() then
     return false
   end
-  self.robot.swingUp()
+  robot.swingUp()
   if not self:canMine() then
     return false
   end
-  self.robot.swingDown()
+  robot.swingDown()
   if inv.isIdealTorchSpot(self.move.posY, self.move.posX - 1) then
     if not inv.placeTorch() then
       print("could not place a torch when needed.")
@@ -114,8 +116,27 @@ function Quary:mineNextLane()
 end
 
 function Quary:backToStart()
-  self.move:moveTo(0, 0)
+  if self.move:moveTo(0, 0) then
+    local result = self:dumpInventory()
+    if not result then
+      print("could not dump inventory.")
+    end
+    self.move:moveTo(0, 0)
+  end
+
   self.move:faceDirection(1)
+end
+
+function Quary:dumpInventory()
+  while true do
+    if not self.move:findInventory(-2, 5, true) > 0 then
+      return false
+    end
+    local result = inventory.dropAll(sides.bottom)
+    if result then
+      return true
+    end
+  end
 end
 
 function Quary:start()
@@ -156,7 +177,7 @@ end
 function quary.new(o)
   o = o or {}
   setmetatable(o, { __index = Quary })
-  o.move = o.move or smartmove.new({robot=o.robot})
+  o.move = o.move or smartmove.new()
   return o
 end
 

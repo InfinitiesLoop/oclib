@@ -1,4 +1,8 @@
 local smartmove = {}
+local robot = require("robot")
+local c = require("component")
+local ic = c.inventory_controller
+local sides = require("sides")
 
 SmartMove = {
   posX = 0,
@@ -9,9 +13,9 @@ SmartMove = {
 function SmartMove:_move(direction)
   local result
   if direction == 1 then
-    result = self.robot.forward()
+    result = robot.forward()
   else
-    result = self.robot.back()
+    result = robot.back()
   end
 
   if result then
@@ -34,9 +38,9 @@ end
 function SmartMove:_turn(direction)
   local result
   if direction == 1 then
-    result = self.robot.turnRight()
+    result = robot.turnRight()
   else
-    result = self.robot.turnLeft()
+    result = robot.turnLeft()
   end
   if result then
     if self.orient == 1 then
@@ -127,6 +131,38 @@ function SmartMove:moveTo(x, y)
   if moved and (self.posY ~= y or self.posX ~= x) then
     self:moveTo(x, y)
   end
+end
+
+function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpot)
+  if not dontCheckCurrentSpot then
+    local invSize = ic.getInventorySize(sides.bottom);
+    if invSize > 0 then
+      return invSize
+    end
+  end
+
+  local wasOrient = self.orient
+  local wasX = self.posX
+  local wasY = self.posY
+  self:faceDirection(strafeDirection)
+
+  local moved = 0
+  while moved < maxBlocks do
+    if not self:forward() then
+      break
+    end
+    moved++
+    invSize = ic.getInventorySize(sides.bottom);
+    if invSize > 0 then
+      break
+    end
+  end
+  if invSize == nil or invSize == 0
+    self:moveTo(wasX, wasY)
+  end
+
+  self:faceDirection(wasOrient)
+  return invSize
 end
 
 function smartmove.new(o)

@@ -14,7 +14,13 @@ function inventory.dropAll(side)
 		local c = robot.count(i)
 		if c > 0 then
 			robot.select(i)
-			robot.drop()
+			if side == nil or side == sides.front then
+				robot.drop()
+			else if side == sides.bottom then
+				robot.dropBottom()
+			else if side == sides.top then
+				robot.dropTop()
+			end
 			-- see if all the items were successfully dropped
 			c = robot.count(i)
 			if c > 0 then
