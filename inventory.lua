@@ -71,7 +71,8 @@ function inventory.placeTorch(sideOfRobot, sideOfBlock)
 end
 
 function inventory.isLocalFull()
-	for i=1,robot.inventorySize() do
+	-- backwards cuz the later slots fill up last
+	for i=robot.inventorySize(),1 do
 		local stack = ic.getStackInInternalSlot(i)
 		if stack == nil then
 			return false
