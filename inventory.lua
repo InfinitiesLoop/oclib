@@ -17,9 +17,9 @@ function inventory.dropAll(side)
 			if side == nil or side == sides.front then
 				robot.drop()
 			elseif side == sides.bottom then
-				robot.dropBottom()
+				robot.dropDown()
 			elseif side == sides.top then
-				robot.dropTop()
+				robot.dropUp()
 			end
 			-- see if all the items were successfully dropped
 			c = robot.count(i)
