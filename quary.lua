@@ -3,6 +3,7 @@ local smartmove = require("smartmove")
 local inv = require("inventory")
 local robot = require("robot")
 local inventory = require("inventory")
+local sides = require("sides")
 
 local quary = {}
 
