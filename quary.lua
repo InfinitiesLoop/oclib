@@ -138,7 +138,7 @@ function Quary:dumpInventory()
     if result == nil or result <= 0 then
       return false
     end
-    local result = inventory.dropAll(sides.bottom)
+    local result = inventory.dropAll(sides.bottom, 5)
     if result then
       return true
     end

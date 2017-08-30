@@ -5,12 +5,13 @@ local sides = require("sides")
 
 local inventory = {}
 
-function inventory.dropAll(side)
+function inventory.dropAll(side, fromSlotNumber)
 	-- tries to drop all the robot's inventory into the storage on the given side
 	-- returns true if all if it could be unloaded, false if none or only some could
 	--robot.drop([number]) -- Returns true if at least one item was dropped, false otherwise.
 	local couldDropAll = true
-	for i=1,robot.inventorySize() do
+	fromSlotNumber = fromSlotNumber or 1
+	for i=fromSlotNumber,robot.inventorySize() do
 		local c = robot.count(i)
 		if c > 0 then
 			robot.select(i)
@@ -72,7 +73,7 @@ end
 
 function inventory.isLocalFull()
 	-- backwards cuz the later slots fill up last
-	for i=robot.inventorySize(),1 do
+	for i=robot.inventorySize(),1,-1 do
 		local stack = ic.getStackInInternalSlot(i)
 		if stack == nil then
 			return false
