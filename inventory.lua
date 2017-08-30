@@ -70,4 +70,14 @@ function inventory.placeTorch(sideOfRobot, sideOfBlock)
 	return false
 end
 
+function inventory.isLocalFull()
+	for i=1,robot.inventorySize() do
+		local stack = ic.getStackInInternalSlot(i)
+		if stack == nil then
+			return false
+		end
+	end
+	return true
+end
+
 return inventory

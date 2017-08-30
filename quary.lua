@@ -17,6 +17,10 @@ function Quary:canMine()
     print("lost durability on tool!")
     return false
   end
+  if inventory.isLocalFull() then
+    print("inventory is full!")
+    return false
+  end
   return true
 end
 
