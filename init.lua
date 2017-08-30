@@ -10,14 +10,14 @@ function init.getfiles()
       print("repo " .. repo)
     else 
       print("getting " .. line)
-      os.execute("wget -f https://raw.githubusercontent.com/" .. repo .. "/master/" .. line .. " " .. line)
+      os.execute("wget -f https://raw.githubusercontent.com/" .. repo .. "/master/" .. line .. "?" .. math.random() .. " " .. line)
     end
   end
   print("done")
 end
 
 function init.clone(repo)
-  os.execute("wget -f https://raw.githubusercontent.com/" .. repo .. "/master/init.files init.files")
+  os.execute("wget -f https://raw.githubusercontent.com/" .. repo .. "/master/init.files?" .. math.random() .. " init.files")
   init.getfiles()
 end
 
