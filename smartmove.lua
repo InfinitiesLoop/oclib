@@ -50,6 +50,7 @@ function SmartMove:_turn(direction)
       self.orient = direction * 1
     end
   end
+  return result
 end
 
 function SmartMove:turnRight()
@@ -94,6 +95,7 @@ function SmartMove:faceDirection(o)
     self:turnRight()
   end
 
+  return true
 end
 
 function SmartMove:moveTo(x, y)
@@ -128,6 +130,8 @@ function SmartMove:moveTo(x, y)
   if moved and (self.posY ~= y or self.posX ~= x) then
     self:moveTo(x, y)
   end
+
+  return self.posY == y and self.posX == x
 end
 
 function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpot)
