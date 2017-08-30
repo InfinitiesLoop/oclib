@@ -5,9 +5,6 @@ local ic = c.inventory_controller
 local sides = require("sides")
 
 SmartMove = {
-  posX = 0,
-  posY = 0,
-  orient = 1
 }
 
 function SmartMove:_move(direction)
@@ -168,6 +165,9 @@ end
 function smartmove.new(o)
   o = o or {}
   setmetatable(o, { __index = SmartMove })
+  o.posX = 0
+  o.posY = 0
+  o.orient = 1
   return o
 end
 
