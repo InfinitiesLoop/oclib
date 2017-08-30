@@ -129,7 +129,8 @@ end
 
 function Quary:dumpInventory()
   while true do
-    if not self.move:findInventory(-2, 5, true) > 0 then
+    local result = self.move:findInventory(-2, 5, true)
+    if result == nil or result <= 0 then
       return false
     end
     local result = inventory.dropAll(sides.bottom)
