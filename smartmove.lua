@@ -134,10 +134,12 @@ function SmartMove:moveTo(x, y)
   return self.posY == y and self.posX == x
 end
 
-function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpot)
+function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpot, minimumInventorySize)
+  minimumInventorySize = minimumInventorySize or 1
+
   if not dontCheckCurrentSpot then
     local invSize = ic.getInventorySize(sides.bottom);
-    if invSize > 0 then
+    if invSize ~= nil and invSize >= minimumInventorySize then
       return invSize
     end
   end
@@ -154,11 +156,11 @@ function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpo
     end
     moved = moved + 1
     invSize = ic.getInventorySize(sides.bottom);
-    if invSize ~= nil and invSize > 0 then
+    if invSize ~= nil and invSize >= minimumInventorySize then
       break
     end
   end
-  if invSize == nil or invSize == 0 then
+  if invSize == nil or invSize < minimumInventorySize then
     self:moveTo(wasX, wasY)
   end
 

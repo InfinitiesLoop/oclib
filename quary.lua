@@ -150,7 +150,7 @@ end
 
 function Quary:dumpInventory()
   while true do
-    local result = self.move:findInventory(-2, 5, true)
+    local result = self.move:findInventory(-2, 5, true, 16)
     if result == nil or result <= 0 then
       return false
     end
