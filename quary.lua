@@ -16,9 +16,7 @@ Quary = {
 }
 
 function Quary:canMine()
-  local d, dcurrent, dmax = robot.durability()
-  d = util.trunc(d or 0, 2)
-  if d <= 0 then
+  if inventory.toolIsBroken() then
     print("lost durability on tool!")
     return false
   end
@@ -134,8 +132,16 @@ function Quary:backToStart()
     local result = self:dumpInventory()
     if not result then
       print("could not dump inventory.")
+      self.move:moveTo(0, 0)
+      return false
     end
-    self.move:moveTo(0, 0)
+    if not self.move:moveTo(0, 0) then
+      print("could not return to 0,0 after dumping inventory.")
+      return false
+    end
+  else
+    print("could not get back to 0,0 for some reason.")
+    return false
   end
 
   self.move:faceDirection(1)
@@ -144,8 +150,22 @@ function Quary:backToStart()
   if util.needsCharging(NEEDS_CHARGE_THRESHOLD) then
     if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 300) then
       print("waited a long time and I didn't get charged enough :(")
+      return false
     end
   end
+
+  -- get a new tool if needed
+  if inventory.toolIsBroken then
+    if not inventory.equipFreshTool() then
+      print("could not find a fresh tool to equip!")
+      return false
+    end
+  end
+
+  -- todo: need to check for torch supply too
+  
+  -- should be no reason why we cant get back out there now!
+  return true
 end
 
 function Quary:dumpInventory()
@@ -161,7 +181,7 @@ function Quary:dumpInventory()
   end
 end
 
-function Quary:start()
+function Quary:iterate()
   self.stepsWidth = 0
   if not self:_mineAhead() then
     print("could not enter quary area.")
@@ -179,21 +199,24 @@ function Quary:start()
     local result = self:mineNextLane()
     if not result then
       print("failed to mine lane")
-      self:backToStart()
-      return false
+      return self:backToStart()
     end
 
     -- move to next lane
     if not self:_mineAroundCorner() then
       print("failed to turn corner into new lane.")
-      self:backToStart()
-      return false
+      return self:backToStart()
     end
 
     self.stepsWidth = self.stepsWidth + 2
   end
-  self:backToStart()
-  return true
+  return self:backToStart()
+end
+
+function Quary:start()
+  while self:iterate() do
+    print("going out again")
+  end
 end
 
 function quary.new(o)
