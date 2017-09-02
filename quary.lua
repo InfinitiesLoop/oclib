@@ -14,7 +14,7 @@ local FULL_CHARGE_THRESHOLD = 0.95
 local Quary = {
 }
 
-function Quary:canMine()
+function Quary:canMine() --luacheck: no unused args
   if inventory.toolIsBroken() then
     if not inventory.equipFreshTool() then
       print("lost durability on tool and can't find a fresh one in my inventory!")
