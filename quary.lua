@@ -6,6 +6,7 @@ local inventory = require("inventory")
 local sides = require("sides")
 local computer = require("computer")
 local util = require("util")
+local shell = require("shell")
 
 local quary = {}
 
@@ -40,6 +41,7 @@ function Quary:_mineAhead()
   end
   robot.swing()
   if not self.move:forward() then
+    print("I hit something!")
     return false
   end 
   if not self:canMine() then
@@ -50,11 +52,13 @@ function Quary:_mineAhead()
     return false
   end
   robot.swingDown()
-  if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
-    if not inv.placeTorch() then
-      -- not placing a torch isn't considered an error we need to worry about.
-      -- basically, we tried.
-      print("could not place a torch when needed.")
+  if self.torches then 
+    if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
+      if not inv.placeTorch() then
+        -- not placing a torch isn't considered an error we need to worry about.
+        -- basically, we tried.
+        print("could not place a torch when needed.")
+      end
     end
   end
   return true
@@ -235,7 +239,21 @@ function quary.new(o)
   o = o or {}
   setmetatable(o, { __index = Quary })
   o.move = o.move or smartmove.new()
+  o.width = tonumber(o.width or "10")
+  o.depth = tonumber(o.depth or "10")
+  o.height = tonumber(o.height or "3")
+  o.torches = o.torches == true or o.torches == "true" or o.torches == nil
   return o
+end
+
+local args, options = shell.parse( ... )
+if args[1] == 'start' then
+  if (args[2] == 'help') then
+    print("usage: quary start --width=100 --depth=100 --height=9 --torches=true")
+  else
+    local q = quary.new(options)
+    q:start()
+  end
 end
 
 return quary
