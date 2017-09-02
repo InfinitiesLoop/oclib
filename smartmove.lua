@@ -4,6 +4,13 @@ local c = require("component")
 local ic = c.inventory_controller
 local sides = require("sides")
 
+-- Utility that keeps track of the robot's movements so it knows where it is relative to the starting location.
+-- Coordinates have nothing to do with map coordinates, it does not rely on the map upgrade.
+-- X axis: The direction the robot was initially facing
+-- Z axis: Right side direction
+-- Y axis: Up and down
+-- Starting point is 0,0,0 (X,Z,Y)
+
 SmartMove = {
 }
 
@@ -19,7 +26,7 @@ function SmartMove:_move(direction)
     if self.orient == 1 or self.orient == -1 then
       self.posX = self.posX + (direction*self.orient)
     else
-      self.posY = self.posY + (direction*self.orient/2)
+      self.posZ = self.posZ + (direction*self.orient/2)
     end
   end
   return result
@@ -98,7 +105,7 @@ function SmartMove:faceDirection(o)
   return true
 end
 
-function SmartMove:moveTo(x, y)
+function SmartMove:moveTo(x, z)
   local moved = false
   -- lets do X first, gotta reorient if necessary
   if self.posX ~= x then
@@ -114,24 +121,24 @@ function SmartMove:moveTo(x, y)
     end
   end
 
-  if self.posY ~= y then
-    if self.posY < y then
+  if self.posZ ~= z then
+    if self.posZ < z then
       direction = 2
     else
       direction = -2
     end
     self:faceDirection(direction)
-    while self.posY ~= y and self:forward() do
+    while self.posZ ~= z and self:forward() do
       moved = true
     end
   end
 
   -- try again
-  if moved and (self.posY ~= y or self.posX ~= x) then
-    self:moveTo(x, y)
+  if moved and (self.posZ ~= z or self.posX ~= x) then
+    self:moveTo(x, z)
   end
 
-  return self.posY == y and self.posX == x
+  return self.posZ == z and self.posX == x
 end
 
 function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpot, minimumInventorySize)
@@ -146,7 +153,7 @@ function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpo
 
   local wasOrient = self.orient
   local wasX = self.posX
-  local wasY = self.posY
+  local wasY = self.posZ
   self:faceDirection(strafeDirection)
 
   local moved = 0
@@ -172,7 +179,7 @@ function smartmove.new(o)
   o = o or {}
   setmetatable(o, { __index = SmartMove })
   o.posX = 0
-  o.posY = 0
+  o.posZ = 0
   o.orient = 1
   return o
 end

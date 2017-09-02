@@ -50,7 +50,7 @@ function Quary:_mineAhead()
     return false
   end
   robot.swingDown()
-  if inv.isIdealTorchSpot(self.move.posY, self.move.posX - 1) then
+  if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
     if not inv.placeTorch() then
       print("could not place a torch when needed.")
       return false
