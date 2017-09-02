@@ -17,13 +17,16 @@ Quary = {
 
 function Quary:canMine()
   if inventory.toolIsBroken() then
-    print("lost durability on tool!")
-    return false
+    if not inventory.equipFreshTool() then
+      print("lost durability on tool and can't find a fresh one in my inventory!")
+      return false
+    end
   end
   if inventory.isLocalFull() then
     print("inventory is full!")
     return false
   end
+  -- todo: use generator if present
   if util.needsCharging(NEEDS_CHARGE_THRESHOLD) then
     print("charge level is low!")
     return false
@@ -155,7 +158,7 @@ function Quary:backToStart()
   end
 
   -- get a new tool if needed
-  if inventory.toolIsBroken then
+  if inventory.toolIsBroken() then
     if not inventory.equipFreshTool() then
       print("could not find a fresh tool to equip!")
       return false
@@ -163,7 +166,7 @@ function Quary:backToStart()
   end
 
   -- todo: need to check for torch supply too
-  
+
   -- should be no reason why we cant get back out there now!
   return true
 end
