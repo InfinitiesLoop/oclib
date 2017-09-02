@@ -92,7 +92,7 @@ end
 function inventory.equipFreshTool()
   -- first we must see what tool it is we currently have
   -- swap it with slot 1
-  ic.select(1)
+  robot.select(1)
   ic.equip()
   local currentTool = ic.getStackInInternalSlot()
   -- equip it back since whatever was in slot 1 might be important
