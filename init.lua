@@ -8,16 +8,18 @@ function init.getfiles()
     if repo == nil then
       repo = line
       print("repo " .. repo)
-    else 
+    else
       print("getting " .. line)
-      os.execute("wget -f https://raw.githubusercontent.com/" .. repo .. "/master/" .. line .. "?" .. math.random() .. " " .. line)
+      os.execute("wget -f https://raw.githubusercontent.com/" .. repo .. "/master/" .. line ..
+        "?" .. math.random() .. " " .. line)
     end
   end
   print("done")
 end
 
 function init.clone(repo)
-  os.execute("wget -f https://raw.githubusercontent.com/" .. repo .. "/master/init.files?" .. math.random() .. " init.files")
+  os.execute("wget -f https://raw.githubusercontent.com/" .. repo .. "/master/init.files?"
+    .. math.random() .. " init.files")
   init.getfiles()
 end
 
@@ -27,5 +29,5 @@ if args[1] ~= nil then
 else
   init.getfiles()
 end
-  
+
 return init

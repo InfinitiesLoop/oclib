@@ -1,5 +1,5 @@
-local c = require("component")
-local ic = c.inventory_controller
+local component = require("component")
+local ic = component.inventory_controller
 local robot = require("robot")
 local sides = require("sides")
 local util = require("util")
@@ -46,7 +46,7 @@ function inventory.isIdealTorchSpot(x, z)
   local zRow = math.floor(z / 7) % 2
   if (zRow == 0 and isX == 6) or (zRow == 1 and isX == 0) then
     return false
-  end 
+  end
   return true
 end
 
@@ -62,9 +62,13 @@ function inventory.selectItem(name)
 end
 
 function inventory.placeTorch(sideOfRobot, sideOfBlock)
-  -- todo: sideOfRobot
   if inventory.selectItem("minecraft:torch") then
-    local success = robot.placeDown(sideOfBlock or sides.bottom)
+    local success
+    if sideOfRobot == sides.down then
+      success = robot.placeDown(sideOfBlock or sides.bottom)
+    elseif sideOfRobot == sides.front then
+      success = robot.place(sideOfBlock or sides.bottom)
+    end
     if success then
       return true
     end
@@ -84,7 +88,7 @@ function inventory.isLocalFull()
 end
 
 function inventory.toolIsBroken()
-  local d, dcurrent, dmax = robot.durability()
+  local d = robot.durability()
   d = util.trunc(d or 0, 2)
   return d <= 0
 end
@@ -111,9 +115,7 @@ function inventory.equipFreshTool()
       robot.select(i)
       ic.equip()
       -- found one but we need to check if it's got durability
-      local d, dcurrent, dmax = robot.durability()
-      d = util.trunc(d or 0, 2)
-      if d > 0 then
+      if not inventory.toolIsBroken() then
         return true
       end
       -- not durable enough, so put it back and keep looking

@@ -11,7 +11,7 @@ local sides = require("sides")
 -- Y axis: Up and down
 -- Starting point is 0,0,0 (X,Z,Y)
 
-SmartMove = {
+local SmartMove = {
 }
 
 function SmartMove:_climb(direction)
@@ -146,6 +146,7 @@ end
 
 function SmartMove:moveToZ(z)
   local moved = false
+  local direction
   if self.posZ ~= z then
     if self.posZ < z then
       direction = 2
@@ -163,6 +164,7 @@ end
 
 function SmartMove:moveToY(y)
   local moved = false
+  local direction
   if self.posY ~= y then
     if self.posY < y then
       direction = 1
@@ -181,7 +183,7 @@ function SmartMove:moveToXZ(x, z)
   -- first try X
   local resultX, movedX = self:moveToX(x)
   -- then try Z
-  local resultZ, movedZ = self:moveToZ(z)
+  local _, movedZ = self:moveToZ(z)
 
   -- if X failed but we moved Z, we can try X again (might be unblocked now)
   if not resultX and movedZ then
@@ -197,7 +199,7 @@ function SmartMove:moveToXZY(x, z, y)
   -- try horizontal movement first
   local resultXZ, movedXZ = self:moveToXZ(x, z)
   -- now climb
-  local resultY, movedY = self:moveToY(y)
+  local _, movedY = self:moveToY(y)
 
   -- if XZ failed but we moved Y, we can try XZ again (might be unblocked now)
   if not resultXZ and movedY then
@@ -225,6 +227,7 @@ function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpo
   self:faceDirection(strafeDirection)
 
   local moved = 0
+  local invSize
   while moved < maxBlocks do
     if not self:forward() then
       break

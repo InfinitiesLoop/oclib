@@ -4,8 +4,6 @@ local inv = require("inventory")
 local robot = require("robot")
 local inventory = require("inventory")
 local sides = require("sides")
-local computer = require("computer")
-local util = require("util")
 local shell = require("shell")
 
 local quary = {}
@@ -13,7 +11,7 @@ local quary = {}
 local NEEDS_CHARGE_THRESHOLD = 0.1
 local FULL_CHARGE_THRESHOLD = 0.95
 
-Quary = {
+local Quary = {
 }
 
 function Quary:canMine()
@@ -43,7 +41,7 @@ function Quary:_mineAhead()
   if not self.move:forward() then
     print("I hit something!")
     return false
-  end 
+  end
   if not self:canMine() then
     return false
   end
@@ -52,7 +50,7 @@ function Quary:_mineAhead()
     return false
   end
   robot.swingDown()
-  if self.torches then 
+  if self.torches then
     if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
       if not inv.placeTorch() then
         -- not placing a torch isn't considered an error we need to worry about.
@@ -96,12 +94,12 @@ function Quary:_findStartingPoint()
       return false
     end
   end
-  
+
   -- found it, and it's the very beginning
   if not moved then
     print("looks like a new quary! may the diamonds be plentiful!")
   end
- 
+
   -- there was a block up or down so we're already in the starting spot
   print("found starting point.")
   self.move:turnRight()
@@ -117,12 +115,12 @@ function Quary:mineNextLane()
     end
     steps = steps + 1
   end
-  
+
   if not self:_mineAroundCorner() then
     print("could not turn corner")
     return false
   end
-  
+
   steps = 0
   while (steps < (self.depth - 1)) do
     if not self:_mineAhead() then
@@ -182,7 +180,7 @@ function Quary:dumpInventory()
     if result == nil or result <= 0 then
       return false
     end
-    local result = inventory.dropAll(sides.bottom, 5)
+    result = inventory.dropAll(sides.bottom, 5)
     if result then
       return true
     end
@@ -196,13 +194,13 @@ function Quary:iterate()
     self:backToStart()
     return false
   end
-  
+
   if not self:_findStartingPoint() then
     print("could not find starting point.")
     self:backToStart()
     return false
   end
-  
+
   while self.stepsWidth < self.width do
     local result = self:mineNextLane()
     if not result then
@@ -225,7 +223,7 @@ end
 
 function Quary:start()
   local result
-  local isDone 
+  local isDone
   result, isDone = self:iterate()
   while (result and not isDone) do
     print("headed out again!")
