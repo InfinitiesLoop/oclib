@@ -52,8 +52,9 @@ function Quary:_mineAhead()
   robot.swingDown()
   if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
     if not inv.placeTorch() then
+      -- not placing a torch isn't considered an error we need to worry about.
+      -- basically, we tried.
       print("could not place a torch when needed.")
-      return false
     end
   end
   return true
@@ -226,8 +227,8 @@ function Quary:start()
     print("headed out again!")
     result, isDone = self:iterate()
   end
-  while self:iterate() do
-  end
+
+  return isDone or false
 end
 
 function quary.new(o)
