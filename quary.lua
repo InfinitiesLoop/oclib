@@ -131,19 +131,19 @@ function Quary:mineNextLane()
 end
 
 function Quary:backToStart()
-  if self.move:moveTo(0, 0) then
+  if self.move:moveToXZY(0, 0, 0) then
     local result = self:dumpInventory()
     if not result then
       print("could not dump inventory.")
-      self.move:moveTo(0, 0)
+      self.move:moveToXZY(0, 0, 0)
       return false
     end
-    if not self.move:moveTo(0, 0) then
-      print("could not return to 0,0 after dumping inventory.")
+    if not self.move:moveToXZY(0, 0, 0) then
+      print("could not return to 0,0,0 after dumping inventory.")
       return false
     end
   else
-    print("could not get back to 0,0 for some reason.")
+    print("could not get back to 0,0,0 for some reason.")
     return false
   end
 
@@ -213,12 +213,20 @@ function Quary:iterate()
 
     self.stepsWidth = self.stepsWidth + 2
   end
-  return self:backToStart()
+  local returnedToStart = self:backToStart()
+
+  return returnedToStart, (self.stepsWidth >= self.width)
 end
 
 function Quary:start()
+  local result
+  local isDone 
+  result, isDone = self:iterate()
+  while (result and not isDone) do
+    print("headed out again!")
+    result, isDone = self:iterate()
+  end
   while self:iterate() do
-    print("going out again")
   end
 end
 

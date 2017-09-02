@@ -14,6 +14,21 @@ local sides = require("sides")
 SmartMove = {
 }
 
+function SmartMove:_climb(direction)
+  local result
+  if direction == 1 then
+    result = robot.up()
+  else
+    result = robot.down()
+  end
+
+  if result then
+    self.posY = self.posY + direction
+  end
+
+  return result
+end
+
 function SmartMove:_move(direction)
   local result
   if direction == 1 then
@@ -37,6 +52,12 @@ function SmartMove:forward()
 end
 function SmartMove:backward()
   return self:_move(-1)
+end
+function SmartMove:up()
+  return self:_climb(1)
+end
+function SmartMove:down()
+  return self:_climb(-1)
 end
 
 function SmartMove:_turn(direction)
@@ -105,9 +126,8 @@ function SmartMove:faceDirection(o)
   return true
 end
 
-function SmartMove:moveTo(x, z)
+function SmartMove:moveToX(x)
   local moved = false
-  -- lets do X first, gotta reorient if necessary
   if self.posX ~= x then
     local direction
     if self.posX < x then
@@ -121,6 +141,11 @@ function SmartMove:moveTo(x, z)
     end
   end
 
+  return self.posX == x, moved
+end
+
+function SmartMove:moveToZ(z)
+  local moved = false
   if self.posZ ~= z then
     if self.posZ < z then
       direction = 2
@@ -133,12 +158,55 @@ function SmartMove:moveTo(x, z)
     end
   end
 
-  -- try again
-  if moved and (self.posZ ~= z or self.posX ~= x) then
-    self:moveTo(x, z)
+  return self.posZ == z, moved
+end
+
+function SmartMove:moveToY(y)
+  local moved = false
+  if self.posY ~= y then
+    if self.posY < y then
+      direction = 1
+    else
+      direction = -1
+    end
+    while self.posY ~= y and self:_climb(direction) do
+      moved = true
+    end
   end
 
-  return self.posZ == z and self.posX == x
+  return self.posY == y, moved
+end
+
+function SmartMove:moveToXZ(x, z)
+  -- first try X
+  local resultX, movedX = self:moveToX(x)
+  -- then try Z
+  local resultZ, movedZ = self:moveToZ(z)
+
+  -- if X failed but we moved Z, we can try X again (might be unblocked now)
+  if not resultX and movedZ then
+    local innerResult, innerMoved = self:moveToXZ(x, z)
+    return innerResult, (innerMoved or movedX or movedZ)
+  end
+
+  -- successful if we ended up where we wanted to be
+  return (self.posZ == z and self.posX == x), (movedX or movedZ)
+end
+
+function SmartMove:moveToXZY(x, z, y)
+  -- try horizontal movement first
+  local resultXZ, movedXZ = self:moveToXZ(x, z)
+  -- now climb
+  local resultY, movedY = self:moveToY(y)
+
+  -- if XZ failed but we moved Y, we can try XZ again (might be unblocked now)
+  if not resultXZ and movedY then
+    local innerResult, innerMoved = self:moveToXZY(x, z, y)
+    return innerResult, (innerMoved or movedXZ or movedY)
+  end
+
+  -- successful if we ended up where we wanted to be
+  return (self.posZ == z and self.posX == x and self.posY == y), (movedXZ or movedY)
 end
 
 function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpot, minimumInventorySize)
@@ -180,6 +248,7 @@ function smartmove.new(o)
   setmetatable(o, { __index = SmartMove })
   o.posX = 0
   o.posZ = 0
+  o.posY = 0
   o.orient = 1
   return o
 end
