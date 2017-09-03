@@ -1,7 +1,7 @@
 local quary = require("quary")
 --local robot = require("robot")
 
-local q = quary.new({depth = 50, width = 200})
+local q = quary.new({ options = {depth = 50, width = 200} })
 q:start()
 
 
