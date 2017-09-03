@@ -5,6 +5,7 @@ local robot = require("robot")
 local inventory = require("inventory")
 local sides = require("sides")
 local shell = require("shell")
+local fs = require("fs")
 
 local quary = {}
 
@@ -50,7 +51,7 @@ function Quary:_mineAhead()
     return false
   end
   robot.swingDown()
-  if self.torches then
+  if self.options.torches then
     if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
       if not inv.placeTorch() then
         -- not placing a torch isn't considered an error we need to worry about.
@@ -88,7 +89,7 @@ function Quary:_findStartingPoint()
   while self.move:forward() do
     moved = true
     self.stepsWidth = self.stepsWidth + 1
-    if self.stepsWidth >= self.width then
+    if self.stepsWidth >= self.options.width then
       print("looks like this quary is done, I couldn't find the starting point!")
       self.move:turnRight()
       return false
@@ -108,7 +109,7 @@ end
 
 function Quary:mineNextLane()
   local steps = 0
-  while (steps < (self.depth - 1)) do
+  while (steps < (self.options.depth - 1)) do
     if not self:_mineAhead() then
       print("could not mine main part of lane")
       return false
@@ -122,7 +123,7 @@ function Quary:mineNextLane()
   end
 
   steps = 0
-  while (steps < (self.depth - 1)) do
+  while (steps < (self.options.depth - 1)) do
     if not self:_mineAhead() then
       print("could not mine return part of lane")
       return false
@@ -201,7 +202,7 @@ function Quary:iterate()
     return false
   end
 
-  while self.stepsWidth < self.width do
+  while self.stepsWidth < self.options.width do
     local result = self:mineNextLane()
     if not result then
       print("failed to mine lane")
@@ -218,7 +219,7 @@ function Quary:iterate()
   end
   local returnedToStart = self:backToStart()
 
-  return returnedToStart, (self.stepsWidth >= self.width)
+  return returnedToStart, (self.stepsWidth >= self.options.width)
 end
 
 function Quary:start()
@@ -233,14 +234,28 @@ function Quary:start()
   return isDone or false
 end
 
+function Quary:saveState()
+  return fs.saveObject("quary", self.options)
+end
+
+function Quary:loadState()
+  local result = fs.loadObject("quary")
+  if result ~= nil then
+    self.options = result
+    return true
+  end
+  return false
+end
+
 function quary.new(o)
   o = o or {}
   setmetatable(o, { __index = Quary })
   o.move = o.move or smartmove.new()
-  o.width = tonumber(o.width or "10")
-  o.depth = tonumber(o.depth or "10")
-  o.height = tonumber(o.height or "3")
-  o.torches = o.torches == true or o.torches == "true" or o.torches == nil
+  o.options = o.options or {}
+  o.options.width = tonumber(o.options.width or "10")
+  o.options.depth = tonumber(o.options.depth or "10")
+  o.options.height = tonumber(o.options.height or "3")
+  o.options.torches = o.options.torches == true or o.options.torches == "true" or o.options.torches == nil
   return o
 end
 
@@ -249,8 +264,16 @@ if args[1] == 'start' then
   if (args[2] == 'help') then
     print("usage: quary start --width=100 --depth=100 --height=9 --torches=true")
   else
-    local q = quary.new(options)
+    local q = quary.new({options = options})
+    q:saveState()
     q:start()
+  end
+elseif args[1] == 'resume' then
+  local q = quary.new()
+  if q:loadState() then
+    q:start()
+  else
+    print("cannot resume")
   end
 end
 
