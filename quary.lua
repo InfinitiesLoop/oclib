@@ -117,6 +117,11 @@ function Quary:_findStartingLevel()
   end
 
   -- if we made it here we're at the bottom level successfully
+  if moved then
+    -- might need a torch!
+    self:_placeTorch()
+  end
+
   return moved
 end
 
@@ -276,6 +281,7 @@ function Quary:iterate()
         print("failed to mine down to the next level")
         return false
       end
+      self.stepsHeight = self.stepsHeight + 3
       self.move:faceDirection(1)
       self:_placeTorch()
     end

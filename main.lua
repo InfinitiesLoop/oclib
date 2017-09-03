@@ -11,3 +11,6 @@ q:start()
 -- generator? use coal that is found on the way
 -- quary command line support, with quary resume command.
 -- auto compress cobblestone if crafting upgrade present.
+-- FEATURE: torches should go in non-ideal spots if necessary. Basically if it wont get to the next good spot
+-- FEATURE: place a ladder if in inventory so humans can explore easily (check if robot can move through ladder
+--    blocks tho)
