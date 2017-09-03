@@ -10,12 +10,12 @@ local function saveObject(name, obj)
 end
 
 local function loadObject(name)
-  local status, result = pcall(io.lines("/usr/objectstore/" .. name))
+  local status, result = pcall(function() return io.lines("/usr/objectstore/" .. name) end)
   if not status then return false end
 
   local lines = {}
   for line in result do
-    lines[#line] = line
+    lines[#lines+1] = line
   end
   return serializer.deserializeLines(lines)
 end
