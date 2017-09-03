@@ -7,6 +7,12 @@ local function serialize(obj, indent)
     s =  s .. indent .. k .. ":" .. t .. "="
     if t == "table" then
       s = s .. "{\n" .. indent .. serialize(v, indent .. '  ') .. indent .. "}\n"
+    elseif t == "boolean" then
+      if v then
+        s = s .. "true\n"
+      else
+        s = s .. "false\n"
+      end
     else
       s = s .. v .. "\n"
     end
@@ -26,6 +32,8 @@ local function deserializeFromLines(lines)
       result[k] = v
     elseif t == "number" then
       result[k] = tonumber(v)
+    elseif t == "boolean" then
+      result[k] = v == "true"
     elseif t == "table" then
       -- find all the lines containing this nested table
       local tableLines = {}
