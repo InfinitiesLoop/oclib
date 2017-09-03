@@ -27,7 +27,7 @@ function Quary:canMine() --luacheck: no unused args
     return false
   end
   -- todo: use generator if present
-  if util.needsCharging(NEEDS_CHARGE_THRESHOLD) then
+  if util.needsCharging(NEEDS_CHARGE_THRESHOLD, self.move:distanceFromStart()) then
     print("charge level is low!")
     return false
   end

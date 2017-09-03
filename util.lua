@@ -6,9 +6,11 @@ local function trunc(num, numDecimalPlaces)
   return math.floor(num * mult) / mult
 end
 
-local function needsCharging(threshold)
+local function needsCharging(threshold, distanceFromCharger)
   local percentCharge = (computer.energy() / computer.maxEnergy())
-  if percentCharge <= threshold then
+  -- require additional 1% charge per 25 blocks distance to charger
+  local chargeRequired = threshold + (distanceFromCharger / 25)
+  if percentCharge <= chargeRequired then
     return true
   end
   return false

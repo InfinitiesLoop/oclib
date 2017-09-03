@@ -11,4 +11,4 @@ q:start()
 -- generator? use coal that is found on the way
 -- quary command line support, with quary resume command.
 -- auto compress cobblestone if crafting upgrade present.
--- BUG: ran out of energy on this way back. Need to account for travel distance somehow or just keep a bigger padding.
+-- BUG: dont wanna see error that directory already exists when starting new quary command

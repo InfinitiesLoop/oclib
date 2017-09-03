@@ -211,6 +211,10 @@ function SmartMove:moveToXZY(x, z, y)
   return (self.posZ == z and self.posX == x and self.posY == y), (movedXZ or movedY)
 end
 
+function SmartMove:distanceFromStart()
+  return math.abs(self.posX) + math.abs(self.posY) + math.abs(self.posZ)
+end
+
 function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpot, minimumInventorySize)
   minimumInventorySize = minimumInventorySize or 1
 
