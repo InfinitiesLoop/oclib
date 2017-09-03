@@ -14,19 +14,31 @@ local sides = require("sides")
 local SmartMove = {
 }
 
-function SmartMove:_climb(direction)
-  local result
-  if direction == 1 then
-    result = robot.up()
-  else
-    result = robot.down()
+function SmartMove:_climb(direction, distance, atomic)
+  distance = distance or 1
+  local moveCount = 0
+
+  while moveCount < distance do
+    local result
+    if direction == 1 then
+      result = robot.up()
+    else
+      result = robot.down()
+    end
+
+    if result then
+      moveCount = moveCount + 1
+      self.posY = self.posY + direction
+    elseif atomic then
+      -- failed to move, gotta undo
+      local undid = self:_climb(-direction, moveCount, false)
+      return false, undid
+    else
+      return false
+    end
   end
 
-  if result then
-    self.posY = self.posY + direction
-  end
-
-  return result
+  return true
 end
 
 function SmartMove:_move(direction)
@@ -53,11 +65,11 @@ end
 function SmartMove:backward()
   return self:_move(-1)
 end
-function SmartMove:up()
-  return self:_climb(1)
+function SmartMove:up(distance, atomic)
+  return self:_climb(1, distance, atomic)
 end
-function SmartMove:down()
-  return self:_climb(-1)
+function SmartMove:down(distance, atomic)
+  return self:_climb(-1, distance, atomic)
 end
 
 function SmartMove:_turn(direction)

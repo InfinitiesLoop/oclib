@@ -34,6 +34,20 @@ function Quary:canMine() --luacheck: no unused args
   return true
 end
 
+function Quary:_mineDownLevel()
+  -- mine down 3 times. it's ok if the swing fails, might be air
+  for i=1,3 do
+    robot.swingDown()
+    if not self.move:down() then
+      print("could not move down: " .. i)
+      return false
+    end
+  end
+  -- at this point we're in the right position but we haven't mined out the block underneath us
+  robot.swingDown()
+  return true
+end
+
 function Quary:_mineAhead()
   if not self:canMine() then
     return false
@@ -81,11 +95,37 @@ function Quary:_mineAroundCorner()
   return true
 end
 
-function Quary:_findStartingPoint()
-  -- at the start of a quary, it might be a quary in progress.
-  -- navigate the lanes to the left until we find where we left off.
-  self.move:turnLeft()
+function Quary:_findStartingLevel()
   local moved = false
+  -- each level is 3 blocks high
+  local maxHeight = self.options.height
+
+  while (self.stepsHeight+3) <= maxHeight do
+    -- see if we can increase our level by one
+    local downLevel = self.move:down(3, true)
+    if downLevel then
+      moved = true
+      self.stepsHeight = self.stepsHeight + 3
+    else
+      -- cant move down any more levels, we are at the right spot
+      return moved
+    end
+  end
+
+  -- if we made it here we're at the bottom level successfully
+  return moved
+end
+
+function Quary:_findStartingPoint()
+  local moved = false
+  -- at the start of a quary, it might be a quary in progress.
+  -- first, lets see how deep we need to go
+  if self:_findStartingLevel() then
+    moved = true
+  end
+
+  -- navigate the lanes to the left until we find where we left off, horizontally
+  self.move:turnLeft()
   while self.move:forward() do
     moved = true
     self.stepsWidth = self.stepsWidth + 1
@@ -190,6 +230,7 @@ end
 
 function Quary:iterate()
   self.stepsWidth = 0
+  self.stepsHeight = 3
   if not self:_mineAhead() then
     print("could not enter quary area.")
     self:backToStart()
@@ -202,23 +243,48 @@ function Quary:iterate()
     return false
   end
 
-  while self.stepsWidth < self.options.width do
-    local result = self:mineNextLane()
-    if not result then
-      print("failed to mine lane")
-      return self:backToStart()
+  local firstLevel = true
+  repeat
+    -- no need to move down on the first level, robot starts on that level already
+    if not firstLevel then
+      -- return to the (1,0,_) point for the level we're currently on
+      local result = self:moveToXZ(1, 0)
+      if not result then
+        print("failed to return to starting point to begin the next quary level")
+        return false
+      end
+      self.stepsWidth = 0
+      result = self:_mineDownLevel()
+      if not result then
+        print("failed to mine down to the next level")
+        return false
+      end
+    end
+    firstLevel = false
+
+    -- now do a horizontal slice
+    local firstLane = true
+    while self.stepsWidth < self.options.width do
+      if not firstLane then
+        -- move to next lane
+        if not self:_mineAroundCorner() then
+          print("failed to turn corner into new lane.")
+          return self:backToStart()
+        end
+      end
+      firstLane = false
+
+      local result = self:mineNextLane()
+      if not result then
+        print("failed to mine lane")
+        return self:backToStart()
+      end
+      self.stepsWidth = self.stepsWidth + 2
     end
 
-    -- move to next lane
-    if not self:_mineAroundCorner() then
-      print("failed to turn corner into new lane.")
-      return self:backToStart()
-    end
+  until self.stepsHeight >= self.options.height
 
-    self.stepsWidth = self.stepsWidth + 2
-  end
   local returnedToStart = self:backToStart()
-
   return returnedToStart, (self.stepsWidth >= self.options.width)
 end
 
