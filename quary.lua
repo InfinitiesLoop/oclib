@@ -261,7 +261,7 @@ function Quary:iterate()
     -- no need to move down on the first level, robot starts on that level already
     if not firstLevel then
       -- return to the (1,0,_) point for the level we're currently on
-      result = self:moveToXZ(1, 0)
+      result = self.move:moveToXZ(1, 0)
       if not result then
         print("failed to return to starting point to begin the next quary level")
         return false
