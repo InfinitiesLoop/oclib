@@ -12,7 +12,12 @@ end
 local function loadObject(name)
   local status, result = pcall(io.lines("/usr/objectstore/" .. name))
   if not status then return false end
-  return serializer.deserializeLines(result)
+
+  local lines = {}
+  for line in result do
+    lines[#line] = line
+  end
+  return serializer.deserializeLines(lines)
 end
 
 return {
