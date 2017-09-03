@@ -16,6 +16,8 @@ end
 
 local function deserializeFromLines(lines)
   local result = {}
+  if #lines == 0 then return result end
+
   local i = 1
   repeat
     local line = lines[i]
@@ -54,4 +56,5 @@ end
 return {
   serialize = serialize,
   deserialize = deserialize,
+  deserializeLines = deserializeFromLines,
 }
