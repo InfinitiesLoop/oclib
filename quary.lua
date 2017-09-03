@@ -48,6 +48,18 @@ function Quary:_mineDownLevel()
   return true
 end
 
+function Quary:_placeTorch()
+  if self.options.torches then
+    if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
+      if not inv.placeTorch() then
+        -- not placing a torch isn't considered an error we need to worry about.
+        -- basically, we tried.
+        print("could not place a torch when needed.")
+      end
+    end
+  end
+end
+
 function Quary:_mineAhead()
   if not self:canMine() then
     return false
@@ -65,15 +77,7 @@ function Quary:_mineAhead()
     return false
   end
   robot.swingDown()
-  if self.options.torches then
-    if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
-      if not inv.placeTorch() then
-        -- not placing a torch isn't considered an error we need to worry about.
-        -- basically, we tried.
-        print("could not place a torch when needed.")
-      end
-    end
-  end
+  self:_placeTorch()
   return true
 end
 
@@ -273,6 +277,7 @@ function Quary:iterate()
         return false
       end
       self.move:faceDirection(1)
+      self:_placeTorch()
     end
     firstLevel = false
 
