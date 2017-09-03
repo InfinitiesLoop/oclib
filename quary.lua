@@ -5,7 +5,7 @@ local robot = require("robot")
 local inventory = require("inventory")
 local sides = require("sides")
 local shell = require("shell")
-local fs = require("fs")
+local objectStore = require("objectStore")
 
 local quary = {}
 
@@ -235,11 +235,11 @@ function Quary:start()
 end
 
 function Quary:saveState()
-  return fs.saveObject("quary", self.options)
+  return objectStore.saveObject("quary", self.options)
 end
 
 function Quary:loadState()
-  local result = fs.loadObject("quary")
+  local result = objectStore.loadObject("quary")
   if result ~= nil then
     self.options = result
     return true
