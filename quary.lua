@@ -273,7 +273,7 @@ elseif args[1] == 'resume' then
   if q:loadState() then
     q:start()
   else
-    print("cannot resume")
+    print("Cannot resume. Make sure the robot has a writable hard drive to save state in.")
   end
 end
 
