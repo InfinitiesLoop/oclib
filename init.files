@@ -5,3 +5,5 @@ main.lua
 util.lua
 quary.lua
 smartmove.lua
+fs.lua
+serializer.lua
