@@ -160,26 +160,11 @@ function Quary:mineNextLane()
   local steps = 0
   while (steps < (self.options.depth - 1)) do
     if not self:_mineAhead() then
-      print("could not mine main part of lane")
+      print("could not to end of lane")
       return false
     end
     steps = steps + 1
   end
-
-  if not self:_mineAroundCorner() then
-    print("could not turn corner")
-    return false
-  end
-
-  steps = 0
-  while (steps < (self.options.depth - 1)) do
-    if not self:_mineAhead() then
-      print("could not mine return part of lane")
-      return false
-    end
-    steps = steps + 1
-  end
-
   return true
 end
 
@@ -238,7 +223,7 @@ function Quary:dumpInventory()
 end
 
 function Quary:iterate()
-  self.stepsWidth = 0
+  self.stepsWidth = 1
   self.stepsHeight = 3
   if not self:_mineAhead() then
     print("could not enter quary area.")
@@ -275,7 +260,7 @@ function Quary:iterate()
         print("failed to return to starting point to begin the next quary level")
         return false
       end
-      self.stepsWidth = 0
+      self.stepsWidth = 1
       result = self:_mineDownLevel()
       if not result then
         print("failed to mine down to the next level")
@@ -289,7 +274,7 @@ function Quary:iterate()
 
     -- now do a horizontal slice
     local firstLane = true
-    while self.stepsWidth < self.options.width do
+    while self.stepsWidth <= self.options.width do
       if not firstLane then
         -- move to next lane
         if not self:_mineAroundCorner() then
@@ -304,7 +289,7 @@ function Quary:iterate()
         print("failed to mine lane")
         return self:backToStart()
       end
-      self.stepsWidth = self.stepsWidth + 2
+      self.stepsWidth = self.stepsWidth + 1
     end
 
   until self.stepsHeight >= self.options.height
