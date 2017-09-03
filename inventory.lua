@@ -64,7 +64,7 @@ end
 function inventory.placeTorch(sideOfRobot, sideOfBlock)
   if inventory.selectItem("minecraft:torch") then
     local success
-    if sideOfRobot == sides.down then
+    if sideOfRobot == nil or sideOfRobot == sides.down then
       success = robot.placeDown(sideOfBlock or sides.bottom)
     elseif sideOfRobot == sides.front then
       success = robot.place(sideOfBlock or sides.bottom)
