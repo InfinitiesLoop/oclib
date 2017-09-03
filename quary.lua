@@ -130,9 +130,9 @@ function Quary:_findStartingPoint()
     moved = true
     self.stepsWidth = self.stepsWidth + 1
     if self.stepsWidth >= self.options.width then
-      print("looks like this quary is done, I couldn't find the starting point!")
+      print("Current level is done, could not find a good starting point.")
       self.move:turnRight()
-      return false
+      return false, true
     end
   end
 
@@ -237,18 +237,31 @@ function Quary:iterate()
     return false
   end
 
-  if not self:_findStartingPoint() then
-    print("could not find starting point.")
-    self:backToStart()
-    return false
+  local firstLevel = true
+  local result, levelIsClear = self:_findStartingPoint()
+
+  if not result then
+    if levelIsClear then
+      -- well, this level has nothing left. Maybe it's time to go down a level?
+      if (self.stepsHeight+3) <= self.options.height then
+        firstLevel = false
+      else
+        -- nope, there's no apparent starting point and we're as deep as we can go
+        print("Query complete!")
+        return false, true
+      end
+    else
+      print("could not find starting point.")
+      self:backToStart()
+      return false
+    end
   end
 
-  local firstLevel = true
   repeat
     -- no need to move down on the first level, robot starts on that level already
     if not firstLevel then
       -- return to the (1,0,_) point for the level we're currently on
-      local result = self:moveToXZ(1, 0)
+      result = self:moveToXZ(1, 0)
       if not result then
         print("failed to return to starting point to begin the next quary level")
         return false
@@ -274,7 +287,7 @@ function Quary:iterate()
       end
       firstLane = false
 
-      local result = self:mineNextLane()
+      result = self:mineNextLane()
       if not result then
         print("failed to mine lane")
         return self:backToStart()
@@ -285,7 +298,7 @@ function Quary:iterate()
   until self.stepsHeight >= self.options.height
 
   local returnedToStart = self:backToStart()
-  return returnedToStart, (self.stepsWidth >= self.options.width)
+  return returnedToStart, true
 end
 
 function Quary:start()
