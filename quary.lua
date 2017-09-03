@@ -272,6 +272,7 @@ function Quary:iterate()
         print("failed to mine down to the next level")
         return false
       end
+      self.move:faceDirection(1)
     end
     firstLevel = false
 
