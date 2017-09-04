@@ -50,10 +50,10 @@ function inventory.isIdealTorchSpot(x, z)
   return true
 end
 
-function inventory.selectItem(name)
+function inventory.selectItem(pattern)
   for i=1,robot.inventorySize() do
     local stack = ic.getStackInInternalSlot(i)
-    if stack ~= nil and stack.name == name then
+    if stack ~= nil and string.find(stack.name, pattern) ~= nil then
       robot.select(i)
       return true
     end
@@ -62,7 +62,7 @@ function inventory.selectItem(name)
 end
 
 function inventory.placeTorch(sideOfRobot, sideOfBlock)
-  if inventory.selectItem("minecraft:torch") then
+  if inventory.selectItem("torch$") then
     local success
     if sideOfRobot == nil or sideOfRobot == sides.down then
       success = robot.placeDown(sideOfBlock or sides.bottom)
