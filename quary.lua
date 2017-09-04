@@ -83,6 +83,7 @@ function Quary:_clearCurrent()
   end
   robot.swingDown()
   self:_placeTorch()
+  return true
 end
 
 function Quary:_mineAroundCorner()
