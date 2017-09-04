@@ -69,6 +69,13 @@ function Quary:_mineAhead()
     print("I hit something!")
     return false
   end
+  if not self:_clearCurrent() then
+    return false
+  end
+  return true
+end
+
+function Quary:_clearCurrent()
   if not self:canMine() then
     return false
   end
@@ -78,7 +85,6 @@ function Quary:_mineAhead()
   end
   robot.swingDown()
   self:_placeTorch()
-  return true
 end
 
 function Quary:_mineAroundCorner()
@@ -126,32 +132,15 @@ function Quary:_findStartingLevel()
 end
 
 function Quary:_findStartingPoint()
-  local moved = false
   -- at the start of a quary, it might be a quary in progress.
   -- first, lets see how deep we need to go
-  if self:_findStartingLevel() then
-    moved = true
-  end
+  self:_findStartingLevel()
 
   -- navigate the lanes to the left until we find where we left off, horizontally
   self.move:turnLeft()
-  while self.move:forward() do
-    moved = true
+  while self.stepsWidth < self.options.width and self.move:forward() do
     self.stepsWidth = self.stepsWidth + 1
-    if self.stepsWidth >= self.options.width then
-      print("Current level is done, could not find a good starting point.")
-      self.move:turnRight()
-      return false, true
-    end
   end
-
-  -- found it, and it's the very beginning
-  if not moved then
-    print("looks like a new quary! may the diamonds be plentiful!")
-  end
-
-  -- there was a block up or down so we're already in the starting spot
-  print("found starting point.")
   self.move:turnRight()
   return true
 end
@@ -232,23 +221,17 @@ function Quary:iterate()
   end
 
   local firstLevel = true
-  local result, levelIsClear = self:_findStartingPoint()
+  local result = self:_findStartingPoint()
 
   if not result then
-    if levelIsClear then
-      -- well, this level has nothing left. Maybe it's time to go down a level?
-      if (self.stepsHeight+3) <= self.options.height then
-        firstLevel = false
-      else
-        -- nope, there's no apparent starting point and we're as deep as we can go
-        print("Query complete!")
-        return false, true
-      end
-    else
-      print("could not find starting point.")
-      self:backToStart()
-      return false
-    end
+    print("could not find starting point.")
+    self:backToStart()
+    return false
+  end
+
+  -- be sure the starting point is fully taken care of
+  if not self:_clearCurrent() then
+    return false
   end
 
   repeat
