@@ -290,6 +290,12 @@ function Quary:start()
     result, isDone = self:iterate()
   end
 
+  if isDone then
+    print("Quary complete.")
+  elseif not result then
+    print("Halting.")
+  end
+
   return isDone or false
 end
 
