@@ -7,7 +7,7 @@ local util = require("util")
 local inventory = {}
 
 function inventory.isOneOf(item, checkList)
-  for chk in checkList do
+  for _,chk in ipairs(checkList) do
     if chk == "!tool" then
       if item.maxDamage > 0 then
         return true
