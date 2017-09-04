@@ -51,11 +51,9 @@ end
 function Quary:_placeTorch()
   if self.options.torches then
     if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
-      if not inv.placeTorch() then
-        -- not placing a torch isn't considered an error we need to worry about.
-        -- basically, we tried.
-        print("could not place a torch when needed.")
-      end
+      inv.placeTorch()
+      -- not placing a torch isn't considered an error we need to worry about.
+      -- basically, we tried.
     end
   end
 end
