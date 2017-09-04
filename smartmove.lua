@@ -239,7 +239,7 @@ function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpo
 
   local wasOrient = self.orient
   local wasX = self.posX
-  local wasY = self.posZ
+  local wasZ = self.posZ
   self:faceDirection(strafeDirection)
 
   local moved = 0
@@ -255,7 +255,7 @@ function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpo
     end
   end
   if invSize == nil or invSize < minimumInventorySize then
-    self:moveTo(wasX, wasY)
+    self:moveToXZ(wasX, wasZ)
   end
 
   self:faceDirection(wasOrient)
