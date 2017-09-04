@@ -6,30 +6,49 @@ local util = require("util")
 
 local inventory = {}
 
-function inventory.dropAll(side, fromSlotNumber)
+function inventory.isOneOf(item, checkList)
+  for chk in checkList do
+    if chk == "!tool" then
+      if item.maxDamage > 0 then
+        return true
+      end
+    elseif string.match(item.name, chk) then
+      return true
+    end
+  end
+  return false
+end
+
+function inventory.dropAll(side, fromSlotNumber, exceptFor)
   -- tries to drop all the robot's inventory into the storage on the given side
   -- returns true if all if it could be unloaded, false if none or only some could
   --robot.drop([number]) -- Returns true if at least one item was dropped, false otherwise.
   local couldDropAll = true
+  exceptFor = exceptFor or {}
   fromSlotNumber = fromSlotNumber or 1
   for i=fromSlotNumber,robot.inventorySize() do
     local c = robot.count(i)
     if c > 0 then
-      robot.select(i)
-      if side == nil or side == sides.front then
-        robot.drop()
-      elseif side == sides.bottom then
-        robot.dropDown()
-      elseif side == sides.top then
-        robot.dropUp()
-      end
-      -- see if all the items were successfully dropped
-      c = robot.count(i)
-      if c > 0 then
-        -- at least one item couldn't be dropped.
-        -- but we keep trying to drop all so we still drop as much as we can.
-        couldDropAll = false
-      end
+      local stack = ic.getStackInInternalSlot(i)
+      if not inventory.isOneOf(stack, exceptFor) then
+
+        robot.select(i)
+        if side == nil or side == sides.front then
+          robot.drop()
+        elseif side == sides.bottom then
+          robot.dropDown()
+        elseif side == sides.top then
+          robot.dropUp()
+        end
+        -- see if all the items were successfully dropped
+        c = robot.count(i)
+        if c > 0 then
+          -- at least one item couldn't be dropped.
+          -- but we keep trying to drop all so we still drop as much as we can.
+          couldDropAll = false
+        end
+
+      end --isOneOf
     end
   end
   return couldDropAll

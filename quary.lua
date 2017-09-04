@@ -203,7 +203,7 @@ function Quary:dumpInventory()
     if result == nil or result <= 0 then
       return false
     end
-    result = inventory.dropAll(sides.bottom, 5)
+    result = inventory.dropAll(sides.bottom, 1, {"torch$", "!tool"})
     if result then
       return true
     end
