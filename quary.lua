@@ -175,8 +175,9 @@ function Quary:backToStart()
 
   self.move:faceDirection(1)
 
-  -- charge if needed
-  if util.needsCharging(NEEDS_CHARGE_THRESHOLD) then
+  -- charge if needed, accounting for the distance to the very end of the quary since
+  -- that might be how far it will need to travel
+  if util.needsCharging(NEEDS_CHARGE_THRESHOLD, self.options.width + self.options.height + self.options.depth) then
     if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 300) then
       print("waited a long time and I didn't get charged enough :(")
       return false
@@ -224,13 +225,13 @@ function Quary:iterate()
 
   if not result then
     print("could not find starting point.")
-    self:backToStart()
-    return false
+    return self:backToStart()
   end
 
   -- be sure the starting point is fully taken care of
   if not self:_clearCurrent() then
-    return false
+    print("could not begin from the starting point")
+    return self:backToStart()
   end
 
   repeat
@@ -240,13 +241,13 @@ function Quary:iterate()
       result = self.move:moveToXZ(1, 0)
       if not result then
         print("failed to return to starting point to begin the next quary level")
-        return false
+        return self:backToStart()
       end
       self.stepsWidth = 1
       result = self:_mineDownLevel()
       if not result then
         print("failed to mine down to the next level")
-        return false
+        return self:backToStart()
       end
       self.stepsHeight = self.stepsHeight + 3
       self.move:faceDirection(1)
