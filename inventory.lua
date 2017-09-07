@@ -112,25 +112,36 @@ function inventory.toolIsBroken()
   return d <= 0
 end
 
-function inventory.equipFreshTool()
-  -- first we must see what tool it is we currently have
-  -- swap it with slot 1
-  robot.select(1)
-  ic.equip()
-  local currentTool = ic.getStackInInternalSlot()
-  -- equip it back since whatever was in slot 1 might be important
-  ic.equip()
+function inventory.equipFreshTool(itemName)
+  if itemName == nil then
+    -- use the currently selected tool as the pattern.
+    -- first we must see what tool it is we currently have
+    -- swap it with slot 1
+    robot.select(1)
+    ic.equip()
+    local currentTool = ic.getStackInInternalSlot()
+    -- equip it back since whatever was in slot 1 might be important
+    ic.equip()
 
-  if currentTool == nil then
-    -- no current tool, sorry
-    return false
+    if currentTool == nil then
+      -- no current tool, sorry
+      return false
+    end
+
+    itemName = currentTool.name
   end
-
-  local itemName = currentTool.name
 
   for i=1,robot.inventorySize() do
     local stack = ic.getStackInInternalSlot(i)
-    if stack ~= nil and stack.name == itemName then
+
+    if itemName == "!empty" then
+      if stack == nil or (stack.maxDamage == nil or stack.maxDamage == 0) then
+        -- found an empty slot or at least something that doesn't use durability
+        robot.select(i)
+        ic.equip()
+        return true
+      end
+    elseif stack ~= nil and (stack.name == itemName or string.match(stack.name, itemName)) then
       robot.select(i)
       ic.equip()
       -- found one but we need to check if it's got durability
