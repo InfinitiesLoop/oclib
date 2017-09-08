@@ -58,7 +58,7 @@ function Quary:_mineDownLevel()
     end
   end
 
-  self.lastLevel = (self.lastLevel or 0) + 3
+  self.lastLevel = (self.lastLevel or 3) + 3
 
   -- at this point we're in the right position but we haven't mined out the block underneath us
   if self.options.cleanup then
