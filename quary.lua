@@ -403,6 +403,7 @@ function quary.new(o)
   o.options.height = tonumber(o.options.height or "3")
   o.options.torches = o.options.torches == true or o.options.torches == "true" or o.options.torches == nil
   o.options.cleanup = o.options.cleanup == true or o.options.cleanup == "true"
+  o.lastLevel = tonumber(o.options.lastLevel or "3")
   return o
 end
 
