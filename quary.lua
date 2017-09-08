@@ -37,14 +37,43 @@ end
 function Quary:_mineDownLevel()
   -- mine down 3 times. it's ok if the swing fails, might be air
   for i=1,3 do
-    robot.swingDown()
+
+    if self.options.cleanup then
+      local _, blockType = robot.detectDown()
+      if blockType == "liquid" then
+        local result = robot.place()
+        if not result then
+          print("could not place a cleanup block forward")
+          return false
+        end
+        robot.swingDown()
+      end
+    else
+      robot.swingDown()
+    end
+
     if not self.move:down() then
       print("could not move down: " .. i)
       return false
     end
   end
+
+  self.lastLevel = (self.lastLevel or 0) + 3
+
   -- at this point we're in the right position but we haven't mined out the block underneath us
-  robot.swingDown()
+  if self.options.cleanup then
+    local _, blockType = robot.detectDown()
+    if blockType == "liquid" then
+      local result = robot.place()
+      if not result then
+        print("could not place a cleanup block forward")
+        return false
+      end
+      robot.swingDown()
+    end
+  else
+    robot.swingDown()
+  end
   return true
 end
 
@@ -63,10 +92,13 @@ function Quary:_mineAhead()
     return false
   end
   if self.options.cleanup then
-    local result = robot.place()
-    if not result then
-      print("could not place a cleanup block forward")
-      return false
+    local _, blockType = robot.detect()
+    if blockType == "liquid" then
+      local result = robot.place()
+      if not result then
+        print("could not place a cleanup block forward")
+        return false
+      end
     end
   end
   robot.swing()
@@ -85,21 +117,27 @@ function Quary:_clearCurrent()
     return false
   end
   if self.options.cleanup then
-    local result = robot.placeUp()
-    if not result then
-      print("could not place a cleanup block up")
-      return false
+    local _, blockType = robot.detectUp()
+    if blockType == "liquid" then
+      local result = robot.placeUp()
+      if not result then
+        print("could not place a cleanup block up")
+        return false
+      end
     end
   end
   robot.swingUp()
   if not self:canMine() then
     return false
   end
-    if self.options.cleanup then
-    local result = robot.placeDown()
-    if not result then
-      print("could not place a cleanup block up")
-      return false
+  if self.options.cleanup then
+    local _, blockType = robot.detect()
+    if blockType == "liquid" then
+      local result = robot.placeDown()
+      if not result then
+        print("could not place a cleanup block down")
+        return false
+      end
     end
   end
   robot.swingDown()
@@ -129,8 +167,10 @@ function Quary:_findStartingLevel()
   local moved = false
   -- each level is 3 blocks high
   local maxHeight = self.options.height
+  local lastLevel = self.lastLevel or 3
 
-  while (self.stepsHeight+3) <= maxHeight do
+  while (self.options.cleanup and (self.stepsHeight+3) <= lastLevel) or
+    (not self.options.cleanup and (self.stepsHeight+3) <= maxHeight) do
     -- see if we can increase our level by one
     local downLevel = self.move:down(3, true)
     if downLevel then
@@ -152,13 +192,14 @@ function Quary:_findStartingLevel()
 end
 
 function Quary:_findStartingPoint()
-  if self.options.cleanup then
-    -- cleanup always starts at the beginning
-    return true
-  end
   -- at the start of a quary, it might be a quary in progress.
   -- first, lets see how deep we need to go
   self:_findStartingLevel()
+
+  if self.options.cleanup then
+    -- cleanup always starts at the beginning of the last level
+    return true
+  end
 
   -- navigate the lanes to the left until we find where we left off, horizontally
   self.move:turnLeft()
@@ -210,7 +251,7 @@ function Quary:backToStart()
   end
 
   -- get a new tool if needed
-  if inventory.toolIsBroken() then
+  if not self.options.cleanup and inventory.toolIsBroken() then
     if not inventory.equipFreshTool() then
       print("could not find a fresh tool to equip!")
       return false
