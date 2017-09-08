@@ -16,13 +16,13 @@ local Quary = {
 }
 
 function Quary:canMine() --luacheck: no unused args
-  if inventory.toolIsBroken() then
+  if not self.options.cleanup and inventory.toolIsBroken() then
     if not inventory.equipFreshTool() then
       print("lost durability on tool and can't find a fresh one in my inventory!")
       return false
     end
   end
-  if inventory.isLocalFull() then
+  if not self.options.cleanup and inventory.isLocalFull() then
     print("inventory is full!")
     return false
   end
@@ -62,6 +62,13 @@ function Quary:_mineAhead()
   if not self:canMine() then
     return false
   end
+  if self.options.cleanup then
+    local result = robot.place()
+    if not result then
+      print("could not place a cleanup block forward")
+      return false
+    end
+  end
   robot.swing()
   if not self.move:forward() then
     print("I hit something!")
@@ -77,9 +84,23 @@ function Quary:_clearCurrent()
   if not self:canMine() then
     return false
   end
+  if self.options.cleanup then
+    local result = robot.placeUp()
+    if not result then
+      print("could not place a cleanup block up")
+      return false
+    end
+  end
   robot.swingUp()
   if not self:canMine() then
     return false
+  end
+    if self.options.cleanup then
+    local result = robot.placeDown()
+    if not result then
+      print("could not place a cleanup block up")
+      return false
+    end
   end
   robot.swingDown()
   self:_placeTorch()
@@ -131,6 +152,10 @@ function Quary:_findStartingLevel()
 end
 
 function Quary:_findStartingPoint()
+  if self.options.cleanup then
+    -- cleanup always starts at the beginning
+    return true
+  end
   -- at the start of a quary, it might be a quary in progress.
   -- first, lets see how deep we need to go
   self:_findStartingLevel()
@@ -204,7 +229,13 @@ function Quary:dumpInventory()
     if result == nil or result <= 0 then
       return false
     end
-    result = inventory.dropAll(sides.bottom, 1, {"torch$", "!tool"})
+    local startingSlot
+    if self.options.cleanup then
+      startingSlot = 2
+    else
+      startingSlot = 1
+    end
+    result = inventory.dropAll(sides.bottom, startingSlot, {"torch$", "!tool"})
     if result then
       return true
     end
@@ -214,6 +245,12 @@ end
 function Quary:iterate()
   self.stepsWidth = 1
   self.stepsHeight = 3
+
+  if self.options.cleanup then
+    -- cleanup block is always slot 1
+    robot.select(1)
+  end
+
   if not self:_mineAhead() then
     print("could not enter quary area.")
     self:backToStart()
@@ -321,6 +358,7 @@ function quary.new(o)
   o.options.depth = tonumber(o.options.depth or "10")
   o.options.height = tonumber(o.options.height or "3")
   o.options.torches = o.options.torches == true or o.options.torches == "true" or o.options.torches == nil
+  o.options.cleanup = o.options.cleanup == true or o.options.cleanup == "true"
   return o
 end
 
@@ -328,6 +366,7 @@ local args, options = shell.parse( ... )
 if args[1] == 'start' then
   if (args[2] == 'help') then
     print("usage: quary start --width=100 --depth=100 --height=9 --torches=true")
+    print("use --cleanup to enter cleanup mode, where the robot will try to cleanup fluid source blocks")
   else
     local q = quary.new({options = options})
     q:saveState()
