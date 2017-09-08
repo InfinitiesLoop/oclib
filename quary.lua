@@ -131,7 +131,7 @@ function Quary:_clearCurrent()
     return false
   end
   if self.options.cleanup then
-    local _, blockType = robot.detect()
+    local _, blockType = robot.detectDown()
     if blockType == "liquid" then
       local result = robot.placeDown()
       if not result then
