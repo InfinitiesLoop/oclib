@@ -255,6 +255,7 @@ function SmartMove:findInventory(strafeDirection, maxBlocks, dontCheckCurrentSpo
     end
   end
   if invSize == nil or invSize < minimumInventorySize then
+    invSize = nil
     self:moveToXZ(wasX, wasZ)
   end
 
