@@ -214,7 +214,7 @@ function Quary:mineNextLane()
   local steps = 0
   while (steps < (self.options.depth - 1)) do
     if not self:_mineAhead() then
-      print("could not to end of lane")
+      print("could mine not to end of lane")
       return false
     end
     steps = steps + 1
@@ -224,15 +224,17 @@ end
 
 function Quary:backToStart()
   if self.move:moveToXZY(0, 0, 0) then
-    local result = self:dumpInventory()
-    if not result then
-      print("could not dump inventory.")
-      self.move:moveToXZY(0, 0, 0)
-      return false
-    end
-    if not self.move:moveToXZY(0, 0, 0) then
-      print("could not return to 0,0,0 after dumping inventory.")
-      return false
+    if not self.options.cleanup then
+      local result = self:dumpInventory()
+      if not result then
+        print("could not dump inventory.")
+        self.move:moveToXZY(0, 0, 0)
+        return false
+      end
+      if not self.move:moveToXZY(0, 0, 0) then
+        print("could not return to 0,0,0 after dumping inventory.")
+        return false
+      end
     end
   else
     print("could not get back to 0,0,0 for some reason.")
@@ -243,7 +245,8 @@ function Quary:backToStart()
 
   -- charge if needed, accounting for the distance to the very end of the quary since
   -- that might be how far it will need to travel
-  if util.needsCharging(NEEDS_CHARGE_THRESHOLD, self.options.width + self.options.height + self.options.depth) then
+  if util.needsCharging(NEEDS_CHARGE_THRESHOLD,
+    math.abs(self.options.width) + math.abs(self.options.height) + math.abs(self.options.depth)) then
     if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 300) then
       print("waited a long time and I didn't get charged enough :(")
       return false
