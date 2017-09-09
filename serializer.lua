@@ -1,19 +1,45 @@
 
-local function serialize(obj, indent)
+local function serialize(obj, indent, asArray)
   local s = ""
   indent = indent or ''
   for k,v in pairs(obj) do
     local t = type(v)
-    s =  s .. indent .. k .. ":" .. t .. "="
     if t == "table" then
-      s = s .. "{\n" .. indent .. serialize(v, indent .. '  ') .. indent .. "}\n"
+      -- what kind of table, one like a list or a like a map?
+      if v[1] == nil then
+        -- map
+        if asArray then
+          s = s .. indent .. t .. "="
+        else
+          s = s .. indent .. k .. ":" .. t .. "="
+        end
+        s = s .. "{\n" .. serialize(v, indent .. '  ') .. indent .. "}\n"
+      else
+        -- list
+        if asArray then
+          s = s .. indent .. "list="
+        else
+          s = s .. indent .. k .. ":list="
+        end
+        s = s .. "[\n" .. serialize(v, indent .. '  ', true) .. indent .. "]\n"
+      end
     elseif t == "boolean" then
+      if asArray then
+        s = s .. indent .. t .. "="
+      else
+        s = s .. indent .. k .. ":" .. t .. "="
+      end
       if v then
         s = s .. "true\n"
       else
         s = s .. "false\n"
       end
     else
+      if asArray then
+        s = s .. indent .. t .. "="
+      else
+        s = s .. indent .. k .. ":" .. t .. "="
+      end
       s = s .. v .. "\n"
     end
   end
