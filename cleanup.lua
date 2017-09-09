@@ -32,6 +32,7 @@ function Cleanup:_cleanHere(isPickup)
         print("could not place a cleanup block")
         return false
       end
+      self.placed = true
     end
   end
   return true
@@ -70,6 +71,14 @@ function Cleanup:iterate()
 
   local firstLevel = true
 
+  -- get to the starting level
+  while self.stepsHeight < self.options.startHeight do
+    if not self.move:down() then
+      return false, "could not get to the starting level"
+    end
+    self.stepsHeight = self.stepsHeight + 1
+  end
+
   repeat
     -- no need to move down on the first level, robot starts on that level already
     if not firstLevel then
@@ -83,8 +92,12 @@ function Cleanup:iterate()
         return false, "failed to move down to the next level"
       end
       self.stepsHeight = self.stepsHeight + 1
+      self.options.startHeight = self.options.startHeight + 1
     end
     firstLevel = false
+
+    self.placed = false
+    self.lastLanePlaced = false
 
     local laneNum = 1
     local advanceToward = 1
@@ -95,6 +108,10 @@ function Cleanup:iterate()
           return false, "could not turn the corner"
         end
       end
+
+      -- about to advance on a lane
+      self.lastLanePlaced = self.placed
+      self.placed = false
 
       -- go down lane
       for d=1,self.options.depth-1 do -- luacheck: no unused args
@@ -110,7 +127,7 @@ function Cleanup:iterate()
       end
 
       -- pick up dirt from the previous lane
-      if laneNum > 1 then
+      if laneNum > 1 and self.lastLanePlaced then
         advanceToward = -advanceToward
         if not self.move:advance(2) then
           return false, "couldn't get back to the previous lane"
@@ -140,16 +157,18 @@ function Cleanup:iterate()
 
     -- we need to pick up the last lane
     -- just turn around and go back down
-    for d=1,self.options.depth-1 do -- luacheck: no unused args
+    if self.placed then
+      for d=1,self.options.depth-1 do -- luacheck: no unused args
+        if not self:_cleanHere(true) then
+          return false, "could not pick up dirt"
+        end
+        if not self.move:advance(advanceToward) then
+          return false, "couldn't step forward"
+        end
+      end
       if not self:_cleanHere(true) then
-        return false, "could not pick up dirt"
+        return false, "could not clean here"
       end
-      if not self.move:advance(advanceToward) then
-        return false, "couldn't step forward"
-      end
-    end
-    if not self:_cleanHere(true) then
-      return false, "could not clean here"
     end
 
   until self.stepsHeight >= self.options.height
@@ -195,6 +214,7 @@ function Cleanup.new(o)
   o.options.width = tonumber(o.options.width or "10")
   o.options.depth = tonumber(o.options.depth or "10")
   o.options.height = tonumber(o.options.height or "1")
+  o.options.startHeight = tonumber(o.options.startHeight or "1")
   return o
 end
 
