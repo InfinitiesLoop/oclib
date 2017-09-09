@@ -46,14 +46,20 @@ local function serialize(obj, indent, asArray)
   return s
 end
 
-local function deserializeFromLines(lines)
+local function deserializeFromLines(lines, asArray)
   local result = {}
   if #lines == 0 then return result end
 
   local i = 1
   repeat
     local line = lines[i]
-    local indent, k, t, v = string.match(line, '(%s*)([^:%s]+):(.+)=(.*)')
+    local indent, k, t, v
+    if asArray then
+      k = i
+      indent, t, v = string.match(line, '(%s*)([^=]+)=(.*)')
+    else
+      indent, k, t, v = string.match(line, '(%s*)([^:%s]+):(.+)=(.*)')
+    end
     if t == "string" then
       result[k] = v
     elseif t == "number" then
@@ -70,6 +76,16 @@ local function deserializeFromLines(lines)
       until (line == (indent .. "}"))
       table.remove(tableLines, #tableLines)
       result[k] = deserializeFromLines(tableLines)
+    elseif t == "list" then
+      -- find all the lines containing this nested list
+      local listLines = {}
+      repeat
+        i = i + 1
+        line = lines[i]
+        listLines[#listLines+1] = line
+      until (line == (indent .. "]"))
+      table.remove(listLines, #listLines)
+      result[k] = deserializeFromLines(listLines, true)
     end
 
     i = i + 1
