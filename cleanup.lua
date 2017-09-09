@@ -129,8 +129,13 @@ function Cleanup:iterate()
       end
 
       -- pick up dirt from the previous lane
-      if laneNum > 1  then
-        self.move:turnLeft()
+      if laneNum > 1 then
+        local orient = self.move.orient
+        if orient == 1 then
+          self.move:turnRight()
+        else
+          self.move:turnLeft()
+        end
         if not self.move:forward() then
           print("couldn't get back to the previous lane")
           return self:backToStart();
@@ -153,7 +158,12 @@ function Cleanup:iterate()
         end
 
         -- now back to where we were
-        self.move:turnLeft()
+        local orient = self.move.orient
+        if orient == 1 then
+          self.move:turnRight()
+        else
+          self.move:turnLeft()
+        end
         if not self.move:forward() then
           print("couldn't get back start the next lane")
           return self:backToStart();
