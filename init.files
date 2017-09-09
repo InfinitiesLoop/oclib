@@ -4,6 +4,7 @@ inventory.lua
 main.lua
 util.lua
 quary.lua
+cleanup.lua
 smartmove.lua
 objectStore.lua
 serializer.lua
