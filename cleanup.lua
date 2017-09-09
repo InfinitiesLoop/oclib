@@ -221,7 +221,7 @@ end
 local args, options = shell.parse( ... )
 if args[1] == 'start' then
   if (args[2] == 'help') then
-    print("usage: cleanup start --width=25 --depth=25 --height=9")
+    print("usage: cleanup start --width=25 --depth=25 --height=9 --startHeight=6")
   else
     local q = Cleanup.new({options = options})
     q:saveState()
