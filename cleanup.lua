@@ -64,10 +64,8 @@ function Cleanup:iterate()
   -- cleanup block is always slot 1
   robot.select(1)
 
-  if not self.move:forward() then
-    print("could not enter Cleanup area.")
-    self:backToStart()
-    return false
+  if not self.move:advance(1) then
+    return false, "could not enter Cleanup area."
   end
 
   local firstLevel = true
@@ -78,143 +76,102 @@ function Cleanup:iterate()
       -- return to the (1,0,_) point for the level we're currently on
       local result = self.move:moveToXZ(1, 0)
       if not result then
-        print("failed to return to starting point to begin the next Cleanup level")
-        return self:backToStart()
+        return false, "failed to return to starting point to begin the next Cleanup level"
       end
       result = self.move:down()
       if not result then
-        print("failed to move down to the next level")
-        return self:backToStart()
+        return false, "failed to move down to the next level"
       end
       self.stepsHeight = self.stepsHeight + 1
-      self.move:faceDirection(1)
     end
     firstLevel = false
 
     local laneNum = 1
+    local advanceToward = 1
     while laneNum <= self.options.width do
       if laneNum ~= 1 then
         -- turn corner
-        local orient = self.move.orient
-        if orient == 1 then
-          self.move:turnLeft()
-        else
-          self.move:turnRight()
-        end
-        if not self.move:forward() then
-          print("could not turn the corner")
-          return false
-        end
-        if orient == 1 then
-          self.move:turnLeft()
-        else
-          self.move:turnRight()
+        if not self.move:advance(-2) then
+          return false, "could not turn the corner"
         end
       end
 
       -- go down lane
       for d=1,self.options.depth-1 do -- luacheck: no unused args
         if not self:_cleanHere() then
-          print("could not clean here")
-          return self:backToStart()
+          return false, "could not clean here"
         end
-        if not self.move:forward() then
-          print("couldn't step forward")
-          return self:backToStart();
+        if not self.move:advance(advanceToward) then
+          return false, "couldn't step forward"
         end
       end
       if not self:_cleanHere() then
-        print("could not clean here")
-        return self:backToStart()
+        return false, "could not clean here"
       end
 
       -- pick up dirt from the previous lane
       if laneNum > 1 then
-        local orient = self.move.orient
-        if orient == 1 then
-          self.move:turnRight()
-        else
-          self.move:turnLeft()
+        advanceToward = -advanceToward
+        if not self.move:advance(2) then
+          return false, "couldn't get back to the previous lane"
         end
-        if not self.move:forward() then
-          print("couldn't get back to the previous lane")
-          return self:backToStart();
-        end
-        self.move:turnLeft()
 
         for d=1,self.options.depth-1 do -- luacheck: no unused args
           if not self:_cleanHere(true) then
-            print("could not pick up dirt")
-            return self:backToStart()
+            return false, "could not pick up dirt"
           end
-          if not self.move:forward() then
-            print("couldn't step forward")
-            return self:backToStart();
+          if not self.move:advance(advanceToward) then
+            return false, "couldn't step forward"
           end
         end
         if not self:_cleanHere(true) then
-          print("could not clean here")
-          return self:backToStart()
+          return false, "could not clean here"
         end
 
-        -- now back to where we were
-        local orient = self.move.orient
-        if orient == 1 then
-          self.move:turnRight()
-        else
-          self.move:turnLeft()
+        -- now back to the lane we were in
+        if not self.move:advance(-2) then
+          return false, "couldn't get back start the next lane"
         end
-        if not self.move:forward() then
-          print("couldn't get back start the next lane")
-          return self:backToStart();
-        end
-        self.move:turnRight()
       end
 
       laneNum = laneNum + 1
+      advanceToward = -advanceToward
     end
 
     -- we need to pick up the last lane
     -- just turn around and go back down
-    self.move:turnLeft()
-    self.move:turnLeft()
     for d=1,self.options.depth-1 do -- luacheck: no unused args
       if not self:_cleanHere(true) then
-        print("could not pick up dirt")
-        return self:backToStart()
+        return false, "could not pick up dirt"
       end
-      if not self.move:forward() then
-        print("couldn't step forward")
-        return self:backToStart();
+      if not self.move:advance(advanceToward) then
+        return false, "couldn't step forward"
       end
     end
     if not self:_cleanHere(true) then
-      print("could not clean here")
-      return self:backToStart()
+      return false, "could not clean here"
     end
 
   until self.stepsHeight >= self.options.height
 
-  local returnedToStart = self:backToStart()
-  return returnedToStart, true
+  return true
 end
 
 function Cleanup:start()
-  local result
-  local isDone
-  result, isDone = self:iterate()
-  while (result and not isDone) do
-    print("headed out again!")
-    result, isDone = self:iterate()
-  end
-
-  if isDone then
-    print("Cleanup complete.")
-  elseif not result then
-    print("Halting.")
-  end
-
-  return isDone or false
+  repeat
+    print("headed out!")
+    local result, err = self:iterate()
+    if not result then
+      print(err)
+      if not self:backToStart() then
+        print("could not return to start, halting")
+        return false
+      end
+    else
+      print("cleanup complete")
+      return true
+    end
+  until false
 end
 
 function Cleanup:saveState()

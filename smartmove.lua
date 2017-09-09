@@ -71,6 +71,9 @@ end
 function SmartMove:down(distance, atomic)
   return self:_climb(-1, distance, atomic)
 end
+function SmartMove:advance(direction)
+  return self:faceDirection(direction) and self:forward()
+end
 
 function SmartMove:_turn(direction)
   local result
