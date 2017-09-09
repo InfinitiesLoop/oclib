@@ -128,12 +128,11 @@ function Cleanup:iterate()
         return self:backToStart()
       end
 
-      -- if this is an even lane number we need to go back to the previous odd lane number
-      -- and pick up the dirt.
-      if laneNum % 2 == 0 then
+      -- pick up dirt from the previous lane
+      if laneNum > 1  then
         self.move:turnLeft()
         if not self.move:forward() then
-          print("couldn't get back to the first lane")
+          print("couldn't get back to the previous lane")
           return self:backToStart();
         end
         self.move:turnLeft()
