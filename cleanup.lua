@@ -48,6 +48,10 @@ function Cleanup:_cleanHere(isPickup)
         return false
       end
       self.placed = true
+    elseif blockType == "solid" then
+      -- this shouldnt happen but it might be left over from previous run
+      -- dont really care if it fails
+      robot.swingDown()
     end
   end
   return true
@@ -91,6 +95,17 @@ function Cleanup:iterate()
     self.stepsHeight = self.stepsHeight + 1
   end
 
+  local laneNum = 1
+  -- get to the starting lane
+  self.options.startLane = self.options.startLane or 1
+  if laneNum < (self.options.startLane - 1) then
+    local result = self.move:moveToXZ(1, self.options.startLane - 2)
+    if not result then
+      return false, "failed to return to the starting lane"
+    end
+    laneNum = self.options.startLane - 1
+  end
+
   repeat
     -- no need to move down on the first level, robot starts on that level already
     if not firstLevel then
@@ -103,6 +118,7 @@ function Cleanup:iterate()
       if not result then
         return false, "failed to move down to the next level"
       end
+      self.options.startLane = 1
       self.stepsHeight = self.stepsHeight + 1
       self.options.startHeight = self.options.startHeight + 1
     end
@@ -111,9 +127,9 @@ function Cleanup:iterate()
     self.placed = false
     self.lastLanePlaced = false
 
-    local laneNum = 1
     local advanceToward = 1
     while laneNum <= self.options.width do
+      self.options.startLane = laneNum
       if laneNum ~= 1 then
         -- turn corner
         if not self.move:advance(-2) then
@@ -235,13 +251,14 @@ function Cleanup.new(o)
   o.options.depth = tonumber(o.options.depth or "10")
   o.options.height = tonumber(o.options.height or "1")
   o.options.startHeight = tonumber(o.options.startHeight or "1")
+  o.options.startLane = tonumber(o.options.startLane or "1")
   return o
 end
 
 local args, options = shell.parse( ... )
 if args[1] == 'start' then
   if (args[2] == 'help') then
-    print("usage: cleanup start --width=25 --depth=25 --height=9 --startHeight=6")
+    print("usage: cleanup start --width=25 --depth=25 --height=9 --startHeight=6 --startLane=10")
   else
     local q = Cleanup.new({options = options})
     q:saveState()
