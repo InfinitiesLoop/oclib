@@ -1,0 +1,83 @@
+title:string=Simple House
+author:string=InfinitiesLoop
+mats:table={
+  x:string=minecraft:cobblestone
+  m:string=minecraft:marble
+  g:string=minecraft:glass
+}
+levels:list=[
+  table={
+    name:string=floor
+    data:list=[
+      string=_______v________
+      string=_______ ________
+      string=xxxxxxxmmxxxxxxx
+      string=xmmmmmmmmmmmmmmx
+      string=xmmxmmxmmmxmmmmx
+      string=xmmxxxxmmmxmmmmx
+      string=xmmxmmxmmmxmmmmx
+      string=xmmmmmmmmmmmmmmx
+      string=xxxxxxxxxxxxxxxx
+    ]
+  }
+  table={
+    name:string=walls
+    span:number=1
+    data:list=[
+      string=
+      string=
+      string=xxxxxxx  xxxxxxx
+      string=x              x
+      string=x              x
+      string=x              x
+      string=x              x
+      string=x              x
+      string=xxxxxxxxxxxxxxxx
+    ]
+  }
+  table={
+    name:string=walls
+    span:number=2
+    data:list=[
+      string=
+      string=
+      string=xxxggxxxxxxggxxx
+      string=x              x
+      string=x              x
+      string=x              x
+      string=x              x
+      string=x              x
+      string=xxxxxxxxxxxxxxxx
+    ]
+  }
+  table={
+    name:string=ceiling
+    span:number=1
+    data:list=[
+      string=
+      string=
+      string=xxxxxxxxxxxxxxxx
+      string=xm   m    m   mx
+      string=x m m      m m x
+      string=x  m        m  x
+      string=x m m      m m x
+      string=xm   m    m   mx
+      string=xxxxxxxxxxxxxxxx
+    ]
+  }
+  table={
+    name:string=roof
+    data:list=[
+      string=
+      string=
+      string=xxxxxxxxxxxxxxxx
+      string=xxxxxxxxxxxxxxxx
+      string=xxxxxxxxxxxxxxxx
+      string=xxxxxxxxxxxxxxxx
+      string=xxxxxxxxxxxxxxxx
+      string=xxxxxxxxxxxxxxxx
+      string=xxxxxxxxxxxxxxxx
+    ]
+  }
+]
+
