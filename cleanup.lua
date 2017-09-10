@@ -3,6 +3,9 @@ local smartmove = require("smartmove")
 local robot = require("robot")
 local shell = require("shell")
 local objectStore = require("objectStore")
+local component = require("component")
+local ic = component.inventory_controller
+local inventory = require("inventory")
 
 local NEEDS_CHARGE_THRESHOLD = 0.1
 local FULL_CHARGE_THRESHOLD = 0.95
@@ -18,6 +21,17 @@ function Cleanup:ok() --luacheck: no unused args
   return true
 end
 
+function Cleanup:selectCleanupMaterial()
+  -- todo: move this into inventory stuff
+  local stack = ic.getStackInInternalSlot()
+  if not stack or stack.name ~= self.cleanMaterial then
+    if not inventory.selectItem(self.cleanMaterial) then
+      return false
+    end
+  end
+  return true
+end
+
 function Cleanup:_cleanHere(isPickup)
   if not self:ok() then
     return false
@@ -27,6 +41,7 @@ function Cleanup:_cleanHere(isPickup)
   else
     local _, blockType = robot.detectDown()
     if blockType == "liquid" then
+      self:selectCleanupMaterial()
       local result = robot.placeDown()
       if not result then
         print("could not place a cleanup block")
@@ -61,9 +76,6 @@ end
 
 function Cleanup:iterate()
   self.stepsHeight = 1
-
-  -- cleanup block is always slot 1
-  robot.select(1)
 
   if not self.move:advance(1) then
     return false, "could not enter Cleanup area."
@@ -177,6 +189,14 @@ function Cleanup:iterate()
 end
 
 function Cleanup:start()
+  robot.select(1)
+  local cleanMaterial = component.inventory_controller.getStackInInternalSlot(1)
+  if not cleanMaterial then
+    print("make sure you have dirt or something to use in slot 1.")
+    return false
+  end
+  self.cleanMaterial = cleanMaterial.name
+
   repeat
     print("headed out!")
     local result, err = self:iterate()
