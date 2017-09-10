@@ -99,7 +99,7 @@ function Cleanup:iterate()
   -- get to the starting lane
   self.options.startLane = self.options.startLane or 1
   if laneNum < (self.options.startLane - 1) then
-    local result = self.move:moveToXZ(1, self.options.startLane - 2)
+    local result = self.move:moveToXZ(1, -(self.options.startLane - 2))
     if not result then
       return false, "failed to return to the starting lane"
     end
