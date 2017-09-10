@@ -9,8 +9,8 @@ end
 local function needsCharging(threshold, distanceFromCharger)
   distanceFromCharger = distanceFromCharger or 0
   local percentCharge = (computer.energy() / computer.maxEnergy())
-  -- require additional 1% charge per 25 blocks distance to charger
-  if (percentCharge - ((distanceFromCharger / 25) / 100)) <= threshold then
+  -- require additional 1% charge per 15 blocks distance to charger
+  if (percentCharge - ((distanceFromCharger / 15) / 100)) <= threshold then
     return true
   end
   return false
