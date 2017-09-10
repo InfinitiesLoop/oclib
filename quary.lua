@@ -173,8 +173,15 @@ function Quary:backToStart()
       return false
     end
   else
-    print("could not get back to 0,0,0 for some reason.")
-    return false
+    print("could not get back to 0,0,0 for some reason, tring 1,1,0 then 0,0,0 again")
+    local result = self.move.moveToXZY(1, 1, 0)
+    if result then
+      result = self.move:moveToXZY(0, 0, 0)
+      if not result then
+        print("still could not get back to 0,0,0")
+        return false
+      end
+    end
   end
 
   self.move:faceDirection(1)
