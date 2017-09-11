@@ -18,13 +18,18 @@ end
 
 local function waitUntilCharge(threshold, maxWaitSeconds)
   maxWaitSeconds = maxWaitSeconds or 300
+  print("waitUntilCharge for " .. maxWaitSeconds)
   while maxWaitSeconds > 0 do
     local percentCharge = (computer.energy() / computer.maxEnergy())
     if (percentCharge >= threshold) then
+      print("waitUntilCharge met: " .. percentCharge .. " of " .. threshold .. " required")
       return true
+    else
+      print("waitUntilCharge NOT met: " .. percentCharge .. " of " .. threshold
+        .. " required. time left: " .. maxWaitSeconds)
     end
-    maxWaitSeconds = maxWaitSeconds - 1
     event.pull(1, "_chargewait")
+    maxWaitSeconds = maxWaitSeconds - 1
   end
   local percentCharge = (computer.energy() / computer.maxEnergy())
   return percentCharge >= threshold
