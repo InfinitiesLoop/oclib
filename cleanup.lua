@@ -66,14 +66,9 @@ function Cleanup:backToStart()
 
   self.move:faceDirection(1)
 
-  -- charge if needed, accounting for the distance to the very end of the Cleanup since
-  -- that might be how far it will need to travel
-  if util.needsCharging(NEEDS_CHARGE_THRESHOLD,
-    math.abs(self.options.width) + math.abs(self.options.height) + math.abs(self.options.depth)) then
-    if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 300) then
-      print("waited a long time and I didn't get charged enough :(")
-      return false
-    end
+  if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 300) then
+    print("waited a long time and I didn't get charged enough :(")
+    return false
   end
 
   return true

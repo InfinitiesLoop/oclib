@@ -185,20 +185,11 @@ function Quary:backToStart()
 
   self.move:faceDirection(1)
 
-  print("checking if charge required (distance=" ..
-    math.abs(self.options.width) + math.abs(self.options.height) + math.abs(self.options.depth) .. ")")
-  -- charge if needed, accounting for the distance to the very end of the quary since
-  -- that might be how far it will need to travel
-  if util.needsCharging(NEEDS_CHARGE_THRESHOLD,
-    math.abs(self.options.width) + math.abs(self.options.height) + math.abs(self.options.depth)) then
-    print("waiting for charge...")
-    if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 300) then
-      print("waited a long time and I didn't get charged enough :(")
-      return false
-    end
+  print("waiting for charge...")
+  if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 300) then
+    print("waited a long time and I didn't get charged enough :(")
+    return false
   end
-
-  print("charge level good, dumping inventory...")
 
   -- get a new tool if needed
   if inventory.toolIsBroken() then
