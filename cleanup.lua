@@ -6,6 +6,7 @@ local objectStore = require("objectStore")
 local component = require("component")
 local ic = component.inventory_controller
 local inventory = require("inventory")
+local chunkloader = component.chunkloader
 
 local NEEDS_CHARGE_THRESHOLD = 0.1
 local FULL_CHARGE_THRESHOLD = 0.95
@@ -205,6 +206,13 @@ function Cleanup:iterate()
 end
 
 function Cleanup:start()
+  if self.options.chunkloader and chunkloader ~= nil then
+    chunkloader.setActive(false)
+    if chunkloader.setActive(true) then
+      print("chunkloader is active")
+    end
+  end
+
   robot.select(1)
   local cleanMaterial = component.inventory_controller.getStackInInternalSlot(1)
   if not cleanMaterial then
@@ -252,6 +260,8 @@ function Cleanup.new(o)
   o.options.height = tonumber(o.options.height or "1")
   o.options.startHeight = tonumber(o.options.startHeight or "1")
   o.options.startLane = tonumber(o.options.startLane or "1")
+  o.options.chunkloader = o.options.chunkloader == true or o.options.chunkloader == "true" or
+    o.options.chunkloader == nil
   return o
 end
 
