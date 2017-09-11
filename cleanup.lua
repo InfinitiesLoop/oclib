@@ -231,7 +231,8 @@ function Cleanup:start()
         return false
       end
     else
-      print("cleanup complete")
+      print("cleanup complete, returning")
+      self.backToStart()
       return true
     end
   until false
