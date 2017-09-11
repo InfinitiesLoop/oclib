@@ -6,6 +6,7 @@ local inventory = require("inventory")
 local sides = require("sides")
 local shell = require("shell")
 local objectStore = require("objectStore")
+local chunkloader = require("component").chunkloader
 
 local quary = {}
 
@@ -161,27 +162,25 @@ function Quary:mineNextLane()
 end
 
 function Quary:backToStart()
-  if self.move:moveToXZY(0, 0, 0) then
-    local result = self:dumpInventory()
-    if not result then
-      print("could not dump inventory.")
-      self.move:moveToXZY(0, 0, 0)
-      return false
-    end
-    if not self.move:moveToXZY(0, 0, 0) then
-      print("could not return to 0,0,0 after dumping inventory.")
+  if self.move:moveToXZY(1, 0, 0) then
+    if self.move:moveToXZY(0, 0, 0) then
+      local result = self:dumpInventory()
+      if not result then
+        print("could not dump inventory.")
+        self.move:moveToXZY(0, 0, 0)
+        return false
+      end
+      if not self.move:moveToXZY(0, 0, 0) then
+        print("could not return to 0,0,0 after dumping inventory.")
+        return false
+      end
+    else
+      print("could not get back to 0,0,0 for some reason")
       return false
     end
   else
-    print("could not get back to 0,0,0 for some reason, tring 1,1,0 then 0,0,0 again")
-    local result = self.move.moveToXZY(1, 1, 0)
-    if result then
-      result = self.move:moveToXZY(0, 0, 0)
-      if not result then
-        print("still could not get back to 0,0,0")
-        return false
-      end
-    end
+    print("could not get back to 0,0,0 for some reason")
+    return false
   end
 
   self.move:faceDirection(1)
@@ -295,6 +294,12 @@ function Quary:iterate()
 end
 
 function Quary:start()
+  if self.options.chunkloader and chunkloader ~= nil then
+    chunkloader.setActive(false)
+    if chunkloader.setActive(true) then
+      print("chunkloader is active")
+    end
+  end
   local result
   local isDone
   result, isDone = self:iterate()
@@ -334,6 +339,8 @@ function quary.new(o)
   o.options.depth = tonumber(o.options.depth or "10")
   o.options.height = tonumber(o.options.height or "3")
   o.options.torches = o.options.torches == true or o.options.torches == "true" or o.options.torches == nil
+  o.options.chunkloader = o.options.chunkloader == true or o.options.chunkloader == "true" or
+    o.options.chunkloader == nil
   o.lastLevel = tonumber(o.options.lastLevel or "3")
   return o
 end
@@ -341,7 +348,7 @@ end
 local args, options = shell.parse( ... )
 if args[1] == 'start' then
   if (args[2] == 'help') then
-    print("usage: quary start --width=100 --depth=100 --height=9 --torches=true")
+    print("usage: quary start --width=100 --depth=100 --height=9 --torches=true --chunkloader=true")
   else
     local q = quary.new({options = options})
     q:saveState()
