@@ -119,6 +119,7 @@ function Cleanup:iterate()
       if not result then
         return false, "failed to move down to the next level"
       end
+      laneNum = 1
       self.options.startLane = 1
       self.stepsHeight = self.stepsHeight + 1
       self.options.startHeight = self.options.startHeight + 1
