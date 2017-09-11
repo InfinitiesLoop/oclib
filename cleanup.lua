@@ -232,7 +232,7 @@ function Cleanup:start()
       end
     else
       print("cleanup complete, returning")
-      self.backToStart()
+      self:backToStart()
       return true
     end
   until false
