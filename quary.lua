@@ -120,9 +120,11 @@ function Quary:backToStart()
     if not self:dumpInventory() and self.move:moveToXZY(0, 0, 0) then
       print("could not dump inventory and return safely.")
       self.move:moveToXZY(0, 0, 0)
+      self.move:faceDirection(1)
       return false
     end
   else
+    self.move:faceDirection(1)
     print("could not get back to 0,0,0 for some reason")
     return false
   end
