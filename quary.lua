@@ -233,8 +233,8 @@ end
 
 function Quary:start()
   if self.options.chunkloader then
-    local chunkloader = pcall(function() return component.chunkloader end)
-    if chunkloader then
+    local result, chunkloader = pcall(function() return component.chunkloader end)
+    if result then
       chunkloader.setActive(false)
       if chunkloader.setActive(true) then
         print("chunkloader is active")
