@@ -6,7 +6,7 @@ local inventory = require("inventory")
 local sides = require("sides")
 local shell = require("shell")
 local objectStore = require("objectStore")
-local chunkloader = require("component").chunkloader
+local component = require("component")
 
 local quary = {}
 
@@ -35,7 +35,7 @@ function Quary:canMine() --luacheck: no unused args
   return true
 end
 
-function Quary:_mineDownLevel()
+function Quary:mineDownLevel()
   -- mine down 3 times. it's ok if the swing fails, might be air
   for i=1,3 do
     robot.swingDown()
@@ -46,14 +46,15 @@ function Quary:_mineDownLevel()
     end
   end
 
-  self.lastLevel = (self.lastLevel or 3) + 3
+  self.options.currentHeight = self.options.currentHeight + 3
+  self:saveState()
 
   -- at this point we're in the right position but we haven't mined out the block underneath us
   robot.swingDown()
   return true
 end
 
-function Quary:_placeTorch()
+function Quary:placeTorch()
   if self.options.torches then
     if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
       inv.placeTorch()
@@ -63,22 +64,15 @@ function Quary:_placeTorch()
   end
 end
 
-function Quary:_mineAhead()
+function Quary:advanceWhileMining(direction)
   if not self:canMine() then
     return false
   end
-  robot.swing()
-  if not self.move:forward() then
-    print("I hit something!")
-    return false
-  end
-  if not self:_clearCurrent() then
-    return false
-  end
-  return true
+  self.move:swing(direction)
+  return self.move:advance(direction) and self:clearCurrent()
 end
 
-function Quary:_clearCurrent()
+function Quary:clearCurrent()
   if not self:canMine() then
     return false
   end
@@ -87,95 +81,45 @@ function Quary:_clearCurrent()
     return false
   end
   robot.swingDown()
-  self:_placeTorch()
+  self:placeTorch()
   return true
 end
 
-function Quary:_mineAroundCorner()
-  local orient = self.move.orient
-  if orient == 1 then
-    self.move:turnLeft()
-  else
-    self.move:turnRight()
-  end
-  if not self:_mineAhead() then
-    return false
-  end
-  if orient == 1 then
-    self.move:turnLeft()
-  else
-    self.move:turnRight()
-  end
-  return true
-end
-
-function Quary:_findStartingLevel()
-  local moved = false
-  -- each level is 3 blocks high
-  local maxHeight = self.options.height
-
-  while (self.stepsHeight+3) <= maxHeight do
-    -- see if we can increase our level by one
-    local downLevel = self.move:down(3, true)
-    if downLevel then
-      moved = true
-      self.stepsHeight = self.stepsHeight + 3
-    else
-      -- cant move down any more levels, we are at the right spot
-      return moved
-    end
-  end
-
-  -- if we made it here we're at the bottom level successfully
-  if moved then
-    -- might need a torch!
-    self:_placeTorch()
-  end
-
-  return moved
-end
-
-function Quary:_findStartingPoint()
-  -- at the start of a quary, it might be a quary in progress.
-  -- first, lets see how deep we need to go
-  self:_findStartingLevel()
-
-  -- navigate the lanes to the left until we find where we left off, horizontally
-  self.move:turnLeft()
-  while self.stepsWidth < self.options.width and self.move:forward() do
-    self.stepsWidth = self.stepsWidth + 1
-  end
-  self.move:turnRight()
-  return true
-end
-
-function Quary:mineNextLane()
-  local steps = 0
-  while (steps < (self.options.depth - 1)) do
-    if not self:_mineAhead() then
-      print("could mine not to end of lane")
+function Quary:findStartingLevel()
+  -- we need to movedown 1 level at a time, which is 3 blocks each
+  local height = 3
+  while height < self.options.currentHeight do
+    if not self.move:down(3, true) then
       return false
     end
-    steps = steps + 1
+    height = height + 3
   end
+  return true
+end
+
+function Quary:findStartingPoint()
+  -- go to where we left off vertically
+  if not self:findStartingLevel() then
+    return false
+  end
+
+  -- go to where we left off horizontally
+  if not self.move:moveToXZ(1, -(self.options.currentWidth - 1)) then
+    return false
+  end
+
+  self:placeTorch()
   return true
 end
 
 function Quary:backToStart()
-  if self.move:moveToXZY(1, 0, 0) then
-    if self.move:moveToXZY(0, 0, 0) then
-      local result = self:dumpInventory()
-      if not result then
-        print("could not dump inventory.")
-        self.move:moveToXZY(0, 0, 0)
-        return false
-      end
-      if not self.move:moveToXZY(0, 0, 0) then
-        print("could not return to 0,0,0 after dumping inventory.")
-        return false
-      end
-    else
-      print("could not get back to 0,0,0 for some reason")
+  if self.move:moveToXZ(1, 0) and -- first part of current level
+    self.move:moveToXZ(1, 0, 0) and -- start of quary area
+    self.move:moveToXZY(0, 0, 0) then -- charging station
+
+    if not self:dumpInventory() and self.move:moveToXZY(0, 0, 0) then
+      print("could not dump inventory and return safely.")
+      self.move:moveToXZY(0, 0, 0)
       return false
     end
   else
@@ -183,10 +127,11 @@ function Quary:backToStart()
     return false
   end
 
+  -- just to look nice.
   self.move:faceDirection(1)
 
   print("waiting for charge...")
-  if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 300) then
+  if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 600) then
     print("waited a long time and I didn't get charged enough :(")
     return false
   end
@@ -199,9 +144,6 @@ function Quary:backToStart()
     end
   end
 
-  -- todo: need to check for torch supply too
-
-  -- should be no reason why we cant get back out there now!
   return true
 end
 
@@ -211,34 +153,28 @@ function Quary:dumpInventory()
     if result == nil or result <= 0 then
       return false
     end
-    result = inventory.dropAll(sides.bottom, 1, {"torch$", "!tool"})
-    if result then
+    if inventory.dropAll(sides.bottom, 1, {"torch$", "!tool"}) then
       return true
     end
   end
 end
 
 function Quary:iterate()
-  self.stepsWidth = 1
-  self.stepsHeight = 3
-
-  if not self:_mineAhead() then
+  if not self:advanceWhileMining(1) then
     print("could not enter quary area.")
-    self:backToStart()
-    return false
+    return self:backToStart()
   end
 
   local firstLevel = true
-  local result = self:_findStartingPoint()
 
-  if not result then
-    print("could not find starting point.")
+  if not self:findStartingPoint() then
+    print("could not get back to where I left off.")
     return self:backToStart()
   end
 
   -- be sure the starting point is fully taken care of
-  if not self:_clearCurrent() then
-    print("could not begin from the starting point")
+  if not self:clearCurrent() then
+    print("could not clear the starting point")
     return self:backToStart()
   end
 
@@ -246,54 +182,63 @@ function Quary:iterate()
     -- no need to move down on the first level, robot starts on that level already
     if not firstLevel then
       -- return to the (1,0,_) point for the level we're currently on
-      result = self.move:moveToXZ(1, 0)
-      if not result then
+      if not self.move:moveToXZ(1, 0) then
         print("failed to return to starting point to begin the next quary level")
         return self:backToStart()
       end
-      self.stepsWidth = 1
-      result = self:_mineDownLevel()
-      if not result then
+      self.options.currentWidth = 1
+      if not self:mineDownLevel() then
         print("failed to mine down to the next level")
         return self:backToStart()
       end
-      self.stepsHeight = self.stepsHeight + 3
-      self.move:faceDirection(1)
-      self:_placeTorch()
+      self:placeTorch()
     end
     firstLevel = false
 
     -- now do a horizontal slice
     local firstLane = true
-    while self.stepsWidth <= self.options.width do
+    local advanceDirection = 1
+    while self.options.currentWidth <= self.options.width do
+      if self.options.currentWidth % 2 == 1 then
+        -- we only remember our lane when its an odd lane, because
+        -- the even numbered lanes are done from -1 toward 1, so we wont
+        -- easily return to that lane from the first row.
+        self:saveState()
+      end
       if not firstLane then
         -- move to next lane
-        if not self:_mineAroundCorner() then
-          print("failed to turn corner into new lane.")
+        if not self:advanceWhileMining(-2) then
+          print("failed to enter new lane.")
           return self:backToStart()
         end
       end
       firstLane = false
 
-      result = self:mineNextLane()
-      if not result then
-        print("failed to mine lane")
-        return self:backToStart()
+      for _=0,self.options.depth-1 do
+        if not self:advanceWhileMining(advanceDirection) then
+          print("could mine not to end of lane")
+          return self:backToStart()
+        end
       end
-      self.stepsWidth = self.stepsWidth + 1
+
+      advanceDirection = -advanceDirection
+      self.options.currentWidth = self.options.currentWidth + 1
     end
 
-  until self.stepsHeight >= self.options.height
+  until self.options.currentHeight >= self.options.height
 
   local returnedToStart = self:backToStart()
   return returnedToStart, true
 end
 
 function Quary:start()
-  if self.options.chunkloader and chunkloader ~= nil then
-    chunkloader.setActive(false)
-    if chunkloader.setActive(true) then
-      print("chunkloader is active")
+  if self.options.chunkloader then
+    local chunkloader = pcall(function() return component.chunkloader end)
+    if chunkloader then
+      chunkloader.setActive(false)
+      if chunkloader.setActive(true) then
+        print("chunkloader is active")
+      end
     end
   end
   local result
@@ -321,32 +266,40 @@ function Quary:loadState()
   local result = objectStore.loadObject("quary")
   if result ~= nil then
     self.options = result
+    self:applyDefaults()
     return true
   end
   return false
 end
 
+function Quary:applyDefaults()
+  self.move = self.move or smartmove.new()
+  self.options = self.options or {}
+  self.options.width = tonumber(self.options.width or "10")
+  self.options.depth = tonumber(self.options.depth or "10")
+  self.options.height = tonumber(self.options.height or "3")
+  self.options.torches = self.options.torches == true or self.options.torches == "true" or self.options.torches == nil
+  self.options.chunkloader = self.options.chunkloader == true or self.options.chunkloader == "true" or
+    self.options.chunkloader == nil
+  self.options.currentHeight = tonumber(self.options.currentHeight or "3")
+  self.options.currentWidth = tonumber(self.options.currentWidth or "1")
+end
+
 function quary.new(o)
   o = o or {}
   setmetatable(o, { __index = Quary })
-  o.move = o.move or smartmove.new()
-  o.options = o.options or {}
-  o.options.width = tonumber(o.options.width or "10")
-  o.options.depth = tonumber(o.options.depth or "10")
-  o.options.height = tonumber(o.options.height or "3")
-  o.options.torches = o.options.torches == true or o.options.torches == "true" or o.options.torches == nil
-  o.options.chunkloader = o.options.chunkloader == true or o.options.chunkloader == "true" or
-    o.options.chunkloader == nil
-  o.lastLevel = tonumber(o.options.lastLevel or "3")
+  o:applyDefaults()
   return o
 end
 
 local args, options = shell.parse( ... )
 if args[1] == 'start' then
   if (args[2] == 'help') then
-    print("usage: quary start --width=100 --depth=100 --height=9 --torches=true --chunkloader=true")
+    print("usage: quary start --width=100 --depth=100 --height=9 \
+      --torches=true --chunkloader=true --currentHeight=3 --currentWidth=5")
   else
     local q = quary.new({options = options})
+    q:applyDefaults()
     q:saveState()
     q:start()
   end

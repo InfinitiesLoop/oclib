@@ -74,6 +74,9 @@ end
 function SmartMove:advance(direction)
   return self:faceDirection(direction) and self:forward()
 end
+function SmartMove:swing(direction)
+  return self:faceDirection(direction), robot.swing()
+end
 
 function SmartMove:_turn(direction)
   local result
