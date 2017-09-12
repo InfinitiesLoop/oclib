@@ -106,7 +106,7 @@ function Quary:findStartingPoint()
   end
 
   -- go to where we left off horizontally
-  if not self.move:moveToXZ(1, -(self.options.currentWidth - 1)) then
+  if not self.move:moveToXZ(1, -(self.options.currentWidth - 2)) then
     return false
   end
 
