@@ -214,7 +214,7 @@ function Quary:iterate()
       end
       firstLane = false
 
-      for _=0,self.options.depth-1 do
+      for _=1,self.options.depth-1 do
         if not self:advanceWhileMining(advanceDirection) then
           print("could mine not to end of lane")
           return self:backToStart()
