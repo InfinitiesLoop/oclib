@@ -118,7 +118,16 @@ function Quary:backToStart()
     self.move:moveToXZ(1, 0, 0) and -- start of quary area
     self.move:moveToXZY(0, 0, 0) then -- charging station
 
-    if not self:dumpInventory() and self.move:moveToXZY(0, 0, 0) then
+    local dumped = self:dumpInventory()
+    if not dumped and inventory.isLocalFull() then
+      print("could not dump inventory and my inventory is full.")
+      self.move:moveToXYZ(0, 0, 0)
+      self.move:faceDirection(1)
+      return false
+      -- its ok if we couldnt drop inventory if our inventory isn't full anyway
+    end
+
+    if not self.move:moveToXZY(0, 0, 0) then
       print("could not dump inventory and return safely.")
       self.move:moveToXZY(0, 0, 0)
       self.move:faceDirection(1)
