@@ -64,15 +64,15 @@ function Quary:placeTorch()
   end
 end
 
-function Quary:advanceWhileMining(direction)
+function Quary:advanceWhileMining(direction, dontPlaceTorch)
   if not self:canMine() then
     return false
   end
   self.move:swing(direction)
-  return self.move:advance(direction) and self:clearCurrent()
+  return self.move:advance(direction) and self:clearCurrent(dontPlaceTorch)
 end
 
-function Quary:clearCurrent()
+function Quary:clearCurrent(dontPlaceTorch)
   if not self:canMine() then
     return false
   end
@@ -81,7 +81,9 @@ function Quary:clearCurrent()
     return false
   end
   robot.swingDown()
-  self:placeTorch()
+  if not dontPlaceTorch then
+    self:placeTorch()
+  end
   return true
 end
 
@@ -108,7 +110,6 @@ function Quary:findStartingPoint()
     return false
   end
 
-  self:placeTorch()
   return true
 end
 
@@ -162,7 +163,7 @@ function Quary:dumpInventory()
 end
 
 function Quary:iterate()
-  if not self:advanceWhileMining(1) then
+  if not self:advanceWhileMining(1, true) then
     print("could not enter quary area.")
     return self:backToStart()
   end
