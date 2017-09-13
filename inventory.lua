@@ -112,6 +112,69 @@ function inventory.toolIsBroken()
   return d <= 0
 end
 
+function inventory.pickUpFreshTools(sideOfRobot, toolName)
+  sideOfRobot = sideOfRobot or sides.bottom
+  local size = ic.getInventorySize()
+  if size == nil then
+    return false
+  end
+
+  local count = 0
+  for i=1,size do
+    local stack = ic.getStackInSlot(sideOfRobot, i)
+    -- is this the tool we want and fully repaired?
+    if stack ~= nil and stack.name == toolName and stack.damage == stack.maxDamage then
+      -- found one, get it!
+      robot.select(1) -- select 1 cuz it will fill into an empty slot at or after that
+      if not ic.suckFromSlot(sideOfRobot, i) then
+        return false
+      end
+      count = count + 1
+    end
+  end
+  return true, count
+end
+
+function inventory.dropBrokenTools(sideOfRobot, toolName)
+  sideOfRobot = sideOfRobot or sides.bottom
+  local brokenToolsCount = 0
+  for i=1,robot.inventorySize() do
+    local stack = ic.getStackInInternalSlot(i)
+
+    if stack ~= nil and stack.name == toolName then
+      -- is this a broken tool?
+      local isBroken = util.trunc(stack.damage / stack.maxDamage, 2) <= 0
+      if isBroken then
+        brokenToolsCount = brokenToolsCount + 1
+        -- drop it
+        robot.select(i)
+        local result = (sideOfRobot == sides.bottom and robot.dropDown(1)) or
+          (sideOfRobot == sides.front and robot.drop(1))
+        if not result then
+          return false, brokenToolsCount
+        end
+      end
+    end
+  end
+  -- finally we need to see if the tool we are holding is broken
+  robot.select(1)
+  robot.equip()
+  local stack = ic.getStackInInternalSlot(1)
+  if stack ~= nil and stack.name == toolName then
+    -- is this a broken tool?
+    local isBroken = util.trunc(stack.damage / stack.maxDamage, 2) <= 0
+    if isBroken then
+      brokenToolsCount = brokenToolsCount + 1
+      if not robot.dropDown(1) then
+        robot.equip()
+        return false, brokenToolsCount
+      end
+    end
+  end
+  robot.equip()
+  return true, brokenToolsCount
+end
+
 function inventory.equipFreshTool(itemName)
   if itemName == nil then
     -- use the currently selected tool as the pattern.

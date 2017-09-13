@@ -150,7 +150,7 @@ function Quary:backToStart()
 
   -- get a new tool if needed
   if inventory.toolIsBroken() then
-    if not inventory.equipFreshTool() then
+    if not inventory.equipFreshTool(self.toolName) then
       print("could not find a fresh tool to equip!")
       return false
     end
@@ -165,7 +165,10 @@ function Quary:dumpInventory()
     if result == nil or result <= 0 then
       return false
     end
-    if inventory.dropAll(sides.bottom, 1, {"torch$", "!tool"}) then
+    local droppedTools = inventory.dropBrokenTools(sides.bottom, self.toolName)
+    local droppedInventory = inventory.dropAll(sides.bottom, 1, {"torch$", "!tool"})
+    inventory.pickUpFreshTools(sides.bottom, self.toolName)
+    if droppedTools and droppedInventory then
       return true
     end
   end
@@ -244,6 +247,17 @@ function Quary:iterate()
 end
 
 function Quary:start()
+  robot.select(1)
+  robot.equip()
+  local tool = component.inventory_controller.getStackInInternalSlot(1)
+  if tool == nil or type(tool.maxDamage) ~= "number" then
+    robot.equip()
+    print("I dont seem to have a tool equipped!")
+    return false
+  end
+  robot.equip()
+  self.toolName = tool.name
+
   if self.options.chunkloader then
     local result, chunkloader = pcall(function() return component.chunkloader end)
     if result then
