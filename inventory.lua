@@ -145,7 +145,7 @@ function inventory.dropBrokenTools(sideOfRobot, toolName)
 
     if stack ~= nil and (stack.name == toolName or string.match(stack.name, toolName)) then
       -- is this a broken tool?
-      local isBroken = util.trunc(stack.damage / stack.maxDamage, 2) <= 0
+      local isBroken = util.trunc((stack.maxDamage-stack.damage) / stack.maxDamage, 2) <= 0
       if isBroken then
         brokenToolsCount = brokenToolsCount + 1
         -- drop it
@@ -164,7 +164,7 @@ function inventory.dropBrokenTools(sideOfRobot, toolName)
   local stack = ic.getStackInInternalSlot(1)
   if stack ~= nil and stack.name == toolName then
     -- is this a broken tool?
-    local isBroken = util.trunc(stack.damage / stack.maxDamage, 2) <= 0
+    local isBroken = util.trunc((stack.maxDamage-stack.damage) / stack.maxDamage, 2) <= 0
     if isBroken then
       brokenToolsCount = brokenToolsCount + 1
       if not robot.dropDown(1) then
