@@ -123,7 +123,9 @@ function inventory.pickUpFreshTools(sideOfRobot, toolName)
   for i=1,size do
     local stack = ic.getStackInSlot(sideOfRobot, i)
     -- is this the tool we want and fully repaired?
-    if stack ~= nil and stack.name == toolName and stack.damage == stack.maxDamage then
+    if stack ~= nil and
+      (stack.name == toolName or string.match(stack.name, toolName))
+      and stack.damage == stack.maxDamage then
       -- found one, get it!
       robot.select(1) -- select 1 cuz it will fill into an empty slot at or after that
       if not ic.suckFromSlot(sideOfRobot, i) then
@@ -141,7 +143,7 @@ function inventory.dropBrokenTools(sideOfRobot, toolName)
   for i=1,robot.inventorySize() do
     local stack = ic.getStackInInternalSlot(i)
 
-    if stack ~= nil and stack.name == toolName then
+    if stack ~= nil and (stack.name == toolName or string.match(stack.name, toolName)) then
       -- is this a broken tool?
       local isBroken = util.trunc(stack.damage / stack.maxDamage, 2) <= 0
       if isBroken then
