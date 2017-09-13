@@ -89,6 +89,7 @@ function Quary:clearCurrent(dontPlaceTorch)
 end
 
 function Quary:findStartingLevel()
+  print("start level: " .. self.options.currentHeight)
   -- we need to movedown 1 level at a time, which is 3 blocks each
   local height = 3
   while height < self.options.currentHeight do
@@ -106,9 +107,17 @@ function Quary:findStartingPoint()
     return false
   end
 
-  -- go to where we left off horizontally
-  if not self.move:moveToXZ(1, -(self.options.currentWidth - 2)) then
-    return false
+  if self.options.currentWidth >= 3 then
+    print("start lane: " .. self.options.currentWidth ..
+      " (Z=" .. -(self.options.currentWidth - 2) .. ")")
+    -- go to where we left off horizontally
+    if not self.move:moveToXZ(1, -(self.options.currentWidth - 2)) then
+      print("failed to get to starting point while at x=" .. self.move.posX ..
+        ",z=" .. self.move.posZ .. ",y=" .. self.move.posY)
+      return false
+    end
+  else
+    print("already in a good starting lane.")
   end
 
   return true
@@ -215,18 +224,14 @@ function Quary:iterate()
     local firstLane = true
     local advanceDirection = 1
     while self.options.currentWidth <= self.options.width do
-      if self.options.currentWidth % 2 == 1 then
-        -- we only remember our lane when its an odd lane, because
-        -- the even numbered lanes are done from -1 toward 1, so we wont
-        -- easily return to that lane from the first row.
-        self:saveState()
-      end
       if not firstLane then
         -- move to next lane
         if not self:advanceWhileMining(-2) then
           print("failed to enter new lane.")
           return self:backToStart()
         end
+        -- we're now actually in the current lane
+        self:saveState()
       end
       firstLane = false
 
