@@ -114,7 +114,7 @@ end
 
 function inventory.pickUpFreshTools(sideOfRobot, toolName)
   sideOfRobot = sideOfRobot or sides.bottom
-  local size = ic.getInventorySize()
+  local size = ic.getInventorySize(sideOfRobot)
   if size == nil then
     return false
   end
