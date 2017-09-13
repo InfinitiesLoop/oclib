@@ -116,6 +116,9 @@ function Quary:findStartingPoint()
         ",z=" .. self.move.posZ .. ",y=" .. self.move.posY)
       return false
     end
+    -- we made it, but since we decided to go the previous lane instead of where
+    -- we actually were, `currentWidth` is now a lie. Fix that!
+    self.options.currentWidth = self.options.currentWidth - 1
   else
     print("already in a good starting lane.")
   end
