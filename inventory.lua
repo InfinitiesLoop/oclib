@@ -158,7 +158,7 @@ function inventory.dropBrokenTools(sideOfRobot, toolName)
   end
   -- finally we need to see if the tool we are holding is broken
   robot.select(1)
-  robot.equip()
+  ic.equip()
   local stack = ic.getStackInInternalSlot(1)
   if stack ~= nil and stack.name == toolName then
     -- is this a broken tool?
@@ -166,12 +166,12 @@ function inventory.dropBrokenTools(sideOfRobot, toolName)
     if isBroken then
       brokenToolsCount = brokenToolsCount + 1
       if not robot.dropDown(1) then
-        robot.equip()
+        ic.equip()
         return false, brokenToolsCount
       end
     end
   end
-  robot.equip()
+  ic.equip()
   return true, brokenToolsCount
 end
 
