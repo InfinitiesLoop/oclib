@@ -7,6 +7,7 @@ local sides = require("sides")
 local shell = require("shell")
 local objectStore = require("objectStore")
 local component = require("component")
+local ic = component.inventory_controller
 
 local quary = {}
 
@@ -18,7 +19,7 @@ local Quary = {
 
 function Quary:canMine() --luacheck: no unused args
   if inventory.toolIsBroken() then
-    if not inventory.equipFreshTool() then
+    if not inventory.equipFreshTool(self.toolName) then
       print("lost durability on tool and can't find a fresh one in my inventory!")
       return false
     end
@@ -248,14 +249,14 @@ end
 
 function Quary:start()
   robot.select(1)
-  robot.equip()
-  local tool = component.inventory_controller.getStackInInternalSlot(1)
+  ic.equip()
+  local tool = ic.getStackInInternalSlot(1)
   if tool == nil or type(tool.maxDamage) ~= "number" then
-    robot.equip()
+    ic.equip()
     print("I dont seem to have a tool equipped!")
     return false
   end
-  robot.equip()
+  ic.equip()
   self.toolName = tool.name
 
   if self.options.chunkloader then
