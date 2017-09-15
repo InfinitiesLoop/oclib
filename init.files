@@ -8,3 +8,4 @@ cleanup.lua
 smartmove.lua
 objectStore.lua
 serializer.lua
+eventDispatcher.lua

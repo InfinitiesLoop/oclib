@@ -8,7 +8,8 @@ local shell = require("shell")
 local objectStore = require("objectStore")
 local component = require("component")
 local ic = component.inventory_controller
-
+local eventDispatcher = require("eventDispatcher")
+local modem = component.modem
 local quary = {}
 
 local NEEDS_CHARGE_THRESHOLD = 0.1
@@ -18,6 +19,11 @@ local Quary = {
 }
 
 function Quary:canMine() --luacheck: no unused args
+  self.eventDispatcher.doEvents()
+  if self.returnRequested then
+    print("return was requested by my master")
+    return false
+  end
   if inventory.toolIsBroken() then
     if not inventory.equipFreshTool(self.toolName) then
       print("lost durability on tool and can't find a fresh one in my inventory!")
@@ -93,6 +99,9 @@ function Quary:findStartingLevel()
   -- we need to movedown 1 level at a time, which is 3 blocks each
   local height = 3
   while height < self.options.currentHeight do
+    self.eventDispatcher.doEvents()
+    if self.returnRequested then return false end
+
     if not self.move:down(3, true) then
       return false
     end
@@ -108,12 +117,8 @@ function Quary:findStartingPoint()
   end
 
   if self.options.currentWidth >= 3 then
-    print("start lane: " .. self.options.currentWidth ..
-      " (Z=" .. -(self.options.currentWidth - 2) .. ")")
     -- go to where we left off horizontally
     if not self.move:moveToXZ(1, -(self.options.currentWidth - 2)) then
-      print("failed to get to starting point while at x=" .. self.move.posX ..
-        ",z=" .. self.move.posZ .. ",y=" .. self.move.posY)
       return false
     end
     -- we made it, but since we decided to go the previous lane instead of where
@@ -256,6 +261,8 @@ function Quary:iterate()
 end
 
 function Quary:start()
+  modem.open(self.port)
+
   robot.select(1)
   ic.equip()
   local tool = ic.getStackInInternalSlot(1)
@@ -279,13 +286,15 @@ function Quary:start()
   local result
   local isDone
   result, isDone = self:iterate()
-  while (result and not isDone) do
+  while (result and not isDone and not self.returnRequested) do
     print("headed out again!")
     result, isDone = self:iterate()
   end
 
   if isDone then
     print("Quary complete.")
+  elseif self.returnRequested then
+    print("You called, master?")
   elseif not result then
     print("Halting.")
   end
@@ -307,6 +316,14 @@ function Quary:loadState()
   return false
 end
 
+function Quary:on_modem_message(localAddr, remoteAddr, port, distance, command) --luacheck: no unused args
+  print("received message from " .. remoteAddr .. ", distance of " .. distance .. ": " .. command)
+  if command == "return" then
+    self.returnRequested = true
+    modem.send(remoteAddr, port, "returning")
+  end
+end
+
 function Quary:applyDefaults()
   self.move = self.move or smartmove.new()
   self.options = self.options or {}
@@ -318,12 +335,14 @@ function Quary:applyDefaults()
     self.options.chunkloader == nil
   self.options.currentHeight = tonumber(self.options.currentHeight or "3")
   self.options.currentWidth = tonumber(self.options.currentWidth or "1")
+  self.options.port = tonumber(self.options.port or "444")
 end
 
 function quary.new(o)
   o = o or {}
   setmetatable(o, { __index = Quary })
   o:applyDefaults()
+  o.eventDispatcher = eventDispatcher.new(o)
   return o
 end
 
@@ -331,7 +350,7 @@ local args, options = shell.parse( ... )
 if args[1] == 'start' then
   if (args[2] == 'help') then
     print("usage: quary start --width=100 --depth=100 --height=9 \
-      --torches=true --chunkloader=true --currentHeight=3 --currentWidth=5")
+      --torches=true --chunkloader=true --currentHeight=3 --currentWidth=5 --port=444")
   else
     local q = quary.new({options = options})
     q:applyDefaults()
