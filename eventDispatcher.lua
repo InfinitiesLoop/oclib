@@ -3,9 +3,10 @@ local event = require("event")
 local eventDispatcher = {}
 local EventDispatcher = {}
 
-function eventDispatcher.new(o)
+function eventDispatcher.new(o, handlers)
   o = o or {}
   setmetatable(o, { __index = EventDispatcher })
+  o.handlers = handlers
   return o
 end
 
@@ -13,8 +14,8 @@ function EventDispatcher:handleEvent(eventName, ...)
   if eventName == nil then
     return false
   end
-  if self["on_"..eventName] then
-    self["on_"..eventName](...)
+  if self.handlers["on_"..eventName] then
+    self.handlers["on_"..eventName](...)
   end
   return true
 end

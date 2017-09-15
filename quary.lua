@@ -342,7 +342,7 @@ function quary.new(o)
   o = o or {}
   setmetatable(o, { __index = Quary })
   o:applyDefaults()
-  o.eventDispatcher = eventDispatcher.new(o)
+  o.eventDispatcher = eventDispatcher.new({}, o)
   return o
 end
 
