@@ -261,7 +261,7 @@ function Quary:iterate()
 end
 
 function Quary:start()
-  modem.open(self.port)
+  modem.open(self.options.port)
 
   robot.select(1)
   ic.equip()
