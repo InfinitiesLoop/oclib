@@ -137,6 +137,7 @@ function Quary:backToStart()
     self.move:moveToXZY(0, 0, 0) then -- charging station
 
     if self.returnRequested then
+      self.move:faceDirection(1)
       return true
     end
 
@@ -370,7 +371,7 @@ elseif args[1] == 'resume' then
   else
     print("Cannot resume. Make sure the robot has a writable hard drive to save state in.")
   end
-elseif args[2] == 'summon' then
+elseif args[1] == 'summon' then
   modem.broadcast(tonumber(args.port or "444"), "return")
 end
 
