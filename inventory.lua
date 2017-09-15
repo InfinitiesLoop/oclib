@@ -1,6 +1,6 @@
 local component = require("component")
-local ic = component.inventory_controller
-local robot = require("robot")
+local ic = function() return component.inventory_controller end
+local robot = function() return require("robot") end
 local sides = require("sides")
 local util = require("util")
 
