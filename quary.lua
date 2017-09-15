@@ -19,7 +19,7 @@ local Quary = {
 }
 
 function Quary:canMine() --luacheck: no unused args
-  self.eventDispatcher.doEvents()
+  self.eventDispatcher:doEvents()
   if self.returnRequested then
     print("return was requested by my master")
     return false
@@ -99,7 +99,7 @@ function Quary:findStartingLevel()
   -- we need to movedown 1 level at a time, which is 3 blocks each
   local height = 3
   while height < self.options.currentHeight do
-    self.eventDispatcher.doEvents()
+    self.eventDispatcher:doEvents()
     if self.returnRequested then return false end
 
     if not self.move:down(3, true) then

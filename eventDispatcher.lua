@@ -15,7 +15,7 @@ function EventDispatcher:handleEvent(eventName, ...)
     return false
   end
   if self.handlers["on_"..eventName] then
-    self.handlers["on_"..eventName](...)
+    self.handlers["on_"..eventName](self, ...)
   end
   return true
 end
