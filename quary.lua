@@ -1,6 +1,5 @@
 local util = require("util")
 local smartmove = require("smartmove")
-local inv = require("inventory")
 local inventory = require("inventory")
 local sides = require("sides")
 local shell = require("shell")
@@ -66,8 +65,8 @@ end
 
 function Quary:placeTorch()
   if self.options.torches then
-    if inv.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
-      inv.placeTorch()
+    if inventory.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
+      inventory.placeTorch()
       -- not placing a torch isn't considered an error we need to worry about.
       -- basically, we tried.
     end
