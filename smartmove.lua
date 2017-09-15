@@ -1,7 +1,7 @@
 local smartmove = {}
-local robot = require("robot")
+local robot
 local c = require("component")
-local ic = c.inventory_controller
+local ic
 local sides = require("sides")
 
 -- Utility that keeps track of the robot's movements so it knows where it is relative to the starting location.
@@ -276,6 +276,11 @@ function smartmove.new(o)
   o.posZ = 0
   o.posY = 0
   o.orient = 1
+
+  -- things we actually need
+  robot = require("robot")
+  ic = c.inventory_controller
+
   return o
 end
 

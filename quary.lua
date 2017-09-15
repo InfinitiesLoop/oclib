@@ -1,14 +1,17 @@
 local util = require("util")
 local smartmove = require("smartmove")
 local inv = require("inventory")
-local robot = require("robot")
 local inventory = require("inventory")
 local sides = require("sides")
 local shell = require("shell")
 local objectStore = require("objectStore")
 local component = require("component")
-local ic = component.inventory_controller
 local eventDispatcher = require("eventDispatcher")
+
+-- optional components
+local ic
+local robot
+
 local modem = component.modem
 local quary = {}
 
@@ -266,6 +269,10 @@ function Quary:iterate()
 end
 
 function Quary:start()
+  -- need these things to actually be here now
+  robot = require("robot")
+  ic = component.inventory_controller
+
   modem.open(self.options.port)
 
   robot.select(1)

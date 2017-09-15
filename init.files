@@ -1,7 +1,6 @@
 InfinitiesLoop/oclib
 init.lua
 inventory.lua
-main.lua
 util.lua
 quary.lua
 cleanup.lua
