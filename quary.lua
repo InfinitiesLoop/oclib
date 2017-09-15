@@ -351,7 +351,9 @@ function quary.new(o)
 end
 
 local args, options = shell.parse( ... )
-if args[1] == 'start' then
+if args[1] == 'help' then
+  print("commands: start, resume, summon")
+elseif args[1] == 'start' then
   if (args[2] == 'help') then
     print("usage: quary start --width=100 --depth=100 --height=9 \
       --torches=true --chunkloader=true --currentHeight=3 --currentWidth=5 --port=444")
@@ -368,6 +370,8 @@ elseif args[1] == 'resume' then
   else
     print("Cannot resume. Make sure the robot has a writable hard drive to save state in.")
   end
+elseif args[2] == 'summon' then
+  modem.broadcast(tonumber(args.port or "444"), "return")
 end
 
 return quary
