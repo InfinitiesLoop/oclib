@@ -3,6 +3,7 @@ local robot
 local c = require("component")
 local ic
 local sides = require("sides")
+local event = require("event")
 
 -- Utility that keeps track of the robot's movements so it knows where it is relative to the starting location.
 -- Coordinates have nothing to do with map coordinates, it does not rely on the map upgrade.
@@ -14,17 +15,29 @@ local sides = require("sides")
 local SmartMove = {
 }
 
-function SmartMove:_climb(direction, distance, atomic)
-  distance = distance or 1
-  local moveCount = 0
-
-  while moveCount < distance do
-    local result
+function SmartMove:_tryClimb(direction)
+  local timeout = self.moveTimeout
+  local result
+  repeat
     if direction == 1 then
       result = robot.up()
     else
       result = robot.down()
     end
+    if not result and timeout > 0 then
+      event.pull(1, "_smartmove")
+    end
+    timeout = timeout - 1
+  until result or timeout <= 0
+  return result
+end
+
+function SmartMove:_climb(direction, distance, atomic)
+  distance = distance or 1
+  local moveCount = 0
+
+  while moveCount < distance do
+    local result = self:_tryClimb(direction)
 
     if result then
       moveCount = moveCount + 1
@@ -41,13 +54,25 @@ function SmartMove:_climb(direction, distance, atomic)
   return true
 end
 
-function SmartMove:_move(direction)
+function SmartMove:_tryMove(direction)
+  local timeout = self.moveTimeout
   local result
-  if direction == 1 then
-    result = robot.forward()
-  else
-    result = robot.back()
-  end
+  repeat
+    if direction == 1 then
+      result = robot.forward()
+    else
+      result = robot.back()
+    end
+    if not result and timeout > 0 then
+      event.pull(1, "_smartmove")
+    end
+    timeout = timeout - 1
+  until result or timeout <= 0
+  return result
+end
+
+function SmartMove:_move(direction)
+  local result = self:_tryMove(direction)
 
   if result then
     if self.orient == 1 or self.orient == -1 then
@@ -276,6 +301,7 @@ function smartmove.new(o)
   o.posZ = 0
   o.posY = 0
   o.orient = 1
+  o.moveTimeout = o.moveTimeout or 0
 
   -- things we actually need
   robot = require("robot")
