@@ -386,7 +386,7 @@ elseif args[1] == 'resume' then
     print("Cannot resume. Make sure the robot has a writable hard drive to save state in.")
   end
 elseif args[1] == 'summon' then
-  modem.broadcast(tonumber(args.port or "444"), "return")
+  modem.broadcast(tonumber(options.port or "444"), "return")
 end
 
 return quary
