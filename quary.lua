@@ -120,7 +120,7 @@ function Quary:findStartingPoint()
 
   if self.options.currentWidth >= 3 then
     -- go to where we left off horizontally
-    if not self.move:moveToXZ(1, -(self.options.currentWidth - 2)) then
+    if not self.move:moveToXZ(1, -(self.options.currentWidth - 2) * self.sideFactor) then
       return false
     end
     -- we made it, but since we decided to go the previous lane instead of where
@@ -186,7 +186,7 @@ end
 
 function Quary:dumpInventory()
   while true do
-    local result = self.move:findInventory(-2, 5, true, 16)
+    local result = self.move:findInventory(-2 * self.sideFactor, 5, true, 16)
     if result == nil or result <= 0 then
       return false
     end
@@ -241,7 +241,7 @@ function Quary:iterate()
     while self.options.currentWidth <= self.options.width do
       if not firstLane then
         -- move to next lane
-        if not self:advanceWhileMining(-2) then
+        if not self:advanceWhileMining(-2 * self.sideFactor) then
           print("failed to enter new lane.")
           return self:backToStart()
         end
@@ -273,6 +273,12 @@ function Quary:start()
   ic = component.inventory_controller
 
   modem.open(self.options.port)
+
+  if self.options.side == "right" then
+    self.sideFactor = -1
+  else
+    self.sideFactor = 1
+  end
 
   robot.select(1)
   ic.equip()
@@ -347,6 +353,7 @@ function Quary:applyDefaults()
   self.options.currentHeight = tonumber(self.options.currentHeight or "3")
   self.options.currentWidth = tonumber(self.options.currentWidth or "1")
   self.options.port = tonumber(self.options.port or "444")
+  self.options.side = self.options.side or "left"
 end
 
 function quary.new(o)
@@ -363,7 +370,8 @@ if args[1] == 'help' then
 elseif args[1] == 'start' then
   if (args[2] == 'help') then
     print("usage: quary start --width=100 --depth=100 --height=9 \
-      --torches=true --chunkloader=true --currentHeight=3 --currentWidth=5 --port=444")
+      --torches=true|false --chunkloader=true|false --currentHeight=3 --currentWidth=5 --port=444 \
+      --side=left|right")
   else
     local q = quary.new({options = options})
     q:applyDefaults()
