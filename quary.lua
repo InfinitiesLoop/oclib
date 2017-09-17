@@ -33,8 +33,18 @@ function Quary:canMine() --luacheck: no unused args
     end
   end
   if inventory.isLocalFull() then
-    print("inventory is full!")
-    return false
+    -- inventory is full but maybe we can dump some trash to make room
+    if self.options.trashCobble then
+      inventory.trash(sides.bottom, "cobblestone")
+      -- if it is STILL full then we're done here
+      if inventory.isLocalFull() then
+        print("inventory is full!")
+        return false
+      end
+    else
+      print("inventory is full!")
+      return false
+    end
   end
   -- todo: use generator if present
   if util.needsCharging(NEEDS_CHARGE_THRESHOLD, self.move:distanceFromStart()) then
@@ -135,8 +145,8 @@ end
 
 function Quary:backToStart()
   if self.move:moveToXZ(1, 0) and -- first part of current level
-    self.move:moveToXZ(1, 0, 0) and -- start of quary area
-    self.move:moveToXZY(0, 0, 0) then -- charging station
+    self.move:moveToY(0) and -- start of quary area
+    self.move:moveToX(0) then -- charging station
 
     if self.returnRequested then
       self.move:faceDirection(1)
@@ -354,6 +364,7 @@ function Quary:applyDefaults()
   self.options.currentWidth = tonumber(self.options.currentWidth or "1")
   self.options.port = tonumber(self.options.port or "444")
   self.options.side = self.options.side or "left"
+  self.options.trashCobble = self.options.trashCobble == true or self.options.trashCobble == "true"
 end
 
 function quary.new(o)
@@ -371,7 +382,7 @@ elseif args[1] == 'start' then
   if (args[2] == 'help') then
     print("usage: quary start --width=100 --depth=100 --height=9 \
       --torches=true|false --chunkloader=true|false --currentHeight=3 --currentWidth=5 --port=444 \
-      --side=left|right")
+      --side=left|right --trashCobble=false|true")
   else
     local q = quary.new({options = options})
     q:applyDefaults()

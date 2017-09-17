@@ -54,6 +54,29 @@ function inventory.dropAll(side, fromSlotNumber, exceptFor)
   return couldDropAll
 end
 
+function inventory.trash(side, name)
+  local droppedSome = true
+  for i=1,robot().inventorySize() do
+    local c = robot().count(i)
+    if c > 0 then
+      local stack = ic().getStackInInternalSlot(i)
+      if inventory.isOneOf(stack, name) then
+        robot().select(i)
+        local result
+        if side == nil or side == sides.front then
+          result = robot().drop()
+        elseif side == sides.bottom then
+          result = robot().dropDown()
+        elseif side == sides.top then
+          result = robot().dropUp()
+        end
+        droppedSome = droppedSome or result
+      end
+    end
+  end
+  return droppedSome
+end
+
 function inventory.isIdealTorchSpot(x, z)
   local isZ = (z % 7)
   local isX = (x % 12)
