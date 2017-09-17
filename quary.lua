@@ -35,7 +35,7 @@ function Quary:canMine() --luacheck: no unused args
   if inventory.isLocalFull() then
     -- inventory is full but maybe we can dump some trash to make room
     if self.options.trashCobble then
-      inventory.trash(sides.bottom, "cobblestone")
+      inventory.trash(sides.bottom, {"cobblestone"})
       -- if it is STILL full then we're done here
       if inventory.isLocalFull() then
         print("inventory is full!")

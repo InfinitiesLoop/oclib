@@ -54,13 +54,13 @@ function inventory.dropAll(side, fromSlotNumber, exceptFor)
   return couldDropAll
 end
 
-function inventory.trash(side, name)
+function inventory.trash(side, items)
   local droppedSome = true
   for i=1,robot().inventorySize() do
     local c = robot().count(i)
     if c > 0 then
       local stack = ic().getStackInInternalSlot(i)
-      if inventory.isOneOf(stack, name) then
+      if inventory.isOneOf(stack, items) then
         robot().select(i)
         local result
         if side == nil or side == sides.front then
