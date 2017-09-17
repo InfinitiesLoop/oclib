@@ -8,3 +8,6 @@ smartmove.lua
 objectStore.lua
 serializer.lua
 eventDispatcher.lua
+builder/model.lua
+builder/test.lua
+builder/models/simplehouse.model
