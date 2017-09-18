@@ -88,7 +88,7 @@ local function identifyStartPoint(firstLevel)
   for i,row in ipairs(firstLevel.blocks) do
     local result = string.find(row, "[v^<>]")
     if result then
-      firstLevel.startPoint = {i,result}
+      firstLevel.startPoint = {i,result,string.sub(row, result, result)}
       firstLevel.dropPoint = {i,result}
       return true
     end
@@ -219,6 +219,15 @@ function model.fromLoadedModel(m)
   calculateDistances(m)
 
   return m
+end
+
+function model.topMostIncompleteLevel(m)
+  for i=#m.levels,1,-1 do
+    if not m.levels[i].isComplete then
+      return i, m.levels[i]
+    end
+  end
+  return nil
 end
 
 model.leftOf = leftOf
