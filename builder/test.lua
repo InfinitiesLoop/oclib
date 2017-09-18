@@ -2,7 +2,8 @@ local model = require("builder/model")
 local pathing = require("builder/pathing")
 local s = require("serializer")
 
-local m = model.load("builder/models/provingground.model")
+--local m = model.load("builder/models/provingground.model")
+local m = model.load("builder/models/simplehouse.model")
 
 
 --print(s.serialize(m))

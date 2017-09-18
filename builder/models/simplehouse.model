@@ -13,9 +13,9 @@ levels:list=[
       string=------- --------
       string=xxxxxxxmmxxxxxxx
       string=xmmmmmmmmmmmmmmx
-      string=xmmxmmxmmmxmmmmx
-      string=-mmxxxxmmmxmmmmx
-      string=xmmxmmxmmmxmmmmx
+      string=xmmmxmmmxmmxmmmx
+      string=xmmmxmmmxxxxmmmx
+      string=xmmmxmmmxmmxmmmx
       string=xmmmmmmmmmmmmmmx
       string=xxxxxxxxxxxxxxxx
     ]
@@ -72,9 +72,9 @@ levels:list=[
       string=
       string=xxxxxxxxxxxxxxxx
       string=xxxxxxxxxxxxxxxx
-      string=xxxxxxxxxxxxxxxx
-      string=xxxxxxxxxxxxxxxx
-      string=xxxxxxxxxxxxxxxx
+      string=xxxxxxgggxxxxxxx
+      string=xxxxxxgggxxxxxxx
+      string=xxxxxxgggxxxxxxx
       string=xxxxxxxxxxxxxxxx
       string=xxxxxxxxxxxxxxxx
     ]
