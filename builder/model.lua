@@ -27,6 +27,30 @@ local function set(arr, rc, value)
   return true
 end
 
+local function pointStr(p)
+  if p then
+    return "(" .. p[1] .. "," .. p[2] .. ")"
+  else
+    return "(nil)"
+  end
+end
+
+local function pathStr(path)
+  local s = ""
+  for _,p in ipairs(path) do
+    s = s .. "->" .. pointStr(p)
+  end
+  return s
+end
+
+local function isBuildable(level, point)
+  return at(level.blocks, point) ~= "-"
+end
+
+local function isComplete(level, point)
+  return (not isBuildable(level, point)) or at(level.statuses, point) == "D"
+end
+
 local function leftOf(point)
   return {point[1], point[2]-1}
 end
@@ -39,9 +63,25 @@ end
 local function downOf(point)
   return {point[1]+1, point[2]}
 end
-
-local function isBuildable(level, point)
-  return at(level.blocks, point) ~= "-"
+local function adjacents(l, point)
+  local adjs = {}
+  local a = leftOf(point)
+  if isBuildable(l, a) then
+    adjs[#adjs + 1] = a
+  end
+  a = rightOf(point)
+  if isBuildable(l, a) then
+    adjs[#adjs + 1] = a
+  end
+  a = upOf(point)
+  if isBuildable(l, a) then
+    adjs[#adjs + 1] = a
+  end
+  a = downOf(point)
+  if isBuildable(l, a) then
+    adjs[#adjs + 1] = a
+  end
+  return adjs
 end
 
 local function identifyStartPoint(firstLevel)
@@ -149,7 +189,8 @@ function model.fromLoadedModel(m)
       local distances = {}
       for x=1,string.len(row) do distances[x] = "?" end
       l.distances[i] = distances
-      -- statusRow stores whether the block has been completed or not ('D' for complete, '.' for not complete)
+      -- statusRow stores whether the block has been completed or not ('D' for complete, 'O' for
+      -- hallowed, '.' for unvisited/unknown)
       -- we use `D` because it kinda stands for 'done' but mainly cuz it's the letter closest to looking like a block
       l.statuses[i] = string.gsub(row, "[^_]", ".")
     end
@@ -180,5 +221,16 @@ function model.fromLoadedModel(m)
   return m
 end
 
+model.leftOf = leftOf
+model.rightOf = rightOf
+model.upOf = upOf
+model.downOf = downOf
+model.adjacents = adjacents
+model.isBuildable = isBuildable
+model.isComplete = isComplete
+model.set = set
+model.at = at
+model.pointStr = pointStr
+model.pathStr = pathStr
 
 return model

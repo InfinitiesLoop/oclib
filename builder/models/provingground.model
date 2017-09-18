@@ -1,0 +1,21 @@
+title:string=Proving Ground
+author:string=InfinitiesLoop
+mats:table={
+  x:string=minecraft:cobblestone
+}
+levels:list=[
+  table={
+    name:string=floor
+    blocks:list=[
+      string=v
+      string=x
+      string=x
+      string=xxxx
+      string=x--x
+      string=x--x--xx
+      string=xxx---xx
+      string=x----xxx
+      string=xxxxxxxx
+    ]
+  }
+]
