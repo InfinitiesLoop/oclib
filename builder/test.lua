@@ -1,5 +1,8 @@
+local _ = require("test/ocmocks/all")
+
 local model = require("builder/model")
 local pathing = require("builder/pathing")
+local builder = require("builder/builder")
 local s = require("serializer")
 
 local m = model.load("builder/models/provingground.model")
@@ -30,3 +33,6 @@ repeat
     print("no points left")
   end
 until not result
+
+local b = builder.new({options = { model = "builder/models/provingground.model" } })
+b:start()

@@ -13,6 +13,10 @@ local builder = {}
 local Builder = {}
 
 function Builder:start()
+  if not self.options.loadedModel then
+    self:loadModel()
+    self:saveState()
+  end
   -- require stuff, open port
   robot = require("robot")
   ic = component.inventory_controller
@@ -24,9 +28,10 @@ function Builder:start()
   if tool == nil or type(tool.maxDamage) ~= "number" then
     ic.equip()
     print("I dont seem to have a tool equipped! I won't be able to clear any existing blocks, I hope that's ok.")
+  else
+    self.toolName = tool.name
   end
   ic.equip()
-  self.toolName = tool.name
 
   -- maybe enable chunk loading
   if self.options.chunkloader then
@@ -93,6 +98,7 @@ function Builder:gotoNextBuildLevel()
       return false
     end
   end
+  return true
 end
 
 function Builder:gotoNextLevel()
@@ -149,6 +155,7 @@ function Builder:iterate()
 end
 
 function Builder:applyDefaults() --luacheck: no unused args
+  self.options.port = tonumber(self.options.port or "888")
 end
 
 function Builder:saveState()
@@ -186,8 +193,6 @@ elseif args[1] == 'start' then
   else
     local b = builder.new({options = options})
     b:applyDefaults()
-    b:loadModel()
-    b:saveState()
     b:start()
   end
 elseif args[1] == 'resume' then
