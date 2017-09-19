@@ -78,5 +78,48 @@ function pathing.findNearestBuildSite(l, from)
   return findNearestBuildSiteRecr(l, from)
 end
 
+function pathing.reverse(path, actualEndPoint)
+  local revPath = {}
+  for i=#path,1,-1 do
+    revPath[#revPath + 1] = path[i]
+  end
+  revPath[#revPath + 1] = actualEndPoint
+  table.remove(revPath, 1)
+  return revPath
+end
+
+function pathing.pathToDropPoint(level, fromPoint)
+  -- each block has distance information, so just follow the numbers starting at the destination
+  -- and go back. For example, if the destination has distance 7, find the adjacent block that has a 6,
+  -- and so on. When we get to 0 we found the source drop point and we have the path. Now reverse that path.
+  local current = fromPoint
+  local currentDist = model.at(level.distances, current)
+  local path = { }
+  while current do
+    local adjs = model.adjacents(current)
+    local found = false
+    local i = 1
+    while i <= #adjs and not found do
+      local adj = adjs[i]
+      local adjDistance = model.at(level.distances, adj)
+      if adjDistance < currentDist then
+        path[#path + 1] = adj
+        current = adj
+        currentDist = adjDistance
+        found = true
+      end
+      if (adjDistance == 0) then
+        -- oh, we're there. the end.
+        return pathing.reverse(path)
+      end
+      i = i + 1
+    end
+    if not found then
+      -- odd, this shouldnt happen
+      return false
+    end
+  end
+end
+
 
 return pathing

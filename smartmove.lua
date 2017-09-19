@@ -99,6 +99,22 @@ end
 function SmartMove:advance(direction)
   return self:faceDirection(direction) and self:forward()
 end
+function SmartMove:faceXZ(x, z)
+  if x ~= self.posX then
+    if x < self.posX then
+      self:faceDirection(-1)
+    elseif x > self.posX then
+      self:faceDirection(1)
+    end
+  elseif z ~= self.posZ then
+    if z < self.posZ then
+      self:faceDirection(-2)
+    elseif z > self.posZ then
+      self:faceDirection(2)
+    end
+  end
+end
+
 function SmartMove:swing(direction)
   return self:faceDirection(direction), robot.swing()
 end

@@ -50,34 +50,41 @@ end
 local function isComplete(level, point)
   return (not isBuildable(level, point)) or at(level.statuses, point) == "D"
 end
+local function isClear(level, point)
+  if not isBuildable(level, point) then
+    return true
+  end
+  local status = at(level.statuses, point)
+  return status == "O" or status == "D"
+end
 
-local function leftOf(point)
+local function westOf(point)
   return {point[1], point[2]-1}
 end
-local function rightOf(point)
+local function eastOf(point)
   return {point[1], point[2]+1}
 end
-local function upOf(point)
+local function northOf(point)
   return {point[1]-1, point[2]}
 end
-local function downOf(point)
+local function southOf(point)
   return {point[1]+1, point[2]}
 end
 local function adjacents(l, point)
   local adjs = {}
-  local a = leftOf(point)
+  local a = westOf(point)
   if isBuildable(l, a) then
     adjs[#adjs + 1] = a
   end
-  a = rightOf(point)
+  a = eastOf(point)
   if isBuildable(l, a) then
     adjs[#adjs + 1] = a
   end
-  a = upOf(point)
+  a = northOf(point)
   if isBuildable(l, a) then
     adjs[#adjs + 1] = a
   end
-  a = downOf(point)
+  a = southOf(point)
   if isBuildable(l, a) then
     adjs[#adjs + 1] = a
   end
@@ -131,10 +138,10 @@ end
 local function calculateDistancesForLevelRecurse(l, point, distance)
   set(l.distances, point, distance)
 
-  local up    = upOf(point)
-  local down  = downOf(point)
-  local left  = leftOf(point)
-  local right = rightOf(point)
+  local up    = northOf(point)
+  local down  = southOf(point)
+  local left  = westOf(point)
+  local right = eastOf(point)
   local upCurrent = at(l.distances, up)
   local downCurrent = at(l.distances, down)
   local leftCurrent = at(l.distances, left)
@@ -230,13 +237,14 @@ function model.topMostIncompleteLevel(m)
   return nil
 end
 
-model.leftOf = leftOf
-model.rightOf = rightOf
-model.upOf = upOf
-model.downOf = downOf
+model.westOf = westOf
+model.eastOf = eastOf
+model.northOf = northOf
+model.southOf = southOf
 model.adjacents = adjacents
 model.isBuildable = isBuildable
 model.isComplete = isComplete
+model.isClear = isClear
 model.set = set
 model.at = at
 model.pointStr = pointStr

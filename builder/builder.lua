@@ -3,6 +3,7 @@ local shell = require("shell")
 local objectStore = require("objectStore")
 local component = require("component")
 local model = require("builder/model")
+local pathing = require("builder/pathing")
 local smartmove = require("smartmove")
 local modem = component.modem
 local robot
@@ -79,7 +80,7 @@ function Builder:start()
   return isDone or false
 end
 
-function Builder:gotoCurrentLevel()
+function Builder:gotoNextBuildLevel()
   -- we build from top down so find the top most level that isn't complete
   local m = self.options.loadedModel
   local levelNum, level = model.topMostIncompleteLevel(m)
@@ -87,16 +88,59 @@ function Builder:gotoCurrentLevel()
     return false
   end
 
-  -- to get to this level, we must get to the drop point of that level but the
-  -- block below it, then move up.
-  for i=1,levelNum-1 do
+  while self.move.posY < levelNum do
+    if not self:gotoNextLevel() then
+      return false
+    end
   end
+end
 
+function Builder:gotoNextLevel()
+  local thisLevel = self.options.loadedModel.levels[self.move.posY]
+  local nextLevel = self.options.loadedModel.levels[self.move.posY + 1]
+  local path = pathing.reverse(pathing.pathToDropPoint(thisLevel, nextLevel.dropPoint), nextLevel.dropPoint)
+
+  return self:followPath(path) and self.move:up()
+end
+
+function Builder:followPath(path)
+  -- follow the given path, clearing blocks if necessary as we go,
+  -- and saving the state of those blocks
+  for _,p in ipairs(path) do
+    if not model.isClear(self.options.loadedModel.levels[self.move.posY], p) then
+      -- make sure the block we're about to move into is cleared.
+      self.move:faceXZ(p[1], p[2])
+      -- is the spot we're about to move into occupied by something we should clear out?
+      local isBlocking, entityType = robot.detect()
+      if isBlocking or entityType ~= "air" then
+        local result = robot.swing()
+        if not result then
+          -- something is in the way and we couldnt deal with it
+          return false, "could not clear whatever is in " .. model.pointStr(p)
+        end
+      end
+      -- the space is clear or we just made it clear, mark it as so
+      model.set(self.options.loadedModel.levels[self.move.posY].statuses, p, 'O')
+      self:saveState()
+    end
+    -- move!
+    if not self.move:moveToXZ(p[1], p[2]) then
+      return false, "could not move into " .. model.pointStr(p)
+    end
+  end
+  return true
+end
+
+function Builder:backToStart() --luacheck: no unused args
+  -- todo: follow path back to droppoint of current level
+  -- then drop and do the same for the next level down
+  -- until we get to level 1s droppoint
+  return false
 end
 
 function Builder:iterate()
-  if not self:gotoCurrentLevel() then
-    print("Could not get back to where I left off.")
+  if not self:gotoNextBuildLevel() then
+    print("Could not get to the next level to build.")
     return self:backToStart()
   end
 
@@ -105,7 +149,6 @@ function Builder:iterate()
 end
 
 function Builder:applyDefaults() --luacheck: no unused args
-
 end
 
 function Builder:saveState()
