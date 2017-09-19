@@ -18,4 +18,12 @@ function inventory_controller.getStackInInternalSlot(slot)
   return nil
 end
 
+local filesystem = {}
+component.filesystem = filesystem
+
+function filesystem.makeDirectory(dir)
+  os.execute("mkdir -p " .. dir)
+  print("component.filesystem: makeDirectory " .. dir)
+end
+
 package.preload.component = function() return component end

@@ -2,31 +2,35 @@ local serializer = require("serializer")
 local filesystem = require("component").filesystem
 local ensuredDirExists = false
 
+local objectstore = {
+  baseDir = "/usr/objectstore"
+}
+
 local function ensureDirExists()
   if not ensuredDirExists then
-    filesystem.makeDirectory("/usr/objectstore")
+    filesystem.makeDirectory(objectstore.baseDir)
     ensuredDirExists = true
   end
 end
 
-local function saveObject(name, obj)
+function objectstore.saveObject(name, obj)
   if filesystem == nil then
     return false
   end
   ensureDirExists()
   local str = serializer.serialize(obj)
-  local file = io.open("/usr/objectstore/" .. name, "w")
+  local file = io.open(objectstore.baseDir .. "/" .. name, "w")
   file:write(str)
   file:close()
   return true
 end
 
-local function loadObject(name)
+function objectstore.loadObject(name)
   if filesystem == nil then
     return nil
   end
   ensureDirExists()
-  local status, result = pcall(function() return io.lines("/usr/objectstore/" .. name) end)
+  local status, result = pcall(function() return io.lines(objectstore.baseDir .. "/" .. name) end)
   if not status then return false end
 
   local lines = {}
@@ -36,7 +40,4 @@ local function loadObject(name)
   return serializer.deserializeLines(lines)
 end
 
-return {
-  saveObject = saveObject,
-  loadObject = loadObject
-}
+return objectstore
