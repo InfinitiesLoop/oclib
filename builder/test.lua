@@ -34,5 +34,5 @@ repeat
   end
 until not result
 
-local b = builder.new({options = { model = "builder/models/provingground.model" } })
+local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
 b:start()

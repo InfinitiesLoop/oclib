@@ -48,15 +48,15 @@ function Builder:start()
   -- where the robot's starting point and orientation is.
   self.move = smartmove:new()
   local startPoint = self.options.loadedModel.levels[1].startPoint
-  self.move.posX = startPoint[1]
+  self.move.posX = -startPoint[1]
   self.move.posZ = startPoint[2]
   self.move.posY = 1
   -- the 3rd item of the startpoint vector is which way the robot is facing.
   -- we need to adjust smartmove's orientation to match since it defaults to `1` (+x)
   if startPoint[3] == 'v' then
-    self.move.orient = 1
-  elseif startPoint[3] == '^' then
     self.move.orient = -1
+  elseif startPoint[3] == '^' then
+    self.move.orient = 1
   elseif startPoint[3] == '<' then
     self.move.orient = -2
   elseif startPoint[3] == '>' then
@@ -104,18 +104,20 @@ end
 function Builder:gotoNextLevel()
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   local nextLevel = self.options.loadedModel.levels[self.move.posY + 1]
-  local path = pathing.reverse(pathing.pathToDropPoint(thisLevel, nextLevel.dropPoint), nextLevel.dropPoint)
+  local path = pathing.pathToDropPoint(thisLevel, nextLevel.dropPoint)
 
   return self:followPath(path) and self.move:up()
 end
 
 function Builder:followPath(path)
+  --print("follow path: " .. model.pathStr(path))
   -- follow the given path, clearing blocks if necessary as we go,
   -- and saving the state of those blocks
   for _,p in ipairs(path) do
+    --print(model.pointStr(p), self.move.orient)
     if not model.isClear(self.options.loadedModel.levels[self.move.posY], p) then
       -- make sure the block we're about to move into is cleared.
-      self.move:faceXZ(p[1], p[2])
+      self.move:faceXZ(-p[1], p[2])
       -- is the spot we're about to move into occupied by something we should clear out?
       local isBlocking, entityType = robot.detect()
       if isBlocking or entityType ~= "air" then
@@ -130,7 +132,7 @@ function Builder:followPath(path)
       self:saveState()
     end
     -- move!
-    if not self.move:moveToXZ(p[1], p[2]) then
+    if not self.move:moveToXZ(-p[1], p[2]) then
       return false, "could not move into " .. model.pointStr(p)
     end
   end

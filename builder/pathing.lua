@@ -96,7 +96,7 @@ function pathing.pathToDropPoint(level, fromPoint)
   local currentDist = model.at(level.distances, current)
   local path = { }
   while current do
-    local adjs = model.adjacents(current)
+    local adjs = model.adjacents(level, current)
     local found = false
     local i = 1
     while i <= #adjs and not found do
@@ -110,13 +110,13 @@ function pathing.pathToDropPoint(level, fromPoint)
       end
       if (adjDistance == 0) then
         -- oh, we're there. the end.
-        return pathing.reverse(path)
+        return pathing.reverse(path, fromPoint)
       end
       i = i + 1
     end
     if not found then
-      -- odd, this shouldnt happen
-      return false
+      -- this happens when we were already standing on the droppoint
+      return path
     end
   end
 end
