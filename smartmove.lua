@@ -146,6 +146,13 @@ end
 function SmartMove:turnLeft()
   return self:_turn(-1)
 end
+function SmartMove:turnAround()
+  local result = robot.turnAround()
+  if result then
+    self.orient = -self.orient
+  end
+  return result
+end
 
 function SmartMove:forwardUntilBlocked()
   while self:forward() do
@@ -161,8 +168,7 @@ function SmartMove:faceDirection(o)
 
   if self.orient == -o then
     -- 180
-    self:turnRight()
-    self:turnRight()
+    self:turnAround()
   -- probably could be more clever
   elseif o == -1 and self.orient == -2 then
     self:turnLeft()

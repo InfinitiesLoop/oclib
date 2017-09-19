@@ -106,7 +106,96 @@ function Builder:gotoNextLevel()
   local nextLevel = self.options.loadedModel.levels[self.move.posY + 1]
   local path = pathing.pathToDropPoint(thisLevel, nextLevel.dropPoint)
 
-  return self:followPath(path) and self.move:up()
+  if not self:followPath(path) then
+    return false
+  end
+  if not self:ensureClearUp() or not self.move:up() then
+    return false
+  end
+  return true
+end
+
+function Builder:ensureClearAdj(p)
+  if not model.isClear(self.options.loadedModel.levels[self.move.posY], p) then
+    -- make sure the block we're about to move into is cleared.
+    self.move:faceXZ(-p[1], p[2])
+    -- is the spot we're about to move into occupied by something we should clear out?
+    local isBlocking, entityType = robot.detect()
+    if isBlocking or entityType ~= "air" then
+      local result = robot.swing()
+      if not result then
+        -- something is in the way and we couldnt deal with it
+        return false, "could not clear whatever is in " .. model.pointStr(p)
+      end
+    end
+    -- the space is clear or we just made it clear, mark it as so
+    model.set(self.options.loadedModel.levels[self.move.posY].statuses, p, 'O')
+    self:saveState()
+  end
+  return true
+end
+
+function Builder:ensureClearUp()
+  local upperLevel = self.options.loadedModel.levels[self.move.posY + 1]
+  if not upperLevel then
+    error("Tried to clearUp but no level above us at posY=" .. self.move.posY)
+  end
+
+  local p = {-self.move.posX, self.move.posZ}
+  if not model.isClear(upperLevel, p) then
+    -- is the spot we're about to move into occupied by something we should clear out?
+    local isBlocking, entityType = robot.detectUp()
+    if isBlocking or entityType ~= "air" then
+      local result = robot.swingUp()
+      if not result then
+        -- something is in the way and we couldnt deal with it
+        return false, "could not clear whatever is above me at " .. model.pointStr(p)
+      end
+    end
+    -- the space is clear or we just made it clear, mark it as so
+    model.set(upperLevel.statuses, p, 'O')
+    self:saveState()
+  end
+  return true
+end
+
+function Builder:buildBlock(level, buildPoint)
+  if not self:ensureClearAdj(buildPoint) then
+    return false, "could not ensure buildpoint was clear at " .. model.pointStr(buildPoint)
+  end
+  self.move:faceXZ(-buildPoint[1], buildPoint[2])
+  -- todo: actually block the block we need by finding it in inventory, etc.
+  print("place")
+
+  -- mark that we have indeed built this point
+  model.set(level.statuses, buildPoint, 'D')
+  self:saveState()
+
+  return true
+end
+
+function Builder:buildCurrentLevel()
+  local l = self.options.loadedModel.levels[self.move.posY]
+  local currentPoint = l.dropPoint
+  repeat
+    local result = pathing.findNearestBuildSite(l, currentPoint)
+    if result then
+      local buildPoint = result[1]
+      local standPoint = result[2][#result[2]] or currentPoint
+
+      -- go where we need to go
+      if not self:followPath(result[2]) then
+        return false
+      end
+
+      -- build the block we need to build
+      self:buildBlock(l, buildPoint)
+      currentPoint = standPoint
+    else
+      return true
+    end
+  until not result
+  return false
 end
 
 function Builder:followPath(path)
@@ -115,21 +204,8 @@ function Builder:followPath(path)
   -- and saving the state of those blocks
   for _,p in ipairs(path) do
     --print(model.pointStr(p), self.move.orient)
-    if not model.isClear(self.options.loadedModel.levels[self.move.posY], p) then
-      -- make sure the block we're about to move into is cleared.
-      self.move:faceXZ(-p[1], p[2])
-      -- is the spot we're about to move into occupied by something we should clear out?
-      local isBlocking, entityType = robot.detect()
-      if isBlocking or entityType ~= "air" then
-        local result = robot.swing()
-        if not result then
-          -- something is in the way and we couldnt deal with it
-          return false, "could not clear whatever is in " .. model.pointStr(p)
-        end
-      end
-      -- the space is clear or we just made it clear, mark it as so
-      model.set(self.options.loadedModel.levels[self.move.posY].statuses, p, 'O')
-      self:saveState()
+    if not self:ensureClearAdj(p) then
+      return false, "could not ensure adjacent spot was clear at " .. model.pointStr(p)
     end
     -- move!
     if not self.move:moveToXZ(-p[1], p[2]) then
@@ -149,6 +225,13 @@ end
 function Builder:iterate()
   if not self:gotoNextBuildLevel() then
     print("Could not get to the next level to build.")
+    return self:backToStart()
+  end
+
+  -- now that we're on the right level (at its droppoint) we can start
+  -- building it.
+  -- todo: will need to be in a loop that goes down levels as it builds
+  if not self:buildCurrentLevel() then
     return self:backToStart()
   end
 

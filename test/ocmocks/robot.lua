@@ -3,6 +3,9 @@ local robot = {}
 function robot.detect()
   return false, "air"
 end
+function robot.detectUp()
+  return false, "air"
+end
 function robot.forward()
   print("robot: forward")
   return true
