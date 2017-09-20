@@ -10,6 +10,10 @@ function robot.forward()
   print("robot: forward")
   return true
 end
+function robot.back()
+  print("robot: back")
+  return true
+end
 function robot.turnLeft()
   print("robot: turnLeft")
   return true

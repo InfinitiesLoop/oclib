@@ -97,7 +97,12 @@ function SmartMove:down(distance, atomic)
   return self:_climb(-1, distance, atomic)
 end
 function SmartMove:advance(direction)
-  return self:faceDirection(direction) and self:forward()
+  -- see if we can go that way by just moving backward, to avoid having to turnaround
+  if self.orient == -direction then
+    return self:backward()
+  else
+    return self:faceDirection(direction) and self:forward()
+  end
 end
 function SmartMove:faceXZ(x, z)
   if x ~= self.posX then
@@ -200,8 +205,7 @@ function SmartMove:moveToX(x)
     else
       direction = -1
     end
-    self:faceDirection(direction)
-    while self.posX ~= x and self:forward() do
+    while self.posX ~= x and self:advance(direction) do
       moved = true
     end
   end
@@ -219,7 +223,7 @@ function SmartMove:moveToZ(z)
       direction = -2
     end
     self:faceDirection(direction)
-    while self.posZ ~= z and self:forward() do
+    while self.posZ ~= z and self:advance(direction) do
       moved = true
     end
   end

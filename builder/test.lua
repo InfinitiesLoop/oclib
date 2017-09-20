@@ -17,13 +17,13 @@ local l = m.levels[1]
 
 --print("bot starts at " .. model.pointStr(l.dropPoint))
 --print("")
-
+--[[
 local currentPoint = l.dropPoint
 repeat
   local result = pathing.findNearestBuildSite(l, currentPoint)
   if result then
     local buildPoint = result[1]
-    local standPoint = result[2][#result[2]] or currentPoint
+    local standPoint = result[2][#result[2] ] or currentPoint
     print("build " .. model.pointStr(buildPoint) .. " stand on " .. model.pointStr(standPoint) ..
       " get there via " .. model.pathStr(result[2]))
     -- mark that slot as complete to pretend the robot did the job
@@ -33,6 +33,7 @@ repeat
     print("no points left")
   end
 until not result
+--]]
 
 local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
 b:start()
