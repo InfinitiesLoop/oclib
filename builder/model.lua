@@ -225,6 +225,9 @@ function model.fromLoadedModel(m)
   -- determines how far away each block is so they can be built in the right order
   calculateDistances(m)
 
+  -- the robot's starting point by definition is already complete
+  set(m.levels[1].statuses, m.levels[1].startPoint, 'D')
+
   return m
 end
 

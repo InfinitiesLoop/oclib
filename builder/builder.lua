@@ -94,14 +94,14 @@ function Builder:gotoNextBuildLevel()
   end
 
   while self.move.posY < levelNum do
-    if not self:gotoNextLevel() then
+    if not self:gotoNextLevelUp() then
       return false
     end
   end
   return true
 end
 
-function Builder:gotoNextLevel()
+function Builder:gotoNextLevelUp()
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   local nextLevel = self.options.loadedModel.levels[self.move.posY + 1]
   local path = pathing.pathToDropPoint(thisLevel, nextLevel.dropPoint)
@@ -110,6 +110,30 @@ function Builder:gotoNextLevel()
     return false
   end
   if not self:ensureClearUp() or not self.move:up() then
+    return false
+  end
+  return true
+end
+
+function Builder:gotoNextLevelDown()
+  -- we can assume we're standing on the droppoint of the level we want to exit.
+  -- so just move downward, then 'build up' to complete the level above. then
+  -- we should navigate to the droppoint of the new level from which building can
+  -- begin.
+  local thisLevel = self.options.loadedModel.levels[self.move.posY]
+  local nextLevel = self.options.loadedModel.levels[self.move.posY - 1]
+  local buildPoint = {-self.move.posX, self.move.posZ}
+  if not self.move:down() then
+    return false, "could not move downward"
+  end
+  if not self:buildBlockUp(thisLevel, buildPoint) then
+    return false, "could not build final block on level " .. (self.move.posY+1) ..
+      " point " .. model.pointStr(buildPoint)
+  end
+
+  -- we're on the level, lets get to the droppoint for it
+  local path = pathing.pathToDropPoint(nextLevel, nextLevel.dropPoint)
+  if not self:followPath(path) then
     return false
   end
   return true
@@ -164,6 +188,17 @@ function Builder:buildBlock(level, buildPoint)
     return false, "could not ensure buildpoint was clear at " .. model.pointStr(buildPoint)
   end
   self.move:faceXZ(-buildPoint[1], buildPoint[2])
+  -- todo: actually block the block we need by finding it in inventory, etc.
+  print("place")
+
+  -- mark that we have indeed built this point
+  model.set(level.statuses, buildPoint, 'D')
+  self:saveState()
+
+  return true
+end
+
+function Builder:buildBlockUp(level, buildPoint)
   -- todo: actually block the block we need by finding it in inventory, etc.
   print("place")
 
@@ -231,10 +266,20 @@ function Builder:iterate()
   -- now that we're on the right level (at its droppoint) we can start
   -- building it.
   -- todo: will need to be in a loop that goes down levels as it builds
-  if not self:buildCurrentLevel() then
-    return self:backToStart()
-  end
+  local firstLevel = true
+  repeat
+    if not firstLevel then
+      if not self:gotoNextLevelDown() then
+        return self:backToStart()
+      end
+    end
+    firstLevel = false
 
+    if not self:buildCurrentLevel() then
+      return self:backToStart()
+    end
+  until self.move.posY == 1 -- todo actually check on the robot start point instead of assuming lvl 1
+--print("done? " .. model.pointStr({self.move.posX, self.move.posZ}), self.move.orient)
   local returnedToStart = self:backToStart()
   return returnedToStart, true
 end
