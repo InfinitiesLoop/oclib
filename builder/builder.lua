@@ -5,12 +5,16 @@ local component = require("component")
 local model = require("builder/model")
 local pathing = require("builder/pathing")
 local smartmove = require("smartmove")
+local util = require("util")
 local modem = component.modem
 local robot
 local ic
 
 local builder = {}
 local Builder = {}
+
+--local NEEDS_CHARGE_THRESHOLD = 0.1
+local FULL_CHARGE_THRESHOLD = 0.95
 
 function Builder:start()
   if not self.options.loadedModel then
@@ -62,7 +66,7 @@ function Builder:start()
   elseif startPoint[3] == '>' then
     self.move.orient = 2
   end
-  self.move.originalOrient = self.move.orient -- just so we know which way to face when shutting down
+  self.originalOrient = self.move.orient -- just so we know which way to face when shutting down
   -- there, now smartmove's state corresponds to our location within the level and the direction
   -- we are facing.
 
@@ -272,7 +276,17 @@ function Builder:backToStart() --luacheck: no unused args
     end
   end
 
-  -- todo: inventory stuff, charging, tools, etc
+  -- just to look nice and make restarts easy to deal with.
+  self.move:faceDirection(self.originalOrient)
+
+  -- we should be back on the charger now.
+  print("waiting for charge...")
+  if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 600) then
+    print("waited a long time and I didn't get charged enough :(")
+    return false
+  end
+
+  -- todo: inventory stuff, tools, etc
 
   return true
 end
