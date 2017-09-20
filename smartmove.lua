@@ -222,7 +222,6 @@ function SmartMove:moveToZ(z)
     else
       direction = -2
     end
-    self:faceDirection(direction)
     while self.posZ ~= z and self:advance(direction) do
       moved = true
     end

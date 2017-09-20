@@ -88,6 +88,14 @@ function pathing.reverse(path, actualEndPoint)
   return revPath
 end
 
+function pathing.pathFromDropPoint(level, toPoint)
+  local path = pathing.pathToDropPoint(level, toPoint)
+  if not path then
+    return path
+  end
+  return pathing.reverse(path, toPoint)
+end
+
 function pathing.pathToDropPoint(level, fromPoint)
   -- each block has distance information, so just follow the numbers starting at the destination
   -- and go back. For example, if the destination has distance 7, find the adjacent block that has a 6,
@@ -110,7 +118,7 @@ function pathing.pathToDropPoint(level, fromPoint)
       end
       if (adjDistance == 0) then
         -- oh, we're there. the end.
-        return pathing.reverse(path, fromPoint)
+        return path
       end
       i = i + 1
     end

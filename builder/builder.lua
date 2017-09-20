@@ -104,7 +104,7 @@ end
 function Builder:gotoNextLevelUp()
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   local nextLevel = self.options.loadedModel.levels[self.move.posY + 1]
-  local path = pathing.pathToDropPoint(thisLevel, nextLevel.dropPoint)
+  local path = pathing.pathFromDropPoint(thisLevel, nextLevel.dropPoint)
 
   if not self:followPath(path) then
     return false
@@ -115,7 +115,7 @@ function Builder:gotoNextLevelUp()
   return true
 end
 
-function Builder:gotoNextLevelDown()
+function Builder:gotoNextLevelDown(isReturningToStart)
   -- we can assume we're standing on the droppoint of the level we want to exit.
   -- so just move downward, then 'build up' to complete the level above. then
   -- we should navigate to the droppoint of the new level from which building can
@@ -126,14 +126,17 @@ function Builder:gotoNextLevelDown()
   if not self.move:down() then
     return false, "could not move downward"
   end
-  if not self:buildBlockUp(thisLevel, buildPoint) then
-    return false, "could not build final block on level " .. (self.move.posY+1) ..
-      " point " .. model.pointStr(buildPoint)
+  if not isReturningToStart then
+    -- when returning ot start we dont want to build blocks on the way
+    if not self:buildBlockUp(thisLevel, buildPoint) then
+      return false, "could not build final block on level " .. (self.move.posY+1) ..
+        " point " .. model.pointStr(buildPoint)
+    end
   end
 
   -- we're on the level, lets get to the droppoint for it
-  local path = pathing.pathToDropPoint(nextLevel, nextLevel.dropPoint)
-  if not self:followPath(path) then
+  local path = pathing.pathToDropPoint(nextLevel, thisLevel.dropPoint)
+  if not self:followPath(path, isReturningToStart) then
     return false
   end
   return true
@@ -233,14 +236,17 @@ function Builder:buildCurrentLevel()
   return false
 end
 
-function Builder:followPath(path)
+function Builder:followPath(path, isReturningToStart)
   --print("follow path: " .. model.pathStr(path))
   -- follow the given path, clearing blocks if necessary as we go,
   -- and saving the state of those blocks
   for _,p in ipairs(path) do
     --print(model.pointStr(p), self.move.orient)
-    if not self:ensureClearAdj(p) then
-      return false, "could not ensure adjacent spot was clear at " .. model.pointStr(p)
+    if not isReturningToStart then
+      -- when returning to start we dont want to do ensureClear
+      if not self:ensureClearAdj(p) then
+        return false, "could not ensure adjacent spot was clear at " .. model.pointStr(p)
+      end
     end
     -- move!
     if not self.move:moveToXZ(-p[1], p[2]) then
@@ -251,10 +257,24 @@ function Builder:followPath(path)
 end
 
 function Builder:backToStart() --luacheck: no unused args
-  -- todo: follow path back to droppoint of current level
-  -- then drop and do the same for the next level down
-  -- until we get to level 1s droppoint
-  return false
+  -- something went wrong the robot needs to get back home (charge level, etc)
+  -- first thing we need to do is get to the droppoint for the level we are on.
+  local thisLevel = self.options.loadedModel.levels[self.move.posY]
+  --print("back to start from " .. model.pointStr({-self.move.posX, self.move.posZ}))
+  local path = pathing.pathToDropPoint(thisLevel, {-self.move.posX, self.move.posZ})
+  if not self:followPath(path, true) then
+    return false, "backToStart could not get to droppoint of current level"
+  end
+  -- now we just need to follow drop points down the first level
+  while self.move.posY > 1 do
+    if not self:gotoNextLevelDown(true) then
+      return false, "backToStart could not navigate down a level"
+    end
+  end
+
+  -- todo: inventory stuff, charging, tools, etc
+
+  return true
 end
 
 function Builder:iterate()

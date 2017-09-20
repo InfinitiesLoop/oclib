@@ -28,6 +28,7 @@ function robot.turnAround()
 end
 function robot.up()
   print("robot: up")
+  --return false
   return true
 end
 function robot.down()
