@@ -286,6 +286,13 @@ function Builder:backToStart() --luacheck: no unused args
     return false
   end
 
+  -- things we need to worry about:
+  -- 1. ran out of a specific material
+  -- 2. might want to restock on materials we didn't run out of
+  -- 3. inventory got full from clearing blocks
+  -- 4. tool broke from clearing blocks
+  -- 5. when restocking we dont want one item type to starve other types if invenotyr isn't full enough
+
   -- todo: inventory stuff, tools, etc
 
   return true
