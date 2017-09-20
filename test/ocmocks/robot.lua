@@ -1,3 +1,4 @@
+local mockInv = require("test/ocmocks/mock_inventory")
 local robot = {}
 
 function robot.detect()
@@ -33,6 +34,39 @@ function robot.up()
 end
 function robot.down()
   print("robot: down")
+  return true
+end
+function robot.inventorySize()
+  return 32
+end
+function robot.select(slot)
+  print("robot: select " .. slot)
+  mockInv.selected = slot
+end
+function robot.place()
+  local stack = mockInv.get()
+  if not stack or stack.count <= 0 then
+    print("robot: place (fail)")
+    return false, "empty slot"
+  end
+  stack.count = stack.count - 1
+  if stack.count <= 0 then
+    mockInv.slots[mockInv.selected] = nil
+  end
+  print("robot: place " .. stack.name .. "(" .. stack.count .. ")")
+  return true
+end
+function robot.placeUp()
+  local stack = mockInv.get()
+  if not stack or stack.count <= 0 then
+    print("robot: placeUp (fail)")
+    return false, "empty slot"
+  end
+  stack.count = stack.count - 1
+  if stack.count <= 0 then
+    mockInv.slots[mockInv.selected] = nil
+  end
+  print("robot: placeUp " .. stack.name .. "(" .. stack.count .. ")")
   return true
 end
 

@@ -5,4 +5,6 @@ require("test/ocmocks/sides")
 require("test/ocmocks/robot")
 require("test/ocmocks/computer")
 
+require("test/ocmocks/mock_inventory")
+
 require("objectStore").baseDir = "/usr/local/oclib/objectstore"

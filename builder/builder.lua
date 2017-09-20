@@ -5,6 +5,7 @@ local component = require("component")
 local model = require("builder/model")
 local pathing = require("builder/pathing")
 local smartmove = require("smartmove")
+local inventory = require("inventory")
 local util = require("util")
 local modem = component.modem
 local robot
@@ -195,8 +196,18 @@ function Builder:buildBlock(level, buildPoint)
     return false, "could not ensure buildpoint was clear at " .. model.pointStr(buildPoint)
   end
   self.move:faceXZ(-buildPoint[1], buildPoint[2])
-  -- todo: actually block the block we need by finding it in inventory, etc.
-  print("place")
+
+  local blockName = model.blockAt(self.options.loadedModel, level, buildPoint)
+  if (blockName and blockName ~= "!air") then
+    if not inventory.selectItem(blockName) then
+      -- we seem to be out of this material
+      return false
+    end
+  end
+  local result, reason = robot.place()
+  if not result then
+    return false, "could not place block " .. blockName .. ": " .. reason
+  end
 
   -- mark that we have indeed built this point
   model.set(level.statuses, buildPoint, 'D')
@@ -206,8 +217,17 @@ function Builder:buildBlock(level, buildPoint)
 end
 
 function Builder:buildBlockUp(level, buildPoint)
-  -- todo: actually block the block we need by finding it in inventory, etc.
-  print("place")
+  local blockName = model.blockAt(self.options.loadedModel, level, buildPoint)
+  if (blockName and blockName ~= "!air") then
+    if not inventory.selectItem(blockName) then
+      -- we seem to be out of this material
+      return false
+    end
+  end
+  local result, reason = robot.placeUp()
+  if not result then
+    return false, "could not place block " .. blockName .. ": " .. reason
+  end
 
   -- mark that we have indeed built this point
   model.set(level.statuses, buildPoint, 'D')
@@ -227,17 +247,20 @@ function Builder:buildCurrentLevel()
 
       -- go where we need to go
       if not self:followPath(result[2]) then
-        return false
+        return false, "couldn't follow path to build site"
       end
 
       -- build the block we need to build
-      self:buildBlock(l, buildPoint)
+      local buildResult, reason = self:buildBlock(l, buildPoint)
+      if not buildResult then
+        return false, reason
+      end
       currentPoint = standPoint
     else
       return true
     end
   until not result
-  return false
+  return false, "unknown"
 end
 
 function Builder:followPath(path, isReturningToStart)

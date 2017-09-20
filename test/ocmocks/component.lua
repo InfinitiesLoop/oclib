@@ -1,5 +1,5 @@
 local component = {}
-
+local mockInv = require("test/ocmocks/mock_inventory")
 local modem = {}
 component.modem = modem
 
@@ -14,8 +14,8 @@ function inventory_controller.equip()
   print("component.inventory_controller: equip")
 end
 function inventory_controller.getStackInInternalSlot(slot)
-  print("component.inventory_controller: getStackInInternalSlot " .. slot)
-  return nil
+  print("component.inventory_controller: getStackInInternalSlot " .. (slot or "selected"))
+  return mockInv.slots[slot or mockInv.selected]
 end
 
 local filesystem = {}

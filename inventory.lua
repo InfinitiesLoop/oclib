@@ -93,8 +93,13 @@ function inventory.isIdealTorchSpot(x, z)
 end
 
 function inventory.selectItem(pattern)
+  -- check if already selected first, should be faster
+  local stack = ic().getStackInInternalSlot()
+  if stack ~= nil and string.find(stack.name, pattern) ~= nil then
+    return true
+  end
   for i=1,robot().inventorySize() do
-    local stack = ic().getStackInInternalSlot(i)
+    stack = ic().getStackInInternalSlot(i)
     if stack ~= nil and string.find(stack.name, pattern) ~= nil then
       robot().select(i)
       return true

@@ -58,6 +58,17 @@ local function isClear(level, point)
   return status == "O" or status == "D"
 end
 
+local function blockAt(model, level, point)
+  if not isBuildable(level, point) then
+    return nil
+  end
+  local moniker = at(level.blocks, point)
+  if moniker == ' ' then
+    return "!air"
+  end
+  return model.mats[moniker] or "!air"
+end
+
 local function westOf(point)
   return {point[1], point[2]-1}
 end
@@ -252,5 +263,6 @@ model.set = set
 model.at = at
 model.pointStr = pointStr
 model.pathStr = pathStr
+model.blockAt = blockAt
 
 return model

@@ -2,6 +2,7 @@ local _ = require("test/ocmocks/all")
 
 local model = require("builder/model")
 local pathing = require("builder/pathing")
+local mockInv = require("test/ocmocks/mock_inventory")
 local builder = require("builder/builder")
 --local s = require("serializer")
 
@@ -34,6 +35,19 @@ repeat
   end
 until not result
 --]]
+
+mockInv.fillAll({
+  name = "minecraft:cobblestone",
+  count = 64
+})
+mockInv.slots[1] = {
+  name = "minecraft:glass",
+  count = 64
+}
+mockInv.slots[2] = {
+  name = "minecraft:marble",
+  count = 64
+}
 
 local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
 b:start()
