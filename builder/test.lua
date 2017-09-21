@@ -4,7 +4,8 @@ local model = require("builder/model")
 local pathing = require("builder/pathing")
 local mockInv = require("test/ocmocks/mock_inventory")
 local builder = require("builder/builder")
---local s = require("serializer")
+local inventory = require("inventory")
+local s = require("serializer")
 
 --local m = model.load("builder/models/provingground.model")
 local m = model.load("builder/models/simplehouse.model")
@@ -38,16 +39,21 @@ until not result
 
 mockInv.fillAll({
   name = "minecraft:cobblestone",
-  count = 64
+  size = 64
 })
 mockInv.slots[1] = {
   name = "minecraft:glass",
-  count = 64
+  size = 64
 }
 mockInv.slots[2] = {
   name = "minecraft:marble",
-  count = 64
+  size = 64
 }
 
-local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
-b:start()
+local map = { glass = 0, cobblestone = 0, test = 0, marble = 1000 }
+inventory.setCountOfItems(map)
+print(s.serialize(map))
+print(inventory.getCountOfItems({"cobblestone"}), inventory.getCountOfItems({"glass"}))
+
+--local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
+--b:start()

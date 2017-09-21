@@ -5,7 +5,7 @@ local inv = {
 
 function inv.fillAll(stack)
   for i=1,32 do
-    inv.slots[i] = { name = stack.name, count = stack.count }
+    inv.slots[i] = { name = stack.name, size = stack.size }
   end
 end
 

@@ -7,6 +7,9 @@ local util = require("util")
 local inventory = {}
 
 function inventory.isOneOf(item, checkList)
+  if item == nil then
+    return false
+  end
   for _,chk in ipairs(checkList) do
     if chk == "!tool" then
       if item.maxDamage > 0 then
@@ -251,5 +254,29 @@ function inventory.equipFreshTool(itemName)
   return false
 end
 
+-- determine how many items that match the given list the robot currently has
+function inventory.getCountOfItems(itemList)
+  local count = 0
+  for i=1,robot().inventorySize() do
+    local stack = ic().getStackInInternalSlot(i)
+    if inventory.isOneOf(stack, itemList) then
+      count = count + stack.size
+    end
+  end
+  return count
+end
+
+function inventory.setCountOfItems(itemMap)
+  for i=1,robot().inventorySize() do
+    local stack = ic().getStackInInternalSlot(i)
+    if stack ~= nil then
+      for name,count in pairs(itemMap) do
+        if inventory.isOneOf(stack, {name}) then
+          itemMap[name] = count + stack.size
+        end
+      end
+    end
+  end
+end
 
 return inventory
