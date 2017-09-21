@@ -1,5 +1,6 @@
 local _ = require("test/ocmocks/all")
 
+local sides = require("sides")
 local model = require("builder/model")
 local pathing = require("builder/pathing")
 local mockInv = require("test/ocmocks/mock_inventory")
@@ -37,6 +38,7 @@ repeat
 until not result
 --]]
 
+--[[
 mockInv.fillAll({
   name = "minecraft:cobblestone",
   size = 64
@@ -48,7 +50,16 @@ mockInv.slots[1] = {
 mockInv.slots[2] = {
   name = "minecraft:marble",
   size = 64
-}
+}--]]
+
+mockInv.setMockWorldInventory(sides.bottom, {
+  { name = "cobblestone", size = 64 },
+  { name = "cobblestone", size = 64 },
+  { name = "glass", size = 64 }
+})
+
+local counts, hasZero = inventory.resupply(sides.bottom, { cobblestone = 400, glass = 100, marble = 100 }, 200)
+print(s.serialize(counts), hasZero)
 
 --local map = { glass = 0, cobblestone = 0, test = 0, marble = 1000 }
 --inventory.setCountOfItems(map)

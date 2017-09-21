@@ -13,10 +13,10 @@ function inventory.isOneOf(item, checkList)
   for _,chk in ipairs(checkList) do
     if chk == "!tool" then
       if item.maxDamage > 0 then
-        return true
+        return true, chk
       end
     elseif string.match(item.name, chk) then
-      return true
+      return true, chk
     end
   end
   return false
@@ -252,6 +252,55 @@ function inventory.equipFreshTool(itemName)
   end
 
   return false
+end
+
+
+
+function inventory.resupply(side, maximumCounts, globalMax)
+  local counts = {}
+  side = side or sides.bottom
+  local size = ic().getInventorySize(side)
+  if size == nil then
+    return nil
+  end
+  robot().select(1)
+
+  for k,_ in pairs(maximumCounts) do
+    counts[k] = 0
+  end
+  inventory.setCountOfItems(counts)
+  local matList = util.tableKeys(counts)
+
+  for i=1,size do
+    local stack = ic().getStackInSlot(side, i)
+    -- is this any of the materials we need?
+    local isMat, whichMat = inventory.isOneOf(stack, matList)
+    if isMat then
+      -- this is a mat we care about, do we need any?
+      local max = math.min(globalMax, maximumCounts[whichMat])
+      if counts[whichMat] < max then
+        local before = stack.size
+        ic().suckFromSlot(side, i, max-counts[whichMat])
+        stack = ic().getStackInSlot(side, i)
+        local taken
+        if not stack then
+          taken = before
+        else
+          taken = before - stack.size
+        end
+        counts[whichMat] = counts[whichMat] + taken
+      end
+    end
+  end
+
+  local hasZeroCount
+  for k,c in pairs(counts) do
+    if c == 0 then
+      hasZeroCount = k
+    end
+  end
+
+  return counts, hasZeroCount
 end
 
 -- determine how many items that match the given list the robot currently has

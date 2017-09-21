@@ -38,8 +38,17 @@ local function cloneArray(t)
   return copy
 end
 
+local function tableKeys(tbl)
+  local keys = {}
+  for k,_ in pairs(tbl) do
+    keys[#keys+1] = k
+  end
+  return keys
+end
+
 return {
   trunc = trunc,
+  tableKeys = tableKeys,
   needsCharging = needsCharging,
   waitUntilCharge = waitUntilCharge,
   cloneArray = cloneArray

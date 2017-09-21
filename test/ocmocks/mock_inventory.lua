@@ -1,6 +1,10 @@
 local inv = {
   slots = {},
-  selected = 1
+  selected = 1,
+  slotCount = 32
+}
+
+local worldInv = {
 }
 
 function inv.fillAll(stack)
@@ -9,8 +13,40 @@ function inv.fillAll(stack)
   end
 end
 
-function inv.get()
-  return inv.slots[inv.selected]
+function inv.setMockWorldInventory(side, contents)
+  worldInv[side] = contents
+end
+function inv.getMockWorldInventory(side)
+  return worldInv[side]
+end
+
+function inv.get(slot)
+  return inv.slots[slot or inv.selected]
+end
+function inv.addStack(putStack, slot)
+  slot = slot or inv.selected
+  local stack = inv.get(slot)
+  if not stack then
+    inv.slots[inv.selected] = putStack
+    return true
+  elseif stack.name == putStack.name then
+    stack.size = stack.size + putStack.size
+    return true
+  else
+    if slot < inv.slotCount then
+      return inv.addStack(putStack, slot + 1)
+    end
+    return false
+  end
+end
+
+function inv.getInventorySize(side)
+  local i = worldInv[side]
+  if not i then
+    return nil, "no inventory"
+  else
+    return #i
+  end
 end
 
 return inv
