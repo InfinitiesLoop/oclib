@@ -70,7 +70,7 @@ local function deserializeFromLines(lines, asArray)
       if asArray then
         indent, t, v = string.match(line, '(%s*)([^=]+)=(.*)')
       else
-        indent, k, t, v = string.match(line, '(%s*)([^:%s]+):(.+)=(.*)')
+        indent, k, t, v = string.match(line, '(%s*)([^%s]+):(.+)=(.*)')
       end
       if t == "string" then
         v = v

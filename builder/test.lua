@@ -11,7 +11,7 @@ local s = require("serializer")
 local m = model.load("builder/models/simplehouse.model")
 
 
---print(s.serialize(m))
+print(s.serialize(m))
 local l = m.levels[1]
 
 --print("level layout")
@@ -50,10 +50,10 @@ mockInv.slots[2] = {
   size = 64
 }
 
-local map = { glass = 0, cobblestone = 0, test = 0, marble = 1000 }
-inventory.setCountOfItems(map)
-print(s.serialize(map))
-print(inventory.getCountOfItems({"cobblestone"}), inventory.getCountOfItems({"glass"}))
+--local map = { glass = 0, cobblestone = 0, test = 0, marble = 1000 }
+--inventory.setCountOfItems(map)
+--print(s.serialize(map))
+--print(inventory.getCountOfItems({"cobblestone"}), inventory.getCountOfItems({"glass"}))
 
 --local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
 --b:start()

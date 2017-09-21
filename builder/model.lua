@@ -2,6 +2,12 @@ local serializer = require("serializer")
 
 local model = {}
 
+local magicChars = "().%+-*?[^$"
+local magicCharsMap = {}
+for i=1,string.len(magicChars) do
+  magicCharsMap[string.sub(magicChars, i, i)] = true
+end
+
 local function at(arr, rc)
   local s = arr[rc[1]]
   if s == nil then return "-" end
@@ -211,6 +217,21 @@ function model.fromLoadedModel(m)
       -- hallowed, '.' for unvisited/unknown)
       -- we use `D` because it kinda stands for 'done' but mainly cuz it's the letter closest to looking like a block
       l.statuses[i] = string.gsub(row, "[^_]", ".")
+
+      -- count how many of each material this level needs
+      l.matCounts = {}
+      for matKey,matName in pairs(m.mats) do
+        local matCount = 0
+        for _,blockRow in ipairs(l.blocks) do
+          local patternToMatch = matKey
+          if magicCharsMap[patternToMatch] then
+            patternToMatch = "%" .. patternToMatch
+          end
+          local _,count = string.gsub(blockRow, patternToMatch, "")
+          matCount = matCount + count
+        end
+        l.matCounts[matName] = matCount
+      end
     end
 
     -- expand out the levels that have a span
@@ -219,6 +240,15 @@ function model.fromLoadedModel(m)
     for _=1,span do
       etlLevels[#etlLevels + 1] = serializer.clone(l)
     end
+
+    -- add up total mat cost for the whole model
+    m.matCounts = {}
+    for _,matName in pairs(m.mats) do
+      for _,etlLevel in ipairs(etlLevels) do
+        m.matCounts[matName] = (m.matCounts[matName] or 0) + etlLevel.matCounts[matName]
+      end
+    end
+
   end
 
   m.levels = etlLevels
