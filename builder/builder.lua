@@ -538,7 +538,7 @@ elseif args[1] == 'start' then
     b:start()
   end
 elseif args[1] == 'resume' then
-  local b = builder.new()
+  local b = builder.new({options = options})
   if b:loadState() then
     b:start()
   else
