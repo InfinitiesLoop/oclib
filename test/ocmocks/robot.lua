@@ -45,28 +45,28 @@ function robot.select(slot)
 end
 function robot.place()
   local stack = mockInv.get()
-  if not stack or stack.count <= 0 then
+  if not stack or stack.size <= 0 then
     print("robot: place (fail)")
     return false, "empty slot"
   end
-  stack.count = stack.count - 1
-  if stack.count <= 0 then
+  stack.size = stack.size - 1
+  if stack.size <= 0 then
     mockInv.slots[mockInv.selected] = nil
   end
-  print("robot: place " .. stack.name .. "(" .. stack.count .. ")")
+  print("robot: place " .. stack.name .. "(" .. stack.size .. ")")
   return true
 end
 function robot.placeUp()
   local stack = mockInv.get()
-  if not stack or stack.count <= 0 then
+  if not stack or stack.size <= 0 then
     print("robot: placeUp (fail)")
     return false, "empty slot"
   end
-  stack.count = stack.count - 1
-  if stack.count <= 0 then
+  stack.size = stack.size - 1
+  if stack.size <= 0 then
     mockInv.slots[mockInv.selected] = nil
   end
-  print("robot: placeUp " .. stack.name .. "(" .. stack.count .. ")")
+  print("robot: placeUp " .. stack.name .. "(" .. stack.size .. ")")
   return true
 end
 
