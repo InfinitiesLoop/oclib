@@ -379,4 +379,18 @@ function inventory.setCountOfItems(itemMap)
   end
 end
 
+function inventory.hasMaterials(itemMap)
+  local counts = {}
+  for k,_ in pairs(itemMap) do
+    counts[k] = 0
+  end
+  inventory.setCountOfItems(counts)
+  for k,v in pairs(counts) do
+    if v == 0 then
+      return false, k
+    end
+  end
+  return true
+end
+
 return inventory

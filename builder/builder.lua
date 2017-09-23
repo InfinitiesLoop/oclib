@@ -358,8 +358,12 @@ function Builder:dumpInventoryAndResupply()
     maxAttempts = maxAttempts - 1
     local result = self.move:findInventory(-2, 5, true, 16)
     if result == nil or result <= 0 then
-      -- no inventory found within 5 blocks so we're done here
-      return false
+      -- no inventory found within 5 blocks so we're done here.
+      -- but, its ok if our inventory is not full and we have at least 1
+      -- block of each required material...
+      local isLocalFull = inventory.isLocalFull()
+      local hasMats = inventory.hasMaterials(self.options.loadedModel.matCounts)
+      return not isLocalFull and hasMats
     end
 
     -- remove excess materials that we probably picked up while building...
