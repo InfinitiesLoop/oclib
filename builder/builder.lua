@@ -202,7 +202,7 @@ function Builder:buildBlock(level, buildPoint)
   if (blockName and blockName ~= "!air") then
     if not inventory.selectItem(blockName) then
       -- we seem to be out of this material
-      return false
+      return false, "no more " .. blockName
     end
     local result, reason = robot.place()
     if not result then
@@ -414,7 +414,9 @@ function Builder:iterate()
     end
     firstLevel = false
 
-    if not self:buildCurrentLevel() then
+    local buildResult, reason = self:buildCurrentLevel()
+    if not buildResult then
+      print("Problem building this level: " .. reason)
       return self:backToStart()
     end
   until self.move.posY == 1 -- todo actually check on the robot start point instead of assuming lvl 1
