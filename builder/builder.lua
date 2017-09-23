@@ -382,6 +382,11 @@ function Builder:dumpInventoryAndResupply()
       inventory.pickUpFreshTools(sides.bottom, self.toolName)
     end
 
+    if not desupplied then
+      -- if we couldn't desupply, it's ok as long as we have inventory space available
+      desupplied = inventory.isLocalFull()
+    end
+
     -- are we good?
     if desupplied and not hasZeroOfSomething then
       return true
