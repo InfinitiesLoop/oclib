@@ -1,9 +1,9 @@
 title:string=Simple House
 author:string=InfinitiesLoop
 mats:table={
-  x:string=minecraft:cobblestone
-  m:string=minecraft:marble
-  g:string=minecraft:glass
+  x:string=cobblestone
+  m:string=marble
+  g:string=glass
 }
 levels:list=[
   table={
