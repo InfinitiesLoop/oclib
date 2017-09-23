@@ -384,7 +384,7 @@ function Builder:dumpInventoryAndResupply()
 
     if not desupplied then
       -- if we couldn't desupply, it's ok as long as we have inventory space available
-      desupplied = inventory.isLocalFull()
+      desupplied = not inventory.isLocalFull()
     end
 
     -- are we good?
