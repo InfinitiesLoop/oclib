@@ -15,11 +15,11 @@ local m = model.load("builder/models/simplehouse.model")
 print(s.serialize(m))
 local l = m.levels[1]
 
---print("level layout")
---print(s.serialize(l.blocks))
+print("level layout")
+print(s.serialize(l.blocks))
 
---print("bot starts at " .. model.pointStr(l.dropPoint))
---print("")
+print("bot starts at " .. model.pointStr(l.dropPoint))
+print("")
 --[[
 local currentPoint = l.dropPoint
 repeat
@@ -38,33 +38,34 @@ repeat
 until not result
 --]]
 
---[[
+
 mockInv.fillAll({
   name = "minecraft:cobblestone",
   size = 64
 })
 mockInv.slots[1] = {
-  name = "minecraft:glass",
+  name = "minecraft:dirt",
   size = 64
 }
-mockInv.slots[2] = {
-  name = "minecraft:marble",
-  size = 64
-}--]]
+
+
 
 mockInv.setMockWorldInventory(sides.bottom, {
-  { name = "cobblestone", size = 64 },
-  { name = "cobblestone", size = 64 },
-  { name = "glass", size = 64 }
-})
+  { name = "minecraft:cobblestone", size = 64 },
+  { name = "minecraft:marble", size = 64 },
+  { name = "minecraft:glass", size = 64 },
+  { name = "minecraft:dirt", size = 64 },
+  { name = "minecraft:dirt", size = 64 },
+  { name = "minecraft:dirt", size = 64 }
+}, 32)
 
-local counts, hasZero = inventory.resupply(sides.bottom, { cobblestone = 400, glass = 100, marble = 100 }, 200)
-print(s.serialize(counts), hasZero)
+--local counts, hasZero = inventory.resupply(sides.bottom, { cobblestone = 400, glass = 100, marble = 100 }, 200)
+--print(s.serialize(counts), hasZero)
 
 --local map = { glass = 0, cobblestone = 0, test = 0, marble = 1000 }
 --inventory.setCountOfItems(map)
 --print(s.serialize(map))
 --print(inventory.getCountOfItems({"cobblestone"}), inventory.getCountOfItems({"glass"}))
 
---local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
---b:start()
+local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
+b:start()

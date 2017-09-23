@@ -7,6 +7,7 @@ local pathing = require("builder/pathing")
 local smartmove = require("smartmove")
 local inventory = require("inventory")
 local util = require("util")
+local sides = require("sides")
 local modem = component.modem
 local robot
 local ic
@@ -203,15 +204,18 @@ function Builder:buildBlock(level, buildPoint)
       -- we seem to be out of this material
       return false
     end
-  end
-  local result, reason = robot.place()
-  if not result then
-    return false, "could not place block " .. blockName .. ": " .. reason
+    local result, reason = robot.place()
+    if not result then
+      return false, "could not place block " .. blockName .. ": " .. reason
+    end
   end
 
   -- mark that we have indeed built this point
   model.set(level.statuses, buildPoint, 'D')
-  self:saveState()
+  if blockName ~= "!air" then
+    self.options.loadedModel.matCounts[blockName] = self.options.loadedModel.matCounts[blockName] - 1
+    self:saveState()
+  end
 
   return true
 end
@@ -283,6 +287,54 @@ function Builder:followPath(path, isReturningToStart)
   return true
 end
 
+function Builder:dumpInventoryAndResupply()
+  -- TODO: this seems to try and dump stuff i already picked up.. need to rethink it.
+  local maxAttempts = 10
+  local missingMaterial = nil
+  while maxAttempts > 0 do
+    -- find a chest...
+    maxAttempts = maxAttempts - 1
+    local result = self.move:findInventory(-2, 5, true, 16)
+    if result == nil or result <= 0 then
+      -- no inventory found within 5 blocks so we're done here
+      return false
+    end
+
+    -- remove excess materials that we probably picked up while building...
+    local desupplied = inventory.desupply(sides.bottom, self.options.loadedModel.matCounts, 128)
+    -- pick up any materials we are missing, if any are present
+    local _, hasZeroOfSomething = inventory.resupply(sides.bottom, self.options.loadedModel.matCounts, 128)
+
+    if not desupplied then
+      -- maybe now that we picked stuff up we can successfully desupply again
+      desupplied = inventory.desupply(sides.bottom, self.options.loadedModel.matCounts, 128)
+    end
+
+    -- drop broken tools and pick up fresh ones, if we had a tool to begin with
+    -- we aren't tracking if this succeeds or not, because combined with the de/resupply stuff
+    -- its kinda complex. If we end up without a tool we may not even need one, so I dunno.
+    if self.toolName then
+      inventory.dropBrokenTools(sides.bottom, self.toolName)
+    end
+    if self.toolName then
+      inventory.pickUpFreshTools(sides.bottom, self.toolName)
+    end
+
+    -- are we good?
+    if desupplied and not hasZeroOfSomething then
+      return true
+    end
+    missingMaterial = missingMaterial or hasZeroOfSomething
+
+    -- hmm, go over to the next chest then.
+  end
+
+  if missingMaterial then
+    print("I seem to be fresh out of " .. missingMaterial)
+  end
+  return false
+end
+
 function Builder:backToStart() --luacheck: no unused args
   -- something went wrong the robot needs to get back home (charge level, etc)
   -- first thing we need to do is get to the droppoint for the level we are on.
@@ -299,6 +351,21 @@ function Builder:backToStart() --luacheck: no unused args
     end
   end
 
+  local posX = self.move.posX
+  local posZ = self.move.posZ
+  local dumped = self:dumpInventoryAndResupply()
+  if not dumped then
+    print("Problem dumping inventory or picking up supplies.")
+    self.move:moveToXZ(posX, posZ)
+    self.move:faceDirection(self.originalOrient)
+    return false
+  end
+  if not self.move:moveToXZ(posX, posZ) then
+    print("Could not dump inventory, resupply, and return safely.")
+    self.move:faceDirection(self.originalOrient)
+    return false
+  end
+
   -- just to look nice and make restarts easy to deal with.
   self.move:faceDirection(self.originalOrient)
 
@@ -309,19 +376,27 @@ function Builder:backToStart() --luacheck: no unused args
     return false
   end
 
-  -- things we need to worry about:
-  -- 1. ran out of a specific material
-  -- 2. might want to restock on materials we didn't run out of
-  -- 3. inventory got full from clearing blocks
-  -- 4. tool broke from clearing blocks
-  -- 5. when restocking we dont want one item type to starve other types if invenotyr isn't full enough
-
-  -- todo: inventory stuff, tools, etc
-
   return true
 end
 
 function Builder:iterate()
+
+  -- before we begin, do a resupply run.
+  local posX = self.move.posX
+  local posZ = self.move.posZ
+  local dumped = self:dumpInventoryAndResupply()
+  if not dumped then
+    print("Problem dumping inventory or picking up supplies.")
+    self.move:moveToXZ(posX, posZ)
+    self.move:faceDirection(self.originalOrient)
+    return false
+  end
+  if not self.move:moveToXZ(posX, posZ) then
+    print("Could not dump inventory, resupply, and return safely.")
+    self.move:faceDirection(self.originalOrient)
+    return false
+  end
+
   if not self:gotoNextBuildLevel() then
     print("Could not get to the next level to build.")
     return self:backToStart()

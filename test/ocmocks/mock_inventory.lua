@@ -13,8 +13,13 @@ function inv.fillAll(stack)
   end
 end
 
-function inv.setMockWorldInventory(side, contents)
+function inv.setMockWorldInventory(side, contents, numSlots)
   worldInv[side] = contents
+  if numSlots then
+    for i=1,numSlots do
+      contents[i] = contents[i] or false
+    end
+  end
 end
 function inv.getMockWorldInventory(side)
   return worldInv[side]
@@ -27,7 +32,7 @@ function inv.addStack(putStack, slot)
   slot = slot or inv.selected
   local stack = inv.get(slot)
   if not stack then
-    inv.slots[inv.selected] = putStack
+    inv.slots[slot] = {name=putStack.name,size=putStack.size}
     return true
   elseif stack.name == putStack.name then
     stack.size = stack.size + putStack.size

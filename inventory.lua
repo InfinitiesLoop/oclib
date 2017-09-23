@@ -12,7 +12,7 @@ function inventory.isOneOf(item, checkList)
   end
   for _,chk in ipairs(checkList) do
     if chk == "!tool" then
-      if item.maxDamage > 0 then
+      if type(item.maxDamage) == "number" and item.maxDamage > 0 then
         return true, chk
       end
     elseif string.match(item.name, chk) then
@@ -144,7 +144,7 @@ function inventory.toolIsBroken()
 end
 
 function inventory.stackIsItem(stack, nameOrPattern)
-  return stack ~= nil and (stack.name == nameOrPattern or string.match(stack.name, nameOrPattern))
+  return stack and (stack.name == nameOrPattern or string.match(stack.name, nameOrPattern))
 end
 
 function inventory.pickUpFreshTools(sideOfRobot, toolName)
@@ -254,8 +254,6 @@ function inventory.equipFreshTool(itemName)
   return false
 end
 
-
-
 function inventory.resupply(side, maximumCounts, globalMax)
   local counts = {}
   side = side or sides.bottom
@@ -295,13 +293,66 @@ function inventory.resupply(side, maximumCounts, globalMax)
 
   local hasZeroCount
   for k,c in pairs(counts) do
-    if c == 0 then
+    if c == 0 and maximumCounts[k] > 0 then
       hasZeroCount = k
     end
   end
 
   return counts, hasZeroCount
 end
+
+function inventory.desupply(side, maximumCounts, globalMax)
+  local counts = {}
+  side = side or sides.bottom
+  local size = ic().getInventorySize(side)
+  if size == nil then
+    return false
+  end
+
+  for k,_ in pairs(maximumCounts) do
+    counts[k] = 0
+  end
+  inventory.setCountOfItems(counts)
+  local matList = util.tableKeys(counts)
+  local couldNotDrop = false
+
+  for i=1,robot().inventorySize() do
+    local stack = ic().getStackInInternalSlot(i)
+    if stack ~= nil then
+      -- is this any of the materials we need?
+      local isMat, whichMat = inventory.isOneOf(stack, matList)
+      if not isMat then
+        if not inventory.isOneOf(stack, {"!tool"}) then
+          -- not a mat we care about and not a tool so we can just drop all of it
+          local dropped = robot().dropDown() -- todo: hard coded direction
+          couldNotDrop = couldNotDrop or not dropped
+        end
+      else
+        -- This is a mat we care about. We should only drop some if we have a surplus.
+        local max = math.min(globalMax, maximumCounts[whichMat])
+        local surplus = counts[whichMat] - max
+        if surplus > 0 then
+          -- we have too may!
+          local before = stack.size
+          robot().select(i)
+          local dropped = robot().dropDown(surplus) -- todo: hard coded direction
+          couldNotDrop = couldNotDrop or not dropped
+          stack = ic().getStackInInternalSlot(i)
+          local taken
+          if not stack then
+            taken = before
+          else
+            taken = before - stack.size
+          end
+          -- we dropped `taken` amount so subject that from what we have
+          counts[whichMat] = counts[whichMat] - taken
+        end
+      end
+    end
+  end
+  return not couldNotDrop
+end
+
 
 -- determine how many items that match the given list the robot currently has
 function inventory.getCountOfItems(itemList)

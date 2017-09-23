@@ -1,4 +1,5 @@
 local mockInv = require("test/ocmocks/mock_inventory")
+local sides = require("sides")
 local robot = {}
 
 function robot.detect()
@@ -43,6 +44,14 @@ function robot.select(slot)
   print("robot: select " .. slot)
   mockInv.selected = slot
 end
+function robot.count(slot)
+  local stack = mockInv.slots[slot or mockInv.selected]
+  if not stack then
+    return 0
+  else
+    return stack.size
+  end
+end
 function robot.place()
   local stack = mockInv.get()
   if not stack or stack.size <= 0 then
@@ -68,6 +77,41 @@ function robot.placeUp()
   end
   print("robot: placeUp " .. stack.name .. "(" .. stack.size .. ")")
   return true
+end
+
+function robot.dropDown(count)
+  local toDrop = mockInv.get()
+  if not toDrop then
+    return false
+  end
+  count = count or toDrop.size
+
+  local i = mockInv.getMockWorldInventory(sides.down)
+  if not i then
+    return false -- todo: well I guess it could go into the world but i usually dont want that
+  end
+  for slot=1,#i do
+    local stack = i[slot]
+    if not stack then
+      i[slot] = {name=toDrop.name,size=count}
+      toDrop.size = toDrop.size - count
+      if toDrop.size <= 0 then
+        mockInv.slots[mockInv.selected] = nil
+      end
+      print("robot: dropDown of " .. toDrop.name .. " (" .. count .. ") success")
+      return true
+    elseif stack.name == toDrop.name then
+      stack.size = stack.size + count
+      toDrop.size = toDrop.size - count
+      if toDrop.size <= 0 then
+        mockInv.slots[mockInv.selected] = nil
+      end
+      print("robot: dropDown of " .. toDrop.name .. " (" .. count .. ") success")
+      return true -- todo: bleed over if stack size > 64
+    end
+  end
+  print("robot: dropDown of " .. toDrop.name .. " (" .. count .. ") failed")
+  return false
 end
 
 package.preload.robot = function() return robot end
