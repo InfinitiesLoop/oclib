@@ -15,8 +15,46 @@ local ic
 local builder = {}
 local Builder = {}
 
---local NEEDS_CHARGE_THRESHOLD = 0.1
+local NEEDS_CHARGE_THRESHOLD = 0.25
 local FULL_CHARGE_THRESHOLD = 0.95
+
+function Builder:statusCheck()
+  self.eventDispatcher:doEvents()
+  if self.returnRequested then
+    return false, "Return was requested by my master"
+  end
+  if self.toolName and inventory.toolIsBroken() then
+    if not inventory.equipFreshTool(self.toolName) then
+      return false, "Lost durability on tool and can't find a fresh one in my inventory!"
+    end
+  end
+  if inventory.isLocalFull() then
+    -- inventory is full but maybe we can dump some trash to make room
+    if self.options.trashCobble then
+      --todo: more specific so we dont drop mossy cobble, for example
+      inventory.trash(sides.bottom, {"cobblestone","netherrack"})
+      -- if it is STILL full then we're done here
+      if inventory.isLocalFull() then
+        return false, "Inventory is full!"
+      end
+    else
+      return false, "Inventory is full!"
+    end
+  end
+  -- need charging?
+  if util.needsCharging(NEEDS_CHARGE_THRESHOLD) then
+    return false, "Charge level is low!"
+  end
+  return true
+end
+
+function Builder:on_modem_message(localAddr, remoteAddr, port, distance, command) --luacheck: no unused args
+  print("received message from " .. remoteAddr .. ", distance of " .. distance .. ": " .. command)
+  if command == "return" then
+    self.returnRequested = true
+    modem.send(remoteAddr, port, "returning")
+  end
+end
 
 function Builder:start()
   if not self.options.loadedModel then
@@ -52,7 +90,7 @@ function Builder:start()
 
   -- set up a smartmove object that is configured to indicate we are standing
   -- where the robot's starting point and orientation is.
-  self.move = smartmove:new()
+  self.move = smartmove:new({ moveTimeout = 10 })
   local startPoint = self.options.loadedModel.levels[1].startPoint
   self.move.posX = -startPoint[1]
   self.move.posZ = startPoint[2]
@@ -128,6 +166,9 @@ function Builder:gotoNextLevelDown(isReturningToStart)
   -- begin.
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   local nextLevel = self.options.loadedModel.levels[self.move.posY - 1]
+  if not isReturningToStart then
+    print("Buttoning up level " .. self.move.posY .. " and starting on level " .. self.move.posY - 1)
+  end
   local buildPoint = {-self.move.posX, self.move.posZ}
   if not self.move:down() then
     return false, "could not move downward"
@@ -137,6 +178,9 @@ function Builder:gotoNextLevelDown(isReturningToStart)
     if not self:buildBlockUp(thisLevel, buildPoint) then
       return false, "could not build final block on level " .. (self.move.posY+1) ..
         " point " .. model.pointStr(buildPoint)
+    else
+      thisLevel.isComplete = true
+      self:saveState()
     end
   end
 
@@ -149,6 +193,12 @@ function Builder:gotoNextLevelDown(isReturningToStart)
 end
 
 function Builder:ensureClearAdj(p)
+  -- required status check
+  local status, reason = self:statusCheck()
+  if not status then
+    return false, reason
+  end
+
   if not model.isClear(self.options.loadedModel.levels[self.move.posY], p) then
     -- make sure the block we're about to move into is cleared.
     self.move:faceXZ(-p[1], p[2])
@@ -169,6 +219,12 @@ function Builder:ensureClearAdj(p)
 end
 
 function Builder:ensureClearUp()
+  -- required status check
+  local status, reason = self:statusCheck()
+  if not status then
+    return false, reason
+  end
+
   local upperLevel = self.options.loadedModel.levels[self.move.posY + 1]
   if not upperLevel then
     error("Tried to clearUp but no level above us at posY=" .. self.move.posY)
@@ -272,6 +328,12 @@ function Builder:followPath(path, isReturningToStart)
   -- follow the given path, clearing blocks if necessary as we go,
   -- and saving the state of those blocks
   for _,p in ipairs(path) do
+    -- required status check
+    local status, reason = self:statusCheck()
+    if not status then
+      return false, reason
+    end
+
     --print(model.pointStr(p), self.move.orient)
     if not isReturningToStart then
       -- when returning to start we dont want to do ensureClear
@@ -380,7 +442,6 @@ function Builder:backToStart() --luacheck: no unused args
 end
 
 function Builder:iterate()
-
   -- before we begin, do a resupply run.
   local posX = self.move.posX
   local posZ = self.move.posZ
@@ -427,6 +488,7 @@ end
 
 function Builder:applyDefaults() --luacheck: no unused args
   self.options.port = tonumber(self.options.port or "888")
+  self.options.trashCobble = self.options.trashCobble == true or self.options.trashCobble == "true"
 end
 
 function Builder:saveState()
