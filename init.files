@@ -11,5 +11,6 @@ eventDispatcher.lua
 builder/model.lua
 builder/pathing.lua
 builder/test.lua
+builder/builder.lua
 builder/models/simplehouse.model
 builder/models/provingground.model
