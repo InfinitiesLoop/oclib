@@ -51,7 +51,7 @@ mockInv.slots[1] = {
 
 
 mockInv.setMockWorldInventory(sides.bottom, {
-  { name = "minecraft:cobblestone", size = 64 },
+  { name = "minecraft:cobblestone", size = 6400 },
   { name = "minecraft:marble", size = 79 },
   { name = "minecraft:glass", size = 64 },
   { name = "minecraft:dirt", size = 64 },
@@ -67,6 +67,6 @@ mockInv.setMockWorldInventory(sides.bottom, {
 --print(s.serialize(map))
 --print(inventory.getCountOfItems({"cobblestone"}), inventory.getCountOfItems({"glass"}))
 
-local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
+local b = builder.new({options = { model = "builder/models/sphere_25.model" } })
 b:start()
 print(s.serialize(b.options.loadedModel.matCounts))
