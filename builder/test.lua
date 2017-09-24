@@ -52,7 +52,7 @@ mockInv.slots[1] = {
 
 mockInv.setMockWorldInventory(sides.bottom, {
   { name = "minecraft:cobblestone", size = 64 },
-  { name = "minecraft:marble", size = 64 },
+  { name = "minecraft:marble", size = 79 },
   { name = "minecraft:glass", size = 64 },
   { name = "minecraft:dirt", size = 64 },
   { name = "minecraft:dirt", size = 64 },
@@ -69,3 +69,4 @@ mockInv.setMockWorldInventory(sides.bottom, {
 
 local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
 b:start()
+print(s.serialize(b.options.loadedModel.matCounts))

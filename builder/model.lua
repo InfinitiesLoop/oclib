@@ -64,7 +64,7 @@ local function isClear(level, point)
   return status == "O" or status == "D"
 end
 
-local function blockAt(model, level, point)
+local function blockAt(m, level, point)
   if not isBuildable(level, point) then
     return nil
   end
@@ -72,7 +72,7 @@ local function blockAt(model, level, point)
   if moniker == ' ' then
     return "!air"
   end
-  return model.mats[moniker] or "!air"
+  return m.mats[moniker] or "!air"
 end
 
 local function westOf(point)
@@ -108,20 +108,21 @@ local function adjacents(l, point)
   return adjs
 end
 
-local function identifyStartPoint(firstLevel)
-  for i,row in ipairs(firstLevel.blocks) do
+local function identifyStartPoint(m, level)
+  for i,row in ipairs(level.blocks) do
     local result = string.find(row, "[v^<>]")
     if result then
-      firstLevel.startPoint = {i,result,string.sub(row, result, result)}
-      firstLevel.dropPoint = {i,result}
+      level.startPoint = {i, result, level.num, string.sub(row, result, result)}
+      m.startPoint = level.startPoint
+      level.dropPoint = {i,result}
       return true
     end
   end
   return false
 end
 
-local function identifyDropPoints(m)
-  for i=2,#m.levels do
+local function identifyDropPointsAbove(m)
+  for i=m.startPoint[3]+1,#m.levels do
     local level = m.levels[i]
     local lowerLevel = m.levels[i-1]
 
@@ -134,6 +135,38 @@ local function identifyDropPoints(m)
       local ic = 1
       while ic <= string.len(level.blocks[ir]) and not found do
         if isBuildable(level, {ir, ic}) and isBuildable(lowerLevel, {ir, ic}) then
+          found = {ir, ic}
+        end
+        ic = ic + 1
+      end
+      ir = ir + 1
+    end
+
+    if not found then
+      -- uh oh, this means there's no way for the bot to get from a level to the next one down
+      -- without having to break an unbuildable block
+      return false, "Drop point not possible on level " .. i
+    end
+
+    level.dropPoint = found
+  end
+  return true
+end
+
+local function identifyDropPointsBelow(m)
+  for i=1,m.startPoint[3]-1 do
+    local level = m.levels[i]
+    local upperLevel = m.levels[i+1]
+
+    -- find the first buildable block in this level that is under a buildable block of the level above it.
+    -- it is that block in which the robot can move from the lower level into the upper one in order to
+    -- complete that level, or to navigate back to the start point for recharging.
+    local ir = 1
+    local found = false
+    while ir <= #level.blocks and not found do
+      local ic = 1
+      while ic <= string.len(level.blocks[ir]) and not found do
+        if isBuildable(level, {ir, ic}) and isBuildable(upperLevel, {ir, ic}) then
           found = {ir, ic}
         end
         ic = ic + 1
@@ -239,6 +272,7 @@ function model.fromLoadedModel(m)
     l.span = nil
     for _=1,span do
       etlLevels[#etlLevels + 1] = serializer.clone(l)
+      etlLevels[#etlLevels].num = #etlLevels
     end
 
     -- add up total mat cost for the whole model
@@ -254,11 +288,21 @@ function model.fromLoadedModel(m)
   m.levels = etlLevels
 
   -- identify where the robot is supposed to start out
-  if not identifyStartPoint(m.levels[1]) then
-    error("Could not find the robots start point. Be sure the first level has one of: v, ^, <, >")
+  local found = false
+  local i = 1
+  while not found and i <= #m.levels do
+    found = identifyStartPoint(m, m.levels[i])
+    i = i + 1
+  end
+  if not found then
+    error("Could not find the robots start point. Be sure there is a level with one of: v, ^, <, >")
   end
   -- identify drop points: where the robot can move from level to level safely
-  local result, err = identifyDropPoints(m)
+  local result, err = identifyDropPointsAbove(m)
+  if not result then
+    error(err)
+  end
+  result, err = identifyDropPointsBelow(m)
   if not result then
     error(err)
   end
@@ -267,15 +311,24 @@ function model.fromLoadedModel(m)
   calculateDistances(m)
 
   -- the robot's starting point by definition is already complete
-  set(m.levels[1].statuses, m.levels[1].startPoint, 'D')
+  set(m.levels[m.startPoint[3]].statuses, m.startPoint, 'D')
 
   return m
 end
 
 function model.topMostIncompleteLevel(m)
-  for i=#m.levels,1,-1 do
+  for i=#m.levels,m.startPoint[3]+1,-1 do
     if not m.levels[i].isComplete then
-      return i, m.levels[i]
+      return m.levels[i]
+    end
+  end
+  return nil
+end
+
+function model.bottomMostIncompleteLevel(m)
+  for i=1,m.startPoint[3]-1 do
+    if not m.levels[i].isComplete then
+      return m.levels[i]
     end
   end
   return nil

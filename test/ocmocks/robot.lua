@@ -8,6 +8,9 @@ end
 function robot.detectUp()
   return false, "air"
 end
+function robot.detectDown()
+  return false, "air"
+end
 function robot.forward()
   print("robot: forward")
   return true
@@ -76,6 +79,19 @@ function robot.placeUp()
     mockInv.slots[mockInv.selected] = nil
   end
   print("robot: placeUp " .. stack.name .. "(" .. stack.size .. ")")
+  return true
+end
+function robot.placeDown()
+  local stack = mockInv.get()
+  if not stack or stack.size <= 0 then
+    print("robot: placeDown (fail)")
+    return false, "empty slot"
+  end
+  stack.size = stack.size - 1
+  if stack.size <= 0 then
+    mockInv.slots[mockInv.selected] = nil
+  end
+  print("robot: placeDown " .. stack.name .. "(" .. stack.size .. ")")
   return true
 end
 

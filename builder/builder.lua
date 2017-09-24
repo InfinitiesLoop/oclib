@@ -91,58 +91,99 @@ function Builder:start()
   -- set up a smartmove object that is configured to indicate we are standing
   -- where the robot's starting point and orientation is.
   self.move = smartmove:new({ moveTimeout = 10 })
-  local startPoint = self.options.loadedModel.levels[1].startPoint
+  local startPoint = self.options.loadedModel.startPoint
   self.move.posX = -startPoint[1]
   self.move.posZ = startPoint[2]
-  self.move.posY = 1
-  -- the 3rd item of the startpoint vector is which way the robot is facing.
+  self.move.posY = startPoint[3]
+  -- the 4th item of the startpoint vector is which way the robot is facing.
   -- we need to adjust smartmove's orientation to match since it defaults to `1` (+x)
-  if startPoint[3] == 'v' then
+  if startPoint[4] == 'v' then
     self.move.orient = -1
-  elseif startPoint[3] == '^' then
+  elseif startPoint[4] == '^' then
     self.move.orient = 1
-  elseif startPoint[3] == '<' then
+  elseif startPoint[4] == '<' then
     self.move.orient = -2
-  elseif startPoint[3] == '>' then
+  elseif startPoint[4] == '>' then
     self.move.orient = 2
   end
   self.originalOrient = self.move.orient -- just so we know which way to face when shutting down
   -- there, now smartmove's state corresponds to our location within the level and the direction
   -- we are facing.
 
-  local result
-  local isDone
-  result, isDone = self:iterate()
-  while (result and not isDone and not self.returnRequested) do
-    print("Headed out again!")
-    result, isDone = self:iterate()
+  repeat
+    print("I'm off to build stuff, wish me luck!")
+    local result, reason = self:iterate()
+    if not result then
+      print("Oh no! " .. reason)
+      result, reason = self:backToStart()
+      if not result then
+        print("I just can't go on :( " .. reason)
+        print("Sorry I let you down, master.")
+        return false
+      end
+    else
+      print("Job's done! Do you like it?")
+      return true
+    end
+  until self.returnRequested
+
+  if self.returnRequested then
+    print("Yes, sir?")
   end
 
-  if isDone then
-    print("Build complete.")
-  elseif self.returnRequested then
-    print("You called, master?")
-  elseif not result then
-    print("Halting.")
-  end
-
-  return isDone or false
+  return false
 end
 
-function Builder:gotoNextBuildLevel()
-  -- we build from top down so find the top most level that isn't complete
-  local m = self.options.loadedModel
-  local levelNum, level = model.topMostIncompleteLevel(m)
-  if not level then
-    return false
+function Builder:completeLevelDown()
+  -- we can assume we're standing on the droppoint of the level we want to exit.
+  -- so just move downward, then 'build up' to complete the level above. then
+  -- we should navigate to the droppoint of the new level from which building can
+  -- begin.
+  local thisLevel = self.options.loadedModel.levels[self.move.posY]
+  local nextLevel = self.options.loadedModel.levels[self.move.posY - 1]
+  print("Buttoning up level " .. thisLevel.num .. " and starting on level " .. nextLevel.num)
+  local buildPoint = {-self.move.posX, self.move.posZ}
+  if not self:ensureClearDown() or not self.move:down() then
+    return false, "could not move downward"
   end
 
-  while self.move.posY < levelNum do
-    if not self:gotoNextLevelUp() then
-      return false
-    end
+  if not self:buildBlockUp(thisLevel, buildPoint) then
+    return false, "could not build final block on level " .. nextLevel.num ..
+      " point " .. model.pointStr(buildPoint)
+  else
+    thisLevel.isComplete = true
+    self:saveState()
   end
-  return true
+
+  -- we're on the level, lets get to the droppoint for it
+  local path = pathing.pathToDropPoint(nextLevel, thisLevel.dropPoint)
+  return self:followPath(path)
+end
+
+function Builder:completeLevelUp()
+  -- we can assume we're standing on the droppoint of the level we want to exit.
+  -- so just move upward, then 'build down' to complete the level below. then
+  -- we should navigate to the droppoint of the new level from which building can
+  -- begin.
+  local thisLevel = self.options.loadedModel.levels[self.move.posY]
+  local nextLevel = self.options.loadedModel.levels[self.move.posY + 1]
+  print("Buttoning up level " .. thisLevel.num .. " and starting on level " .. nextLevel.num)
+  local buildPoint = {-self.move.posX, self.move.posZ}
+  if not self:ensureClearUp() or not self.move:up() then
+    return false, "could not move upward"
+  end
+
+  if not self:buildBlockDown(thisLevel, buildPoint) then
+    return false, "could not build final block on level " .. nextLevel.num ..
+      " point " .. model.pointStr(buildPoint)
+  else
+    thisLevel.isComplete = true
+    self:saveState()
+  end
+
+  -- we're on the level, lets get to the droppoint for it
+  local path = pathing.pathToDropPoint(nextLevel, thisLevel.dropPoint)
+  return self:followPath(path)
 end
 
 function Builder:gotoNextLevelUp()
@@ -159,34 +200,15 @@ function Builder:gotoNextLevelUp()
   return true
 end
 
-function Builder:gotoNextLevelDown(isReturningToStart)
-  -- we can assume we're standing on the droppoint of the level we want to exit.
-  -- so just move downward, then 'build up' to complete the level above. then
-  -- we should navigate to the droppoint of the new level from which building can
-  -- begin.
+function Builder:gotoNextLevelDown()
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   local nextLevel = self.options.loadedModel.levels[self.move.posY - 1]
-  if not isReturningToStart then
-    print("Buttoning up level " .. self.move.posY .. " and starting on level " .. self.move.posY - 1)
-  end
-  local buildPoint = {-self.move.posX, self.move.posZ}
-  if not self.move:down() then
-    return false, "could not move downward"
-  end
-  if not isReturningToStart then
-    -- when returning ot start we dont want to build blocks on the way
-    if not self:buildBlockUp(thisLevel, buildPoint) then
-      return false, "could not build final block on level " .. (self.move.posY+1) ..
-        " point " .. model.pointStr(buildPoint)
-    else
-      thisLevel.isComplete = true
-      self:saveState()
-    end
-  end
+  local path = pathing.pathFromDropPoint(thisLevel, nextLevel.dropPoint)
 
-  -- we're on the level, lets get to the droppoint for it
-  local path = pathing.pathToDropPoint(nextLevel, thisLevel.dropPoint)
-  if not self:followPath(path, isReturningToStart) then
+  if not self:followPath(path) then
+    return false
+  end
+  if not self:ensureClearDown() or not self.move:down() then
     return false
   end
   return true
@@ -248,6 +270,36 @@ function Builder:ensureClearUp()
   return true
 end
 
+function Builder:ensureClearDown()
+  -- required status check
+  local status, reason = self:statusCheck()
+  if not status then
+    return false, reason
+  end
+
+  local lowerLevel = self.options.loadedModel.levels[self.move.posY - 1]
+  if not lowerLevel then
+    error("Tried to clearDown but no level below us at posY=" .. self.move.posY)
+  end
+
+  local p = {-self.move.posX, self.move.posZ}
+  if not model.isClear(lowerLevel, p) then
+    -- is the spot we're about to move into occupied by something we should clear out?
+    local isBlocking, entityType = robot.detectDown()
+    if isBlocking or entityType ~= "air" then
+      local result = robot.swingDown()
+      if not result then
+        -- something is in the way and we couldnt deal with it
+        return false, "could not clear whatever is below me at " .. model.pointStr(p)
+      end
+    end
+    -- the space is clear or we just made it clear, mark it as so
+    model.set(lowerLevel.statuses, p, 'O')
+    self:saveState()
+  end
+  return true
+end
+
 function Builder:buildBlock(level, buildPoint)
   if not self:ensureClearAdj(buildPoint) then
     return false, "could not ensure buildpoint was clear at " .. model.pointStr(buildPoint)
@@ -264,14 +316,12 @@ function Builder:buildBlock(level, buildPoint)
     if not result then
       return false, "could not place block " .. blockName .. ": " .. reason
     end
+    self.options.loadedModel.matCounts[blockName] = self.options.loadedModel.matCounts[blockName] - 1
   end
 
   -- mark that we have indeed built this point
   model.set(level.statuses, buildPoint, 'D')
-  if blockName ~= "!air" then
-    self.options.loadedModel.matCounts[blockName] = self.options.loadedModel.matCounts[blockName] - 1
-    self:saveState()
-  end
+  self:saveState()
 
   return true
 end
@@ -281,12 +331,34 @@ function Builder:buildBlockUp(level, buildPoint)
   if (blockName and blockName ~= "!air") then
     if not inventory.selectItem(blockName) then
       -- we seem to be out of this material
-      return false
+      return false, "no more " .. blockName
     end
+    local result, reason = robot.placeUp()
+    if not result then
+      return false, "could not place block " .. blockName .. ": " .. reason
+    end
+    self.options.loadedModel.matCounts[blockName] = self.options.loadedModel.matCounts[blockName] - 1
   end
-  local result, reason = robot.placeUp()
-  if not result then
-    return false, "could not place block " .. blockName .. ": " .. reason
+
+  -- mark that we have indeed built this point
+  model.set(level.statuses, buildPoint, 'D')
+  self:saveState()
+
+  return true
+end
+
+function Builder:buildBlockDown(level, buildPoint)
+  local blockName = model.blockAt(self.options.loadedModel, level, buildPoint)
+  if (blockName and blockName ~= "!air") then
+    if not inventory.selectItem(blockName) then
+      -- we seem to be out of this material
+      return false, "no more " .. blockName
+    end
+    local result, reason = robot.placeDown()
+    if not result then
+      return false, "could not place block " .. blockName .. ": " .. reason
+    end
+    self.options.loadedModel.matCounts[blockName] = self.options.loadedModel.matCounts[blockName] - 1
   end
 
   -- mark that we have indeed built this point
@@ -298,6 +370,7 @@ end
 
 function Builder:buildCurrentLevel()
   local l = self.options.loadedModel.levels[self.move.posY]
+  print("Starting on level " .. l.num)
   local currentPoint = l.dropPoint
   repeat
     local result = pathing.findNearestBuildSite(l, currentPoint)
@@ -415,9 +488,9 @@ function Builder:backToStart() --luacheck: no unused args
   if not self:followPath(path, true) then
     return false, "backToStart could not get to droppoint of current level"
   end
-  -- now we just need to follow drop points down the first level
-  while self.move.posY > 1 do
-    if not self:gotoNextLevelDown(true) then
+  -- now we just need to follow drop points down the starting level
+  while self.move.posY > self.options.loadedModel.startPoint[3] do
+    if not self:gotoNextLevelDown() then
       return false, "backToStart could not navigate down a level"
     end
   end
@@ -426,25 +499,104 @@ function Builder:backToStart() --luacheck: no unused args
   local posZ = self.move.posZ
   local dumped = self:dumpInventoryAndResupply()
   if not dumped then
-    print("Problem dumping inventory or picking up supplies.")
     self.move:moveToXZ(posX, posZ)
     self.move:faceDirection(self.originalOrient)
-    return false
+    return false, "Problem dumping inventory or picking up supplies."
   end
   if not self.move:moveToXZ(posX, posZ) then
-    print("Could not dump inventory, resupply, and return safely.")
     self.move:faceDirection(self.originalOrient)
-    return false
+    return false, "Could not dump inventory, resupply, and return safely."
   end
 
   -- just to look nice and make restarts easy to deal with.
   self.move:faceDirection(self.originalOrient)
 
   -- we should be back on the charger now.
-  print("waiting for charge...")
+  print("Charging...")
   if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 600) then
-    print("waited a long time and I didn't get charged enough :(")
-    return false
+    return false, "I'm out of energy sir!"
+  end
+
+  return true
+end
+
+function Builder:buildLowerLevels()
+  local level = model.bottomMostIncompleteLevel(self.options.loadedModel)
+  if not level then
+    -- none left
+    return true
+  end
+  -- try and get to that level
+  while self.move.posY > level.num do
+    local result, reason = self:gotoNextLevelDown()
+    if not result then
+      return false, reason
+    end
+  end
+
+  -- iterate through the levels
+  local firstLevel = true
+  repeat
+    if not firstLevel then
+      local result, reason = self:completeLevelUp()
+      if not result then
+        return false, reason
+      end
+    end
+    firstLevel = false
+
+    local result, reason = self:buildCurrentLevel()
+    if not result then
+      return false, reason
+    end
+    -- go until we are just about to get to the starting level
+  until self.move.posY == self.options.loadedModel.startPoint[3] - 1
+
+  -- button up the last lower level
+  local result, reason = self:completeLevelUp()
+  if not result then
+    return false, reason
+  end
+
+  return true
+end
+
+function Builder:buildUpperLevels()
+  local level = model.topMostIncompleteLevel(self.options.loadedModel)
+  if not level then
+    -- none left
+    return true
+  end
+  -- try and get to that level
+  while self.move.posY < level.num do
+    local result, reason = self:gotoNextLevelUp()
+    if not result then
+      return false, reason
+    end
+  end
+
+  -- iterate through the levels
+  local firstLevel = true
+  repeat
+    if not firstLevel then
+      local result, reason = self:completeLevelDown()
+      if not result then
+        return false, reason
+      end
+    end
+    firstLevel = false
+
+    local result, reason = self:buildCurrentLevel()
+    if not result then
+      return false, reason
+    end
+    -- go until we are just about to get to the starting level
+  until self.move.posY == self.options.loadedModel.startPoint[3] + 1
+
+  -- button up the last upper level
+  local result, reason = self:completeLevelDown()
+  if not result then
+    return false, reason
   end
 
   return true
@@ -456,43 +608,29 @@ function Builder:iterate()
   local posZ = self.move.posZ
   local dumped = self:dumpInventoryAndResupply()
   if not dumped then
-    print("Problem dumping inventory or picking up supplies.")
     self.move:moveToXZ(posX, posZ)
     self.move:faceDirection(self.originalOrient)
-    return false
+    return false, "Problem dumping inventory or picking up supplies."
   end
   if not self.move:moveToXZ(posX, posZ) then
-    print("Could not dump inventory, resupply, and return safely.")
     self.move:faceDirection(self.originalOrient)
-    return false
+    return false, "Could not dump inventory, resupply, and return safely."
   end
 
-  if not self:gotoNextBuildLevel() then
-    print("Could not get to the next level to build.")
-    return self:backToStart()
+  local result, reason = self:buildLowerLevels()
+  if not result then
+    return false, reason
+  end
+  result, reason = self:buildUpperLevels()
+  if not result then
+    return false, reason
+  end
+  result, reason = self:buildCurrentLevel()
+  if not result then
+    return false, reason
   end
 
-  -- now that we're on the right level (at its droppoint) we can start
-  -- building it.
-  -- todo: will need to be in a loop that goes down levels as it builds
-  local firstLevel = true
-  repeat
-    if not firstLevel then
-      if not self:gotoNextLevelDown() then
-        return self:backToStart()
-      end
-    end
-    firstLevel = false
-
-    local buildResult, reason = self:buildCurrentLevel()
-    if not buildResult then
-      print("Problem building this level: " .. reason)
-      return self:backToStart()
-    end
-  until self.move.posY == 1 -- todo actually check on the robot start point instead of assuming lvl 1
---print("done? " .. model.pointStr({self.move.posX, self.move.posZ}), self.move.orient)
-  local returnedToStart = self:backToStart()
-  return returnedToStart, true
+  return true
 end
 
 function Builder:applyDefaults() --luacheck: no unused args
