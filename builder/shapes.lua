@@ -82,34 +82,6 @@ function shapes.circle(diameter)
 
 end
 
-function shapes.circle2(diameter)
-  -- distance formula
-  -- sqrt[ (x-cx)^2 + (y-cy)^2 + (z-cz)^2 ]
-  local rows = {}
-  local radius = (diameter-0.5)/2
-  local centerX = diameter/2
-  local centerZ = diameter/2
-
-  for x=0,diameter-1 do
-    rows[x+1] = ""
-    for z=0,diameter-1 do
-
-      local topLeft = radius - math.sqrt(math.pow(x - centerX, 2) + math.pow(z - centerZ, 2))
-      local topRight = radius - math.sqrt(math.pow(x - centerX, 2) + math.pow(z + 1 - centerZ, 2))
-      local botLeft = radius - math.sqrt(math.pow(x + 1 - centerX, 2) + math.pow(z - centerZ, 2))
-      local botRight = radius - math.sqrt(math.pow(x + 1 - centerX, 2) + math.pow(z + 1 - centerZ, 2))
-      if math.abs(sign(topLeft) + sign(topRight) + sign(botLeft) + sign(botRight)) ~= 4 then
-        print(topLeft, topRight, botLeft, botRight)
-        rows[x+1] = rows[x+1] .. "x"
-      else
-        rows[x+1] = rows[x+1] .. "."
-      end
-
-    end
-  end
-  return rows
-end
-
 for i=28,28 do
 local c = shapes.circle(i)
 print(s.serialize({c=c}))
