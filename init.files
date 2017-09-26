@@ -14,3 +14,4 @@ builder/test.lua
 builder/builder.lua
 builder/models/simplehouse.model
 builder/models/provingground.model
+builder/models/sphere_25.model
