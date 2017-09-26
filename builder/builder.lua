@@ -186,31 +186,67 @@ function Builder:completeLevelUp()
   return self:followPath(path)
 end
 
-function Builder:gotoNextLevelUp()
+function Builder:gotoNextLevelUp(isReturningToStart)
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   local nextLevel = self.options.loadedModel.levels[self.move.posY + 1]
-  local path = pathing.pathFromDropPoint(thisLevel, nextLevel.dropPoint)
 
-  if not self:followPath(path) then
-    return false
+  if isReturningToStart then
+    -- This means we are on a lower level, and we need to go up in order
+    -- get back home. In that case, we should already be on the droppoint of
+    -- the current level, so we go up, then get to that level's droppoint
+    if not self:ensureClearUp() or not self.move:up() then
+      return false
+    end
+    local path = pathing.pathToDropPoint(nextLevel, thisLevel.dropPoint)
+    if not self:followPath(path) then
+      return false
+    end
+  else
+    -- This means we are on an upper level, and we need to go up in order to
+    -- navigate to the next upper-most level in order to continue building.
+    -- In that case, we need to go from the droppoint of the current level to the
+    -- droppoint of the upper level, then go up.
+    local path = pathing.pathFromDropPoint(thisLevel, nextLevel.dropPoint)
+    if not self:followPath(path) then
+      return false
+    end
+    if not self:ensureClearUp() or not self.move:up() then
+      return false
+    end
   end
-  if not self:ensureClearUp() or not self.move:up() then
-    return false
-  end
+
   return true
 end
 
-function Builder:gotoNextLevelDown()
+function Builder:gotoNextLevelDown(isReturningToStart)
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   local nextLevel = self.options.loadedModel.levels[self.move.posY - 1]
-  local path = pathing.pathFromDropPoint(thisLevel, nextLevel.dropPoint)
 
-  if not self:followPath(path) then
-    return false
+  if isReturningToStart then
+    -- This means we are on an upper level, and we need to go down in order
+    -- get back home. In that case, we should already be on the droppoint of
+    -- the current level, so we go down, then get to that level's droppoint
+    if not self:ensureClearDown() or not self.move:down() then
+      return false
+    end
+    local path = pathing.pathToDropPoint(nextLevel, thisLevel.dropPoint)
+    if not self:followPath(path) then
+      return false
+    end
+  else
+    -- This means we are on lower level, and we need to go down in order to
+    -- navigate to the next lower-most level in order to continue building.
+    -- In that case, we need to go from the droppoint of the current level to the
+    -- droppoint of the lower level, then go down.
+    local path = pathing.pathFromDropPoint(thisLevel, nextLevel.dropPoint)
+    if not self:followPath(path) then
+      return false
+    end
+    if not self:ensureClearDown() or not self.move:down() then
+      return false
+    end
   end
-  if not self:ensureClearDown() or not self.move:down() then
-    return false
-  end
+
   return true
 end
 
@@ -221,7 +257,9 @@ function Builder:ensureClearAdj(p)
     return false, reason
   end
 
-  if not model.isClear(self.options.loadedModel.levels[self.move.posY], p) then
+  local level = self.options.loadedModel.levels[self.move.posY]
+
+  if not model.isClear(level, p) then
     -- make sure the block we're about to move into is cleared.
     self.move:faceXZ(-p[1], p[2])
     -- is the spot we're about to move into occupied by something we should clear out?
@@ -234,7 +272,7 @@ function Builder:ensureClearAdj(p)
       end
     end
     -- the space is clear or we just made it clear, mark it as so
-    model.set(self.options.loadedModel.levels[self.move.posY].statuses, p, 'O')
+    model.set(level.statuses, p, "O")
     self:saveState()
   end
   return true
@@ -263,8 +301,10 @@ function Builder:ensureClearUp()
         return false, "could not clear whatever is above me at " .. model.pointStr(p)
       end
     end
+
     -- the space is clear or we just made it clear, mark it as so
-    model.set(upperLevel.statuses, p, 'O')
+    model.set(upperLevel.statuses, p, "O")
+
     self:saveState()
   end
   return true
@@ -293,8 +333,10 @@ function Builder:ensureClearDown()
         return false, "could not clear whatever is below me at " .. model.pointStr(p)
       end
     end
+
     -- the space is clear or we just made it clear, mark it as so
-    model.set(lowerLevel.statuses, p, 'O')
+    model.set(lowerLevel.statuses, p, "O")
+
     self:saveState()
   end
   return true
@@ -483,15 +525,20 @@ function Builder:backToStart() --luacheck: no unused args
   -- something went wrong the robot needs to get back home (charge level, etc)
   -- first thing we need to do is get to the droppoint for the level we are on.
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
-  --print("back to start from " .. model.pointStr({-self.move.posX, self.move.posZ}))
+  print("Headed home from level " .. thisLevel.num .. " at " .. model.pointStr({-self.move.posX, self.move.posZ}))
   local path = pathing.pathToDropPoint(thisLevel, {-self.move.posX, self.move.posZ})
   if not self:followPath(path, true) then
     return false, "backToStart could not get to droppoint of current level"
   end
   -- now we just need to follow drop points down the starting level
   while self.move.posY > self.options.loadedModel.startPoint[3] do
-    if not self:gotoNextLevelDown() then
+    if not self:gotoNextLevelDown(true) then
       return false, "backToStart could not navigate down a level"
+    end
+  end
+  while self.move.posY < self.options.loadedModel.startPoint[3] do
+    if not self:gotoNextLevelUp(true) then
+      return false, "backToStart could not navigate up a level"
     end
   end
 
@@ -528,6 +575,9 @@ function Builder:buildLowerLevels()
   end
   -- try and get to that level
   while self.move.posY > level.num do
+    print("Headed down a level to " .. level.num .. " from " .. self.move.posY ..
+      " at " .. model.pointStr({-self.move.posX, self.move.posZ}))
+
     local result, reason = self:gotoNextLevelDown()
     if not result then
       return false, reason
@@ -569,6 +619,9 @@ function Builder:buildUpperLevels()
   end
   -- try and get to that level
   while self.move.posY < level.num do
+    print("Headed up a level to " .. level.num .. " from " .. self.move.posY ..
+      " at " .. model.pointStr({-self.move.posX, self.move.posZ}))
+
     local result, reason = self:gotoNextLevelUp()
     if not result then
       return false, reason
