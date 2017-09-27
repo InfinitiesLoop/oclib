@@ -238,11 +238,12 @@ function model.fromLoadedModel(m)
   -- that will store different information like completion status and distance
   -- from the drop point.
   local etlLevels = {}
-  for _,l in ipairs(m.levels) do
+  for lnum,l in ipairs(m.levels) do
     l.distances = {}
     l.statuses = {}
+
+print(lnum .. ": " .. require("computer").freeMemory())
     for i,row in ipairs(l.blocks) do
-print(require("computer").freeMemory())
       -- distances stores how far away each block is from the drop point 
       local distances = {}
       --for x=1,string.len(row) do distances[x] = "?" end
@@ -251,21 +252,21 @@ print(require("computer").freeMemory())
       -- hallowed, '.' for unvisited/unknown)
       -- we use `D` because it kinda stands for 'done' but mainly cuz it's the letter closest to looking like a block
       l.statuses[i] = string.gsub(row, "[^_]", ".")
+    end
 
-      -- count how many of each material this level needs
-      l.matCounts = {}
-      for matKey,matName in pairs(m.mats) do
-        local matCount = 0
-        for _,blockRow in ipairs(l.blocks) do
-          local patternToMatch = matKey
-          if magicCharsMap[patternToMatch] then
-            patternToMatch = "%" .. patternToMatch
-          end
-          local _,count = string.gsub(blockRow, patternToMatch, "")
-          matCount = matCount + count
+    -- count how many of each material this level needs
+    l.matCounts = {}
+    for matKey,matName in pairs(m.mats) do
+      local matCount = 0
+      for _,blockRow in ipairs(l.blocks) do
+        local patternToMatch = matKey
+        if magicCharsMap[patternToMatch] then
+          patternToMatch = "%" .. patternToMatch
         end
-        l.matCounts[matName] = matCount
+        local _,count = string.gsub(blockRow, patternToMatch, "")
+        matCount = matCount + count
       end
+      l.matCounts[matName] = matCount
     end
 
     -- expand out the levels that have a span
