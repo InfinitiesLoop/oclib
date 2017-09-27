@@ -238,13 +238,13 @@ function model.fromLoadedModel(m)
   -- that will store different information like completion status and distance
   -- from the drop point.
   local etlLevels = {}
-  for lnum,l in ipairs(m.levels) do
+  print("Loading levels...")
+  for _,l in ipairs(m.levels) do
     l.distances = {}
     l.statuses = {}
 
-print(lnum .. ": " .. require("computer").freeMemory())
     for i,row in ipairs(l.blocks) do
-      -- distances stores how far away each block is from the drop point 
+      -- distances stores how far away each block is from the drop point
       local distances = {}
       --for x=1,string.len(row) do distances[x] = "?" end
       l.distances[i] = distances
@@ -272,23 +272,30 @@ print(lnum .. ": " .. require("computer").freeMemory())
     -- expand out the levels that have a span
     local span = l.span or 1
     l.span = nil
-    for _=1,span do
-      etlLevels[#etlLevels + 1] = serializer.clone(l)
-      etlLevels[#etlLevels].num = #etlLevels
-    end
-
-    -- add up total mat cost for the whole model
-    m.matCounts = {}
-    for _,matName in pairs(m.mats) do
-      for _,etlLevel in ipairs(etlLevels) do
-        m.matCounts[matName] = (m.matCounts[matName] or 0) + etlLevel.matCounts[matName]
+    if span > 1 then
+      for _=1,span do
+        etlLevels[#etlLevels + 1] = serializer.clone(l)
+        etlLevels[#etlLevels].num = #etlLevels
       end
+    else
+      etlLevels[#etlLevels + 1] = l
+      l.num = #etlLevels
     end
-
   end
 
   m.levels = etlLevels
 
+  print("Calculating mat cost...")
+
+  -- add up total mat cost for the whole model
+  m.matCounts = {}
+  for _,matName in pairs(m.mats) do
+    for _,etlLevel in ipairs(etlLevels) do
+      m.matCounts[matName] = (m.matCounts[matName] or 0) + etlLevel.matCounts[matName]
+    end
+  end
+
+  print("Identifying starting point...")
   -- identify where the robot is supposed to start out
   local found = false
   local i = 1
@@ -299,6 +306,8 @@ print(lnum .. ": " .. require("computer").freeMemory())
   if not found then
     error("Could not find the robots start point. Be sure there is a level with one of: v, ^, <, >")
   end
+
+  print("Identifying drop points...")
   -- identify drop points: where the robot can move from level to level safely
   local result, err = identifyDropPointsAbove(m)
   if not result then
@@ -309,6 +318,7 @@ print(lnum .. ": " .. require("computer").freeMemory())
     error(err)
   end
 
+  print("Precalculating paths...")
   -- determines how far away each block is so they can be built in the right order
   calculateDistances(m)
 
