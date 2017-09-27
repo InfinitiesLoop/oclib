@@ -58,9 +58,14 @@ end
 
 function Builder:start()
   if not self.options.loadedModel then
+    print("Loading model...")
     self:loadModel()
+    print("Saving state...")
     self:saveState()
   end
+
+  print("Checking things out...")
+
   -- require stuff, open port
   robot = require("robot")
   ic = component.inventory_controller
