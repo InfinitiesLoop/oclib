@@ -198,10 +198,10 @@ local function calculateDistancesForLevelRecurse(l, point, distance)
   local rightCurrent = at(l.distances, right)
   -- my adjacent blocks are distance + 1
   local d = distance + 1
-  local recurseUp    = isBuildable(l, up) and (upCurrent == "?" or upCurrent > d) and set(l.distances, up, d)
-  local recurseDown  = isBuildable(l, down) and (downCurrent == "?" or downCurrent > d) and set(l.distances, down, d)
-  local recurseLeft  = isBuildable(l, left) and (leftCurrent == "?" or leftCurrent > d) and set(l.distances, left, d)
-  local recurseRight =isBuildable(l, right) and (rightCurrent == "?" or rightCurrent > d) and set(l.distances, right, d)
+  local recurseUp    = isBuildable(l, up) and (upCurrent == "-" or upCurrent > d) and set(l.distances, up, d)
+  local recurseDown  = isBuildable(l, down) and (downCurrent == "-" or downCurrent > d) and set(l.distances, down, d)
+  local recurseLeft  = isBuildable(l, left) and (leftCurrent == "-" or leftCurrent > d) and set(l.distances, left, d)
+  local recurseRight =isBuildable(l, right) and (rightCurrent == "-" or rightCurrent > d) and set(l.distances, right, d)
 
   -- its key that we set the values of all our neighbors and THEN recurse into them,
   -- or else paths from our neighbors, which are going to be longer, will be calculated first
@@ -242,9 +242,10 @@ function model.fromLoadedModel(m)
     l.distances = {}
     l.statuses = {}
     for i,row in ipairs(l.blocks) do
-      -- distances stores how far away each block is from the drop point (uninitialized values of ?)
+print(require("computer").freeMemory())
+      -- distances stores how far away each block is from the drop point 
       local distances = {}
-      for x=1,string.len(row) do distances[x] = "?" end
+      --for x=1,string.len(row) do distances[x] = "?" end
       l.distances[i] = distances
       -- statusRow stores whether the block has been completed or not ('D' for complete, 'O' for
       -- hallowed, '.' for unvisited/unknown)
