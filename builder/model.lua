@@ -188,6 +188,23 @@ end
 local function calculateDistancesForLevelRecurse(l, point, distance)
   set(l.distances, point, distance)
 
+  local adjs = adjacents(l, point)
+  local d = distance + 1
+  local toRecurse = {}
+  for _,adj in ipairs(adjs) do
+    local current = at(l.distances, adj)
+    if current == "-" or current > d then
+      set(l.distances, adj, d)
+      -- its key that we set the values of all our neighbors and THEN recurse into them,
+      -- or else paths from our neighbors, which are going to be longer, will be calculated first
+      toRecurse[#toRecurse + 1] = adj
+    end
+  end
+  for _,adj in ipairs(toRecurse) do
+      calculateDistancesForLevelRecurse(l, adj, d)
+  end
+
+  --[[
   local up    = northOf(point)
   local down  = southOf(point)
   local left  = westOf(point)
@@ -203,19 +220,20 @@ local function calculateDistancesForLevelRecurse(l, point, distance)
   local recurseLeft  = isBuildable(l, left) and (leftCurrent == "-" or leftCurrent > d) and set(l.distances, left, d)
   local recurseRight =isBuildable(l, right) and (rightCurrent == "-" or rightCurrent > d) and set(l.distances, right, d)
 
-  -- its key that we set the values of all our neighbors and THEN recurse into them,
-  -- or else paths from our neighbors, which are going to be longer, will be calculated first
   if recurseUp then calculateDistancesForLevelRecurse(l, up, d) end
   if recurseDown then calculateDistancesForLevelRecurse(l, down, d) end
   if recurseRight then calculateDistancesForLevelRecurse(l, right, d) end
   if recurseLeft then calculateDistancesForLevelRecurse(l, left, d) end
+
+  --]]
 end
 
 local function calculateDistances(m)
   -- each level has a drop point from which all building on that level will start, furthest to nearest.
   -- for each level we need to calculate how far away each buildable block point is from
   -- that drop point.
-  for _,l in ipairs(m.levels) do
+  for lnum,l in ipairs(m.levels) do
+    print("  Pathing for level " .. lnum)
       -- this point has distance 0.
       -- the adjacent ones have +1 of that, do it recursively.
     calculateDistancesForLevelRecurse(l, l.dropPoint, 0)
