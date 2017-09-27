@@ -201,31 +201,33 @@ local function calculateDistancesForLevelRecurse(l, point, distance)
     end
   end
   for _,adj in ipairs(toRecurse) do
-      calculateDistancesForLevelRecurse(l, adj, d)
+    calculateDistancesForLevelRecurse(l, adj, d)
+  end
+end
+
+local function calculateDistancesForLevelIterative(l, startPoint)
+  local queue = { {0,startPoint} }
+  local queueLen = 1
+  while queueLen > 0 do
+    local pointInfo = table.remove(queue)
+    queueLen = queueLen - 1
+    local point = pointInfo[2]
+    local distance = pointInfo[1]
+
+    set(l.distances, point, distance)
+
+    local adjs = adjacents(l, point)
+    local d = distance + 1
+    for _,adj in ipairs(adjs) do
+      local current = at(l.distances, adj)
+      if current == "-" or current > d then
+        set(l.distances, adj, d)
+        table.insert(queue, 1, {d,adj})
+        queueLen = queueLen + 1
+      end
+    end
   end
 
-  --[[
-  local up    = northOf(point)
-  local down  = southOf(point)
-  local left  = westOf(point)
-  local right = eastOf(point)
-  local upCurrent = at(l.distances, up)
-  local downCurrent = at(l.distances, down)
-  local leftCurrent = at(l.distances, left)
-  local rightCurrent = at(l.distances, right)
-  -- my adjacent blocks are distance + 1
-  local d = distance + 1
-  local recurseUp    = isBuildable(l, up) and (upCurrent == "-" or upCurrent > d) and set(l.distances, up, d)
-  local recurseDown  = isBuildable(l, down) and (downCurrent == "-" or downCurrent > d) and set(l.distances, down, d)
-  local recurseLeft  = isBuildable(l, left) and (leftCurrent == "-" or leftCurrent > d) and set(l.distances, left, d)
-  local recurseRight =isBuildable(l, right) and (rightCurrent == "-" or rightCurrent > d) and set(l.distances, right, d)
-
-  if recurseUp then calculateDistancesForLevelRecurse(l, up, d) end
-  if recurseDown then calculateDistancesForLevelRecurse(l, down, d) end
-  if recurseRight then calculateDistancesForLevelRecurse(l, right, d) end
-  if recurseLeft then calculateDistancesForLevelRecurse(l, left, d) end
-
-  --]]
 end
 
 local function calculateDistances(m)
@@ -236,7 +238,8 @@ local function calculateDistances(m)
     print("  Pathing for level " .. lnum)
       -- this point has distance 0.
       -- the adjacent ones have +1 of that, do it recursively.
-    calculateDistancesForLevelRecurse(l, l.dropPoint, 0)
+    --calculateDistancesForLevelRecurse(l, l.dropPoint, 0)
+    calculateDistancesForLevelIterative(l, l.dropPoint)
   end
 end
 
