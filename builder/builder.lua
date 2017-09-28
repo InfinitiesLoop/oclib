@@ -18,32 +18,35 @@ local Builder = {}
 local NEEDS_CHARGE_THRESHOLD = 0.25
 local FULL_CHARGE_THRESHOLD = 0.95
 
-function Builder:statusCheck()
+function Builder:statusCheck(isReturningToStart)
   self.eventDispatcher:doEvents()
-  if self.returnRequested then
+  if self.returnRequested and not self.returning then
+    self.returning = true
     return false, "Return was requested by my master"
   end
-  if self.toolName and inventory.toolIsBroken() then
-    if not inventory.equipFreshTool(self.toolName) then
-      return false, "Lost durability on tool and can't find a fresh one in my inventory!"
+  if not isReturningToStart then
+    if self.toolName and inventory.toolIsBroken() then
+      if not inventory.equipFreshTool(self.toolName) then
+        return false, "Lost durability on tool and can't find a fresh one in my inventory!"
+      end
     end
-  end
-  if inventory.isLocalFull() then
-    -- inventory is full but maybe we can dump some trash to make room
-    if self.options.trashCobble then
-      --todo: more specific so we dont drop mossy cobble, for example
-      inventory.trash(sides.bottom, {"cobblestone","netherrack"})
-      -- if it is STILL full then we're done here
-      if inventory.isLocalFull() then
+    if inventory.isLocalFull() then
+      -- inventory is full but maybe we can dump some trash to make room
+      if self.options.trashCobble then
+        --todo: more specific so we dont drop mossy cobble, for example
+        inventory.trash(sides.bottom, {"cobblestone","netherrack"})
+        -- if it is STILL full then we're done here
+        if inventory.isLocalFull() then
+          return false, "Inventory is full!"
+        end
+      else
         return false, "Inventory is full!"
       end
-    else
-      return false, "Inventory is full!"
     end
-  end
-  -- need charging?
-  if util.needsCharging(NEEDS_CHARGE_THRESHOLD) then
-    return false, "Charge level is low!"
+    -- need charging?
+    if util.needsCharging(NEEDS_CHARGE_THRESHOLD) then
+      return false, "Charge level is low!"
+    end
   end
   return true
 end
@@ -426,8 +429,9 @@ function Builder:buildCurrentLevel()
       local standPoint = result[2][#result[2]] or currentPoint
 
       -- go where we need to go
-      if not self:followPath(result[2]) then
-        return false, "couldn't follow path to build site"
+      local followResult, followReason = self:followPath(result[2])
+      if not followResult then
+        return false, "Couldn't follow path to build site: " .. followReason
       end
 
       -- build the block we need to build
@@ -449,7 +453,7 @@ function Builder:followPath(path, isReturningToStart)
   -- and saving the state of those blocks
   for _,p in ipairs(path) do
     -- required status check
-    local status, reason = self:statusCheck()
+    local status, reason = self:statusCheck(isReturningToStart)
     if not status then
       return false, reason
     end
