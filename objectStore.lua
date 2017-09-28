@@ -18,11 +18,7 @@ function objectstore.saveObject(name, obj)
     return false
   end
   ensureDirExists()
-  local str = serializer.serialize(obj)
-  local file = io.open(objectstore.baseDir .. "/" .. name, "w")
-  file:write(str)
-  file:close()
-  return true
+  return serializer.serializeToFile(objectstore.baseDir .. "/" .. name, obj)
 end
 
 function objectstore.loadObject(name)

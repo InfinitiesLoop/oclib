@@ -5,6 +5,81 @@ local function a(t,...)
   end
 end
 
+local function f(file,...)
+  file:write(...)
+end
+
+local function serializeToFileRec(file, obj, indent, asArray)
+  indent = indent or ''
+  if asArray then
+    for _,v in ipairs(obj) do
+      local t = type(v)
+      if t == "table" then
+        -- what kind of table, one like a list or a like a map?
+        if v[1] == nil then
+          -- map
+          f(file, indent, t, "={\n")
+          serializeToFileRec(file, v, indent .. '  ')
+          f(file, indent, "}\n")
+        else
+          -- list
+          f(file, indent, "list=", "[\n")
+          serializeToFileRec(file, v, indent .. '  ')
+          f(file, indent, "]\n")
+        end
+      elseif t == "boolean" then
+        f(file, indent, t, "=")
+        if v then
+          f(file, "true\n")
+        else
+          f(file, "false\n")
+        end
+      else
+        f(file, indent, t, "=", v, "\n")
+      end
+    end
+  else
+    for k,v in pairs(obj) do
+      local t = type(v)
+      if t == "table" then
+        -- what kind of table, one like a list or a like a map?
+        if v[1] == nil then
+          -- map
+          f(file, indent, k, ":", t, "={\n")
+          serializeToFileRec(file, v, indent .. '  ')
+          f(file, indent, "}\n")
+        else
+          -- list
+          f(file, indent, k, ":list=[\n")
+          serializeToFileRec(file, v, indent .. '  ', true)
+          f(file, indent, "]\n")
+        end
+      elseif t == "boolean" then
+        f(file, indent, k, ":", t, "=")
+        if v then
+          f(file, "true\n")
+        else
+          f(file, "false\n")
+        end
+      else
+        f(file, indent, k, ":", t, "=", v, "\n")
+      end
+    end
+  end
+  return true
+end
+
+local function serializeToFile(filePath, obj)
+  local file = io.open(filePath, "w")
+  if not file then
+    return false
+  end
+  serializeToFileRec(file, obj)
+  file:flush()
+  file:close()
+  return true
+end
+
 local function serialize(obj, indent, asArray, toTable)
   local s = toTable or {}
   indent = indent or ''
@@ -18,30 +93,21 @@ local function serialize(obj, indent, asArray, toTable)
           a(s, indent, t, "={\n")
           serialize(v, indent .. '  ', nil, s)
           a(s, indent, "}\n")
-          --s = s .. indent .. t .. "="
-          --s = s .. "{\n" .. serialize(v, indent .. '  ') .. indent .. "}\n"
         else
           -- list
           a(s, indent, "list=", "[\n")
           serialize(v, indent .. '  ', true, s)
           a(s, indent, "]\n")
-          --s = s .. indent .. "list="
-          --s = s .. "[\n" .. serialize(v, indent .. '  ', true) .. indent .. "]\n"
         end
       elseif t == "boolean" then
         a(s, indent, t, "=")
-        --s = s .. indent .. t .. "="
         if v then
           a(s, "true\n")
-          --s = s .. "true\n"
         else
           a(s, "false\n")
-          --s = s .. "false\n"
         end
       else
         a(s, indent, t, "=", v, "\n")
-        --s = s .. indent .. t .. "="
-        --s = s .. v .. "\n"
       end
     end
   else
@@ -54,30 +120,21 @@ local function serialize(obj, indent, asArray, toTable)
           a(s, indent, k, ":", t, "={\n")
           serialize(v, indent .. '  ', nil, s)
           a(s, indent, "}\n")
-          --s = s .. indent .. k .. ":" .. t .. "="
-          --s = s .. "{\n" .. serialize(v, indent .. '  ') .. indent .. "}\n"
         else
           -- list
           a(s, indent, k, ":list=[\n")
           serialize(v, indent .. '  ', true, s)
           a(s, indent, "]\n")
-          --s = s .. indent .. k .. ":list="
-          --s = s .. "[\n" .. serialize(v, indent .. '  ', true) .. indent .. "]\n"
         end
       elseif t == "boolean" then
         a(s, indent, k, ":", t, "=")
-        --s = s .. indent .. k .. ":" .. t .. "="
         if v then
           a(s, "true\n")
-          --s = s .. "true\n"
         else
           a(s, "false\n")
-          --s = s .. "false\n"
         end
       else
         a(s, indent, k, ":", t, "=", v, "\n")
-        --s = s .. indent .. k .. ":" .. t .. "="
-        --s = s .. v .. "\n"
       end
     end
   end
@@ -166,6 +223,7 @@ end
 
 return {
   serialize = serialize,
+  serializeToFile = serializeToFile,
   deserialize = deserialize,
   deserializeLines = deserializeFromLines,
   deserializeFile = deserializeFile,
