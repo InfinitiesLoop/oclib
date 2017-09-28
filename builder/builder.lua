@@ -207,7 +207,7 @@ function Builder:gotoNextLevelUp(isReturningToStart)
     if not self:ensureClearUp() or not self.move:up() then
       return false
     end
-    local path = pathing.pathToDropPoint(nextLevel, thisLevel.dropPoint)
+    local path = pathing.pathToDropPoint(nextLevel, thisLevel.dropPoint, isReturningToStart)
     if not self:followPath(path) then
       return false
     end
@@ -239,7 +239,7 @@ function Builder:gotoNextLevelDown(isReturningToStart)
     if not self:ensureClearDown() or not self.move:down() then
       return false
     end
-    local path = pathing.pathToDropPoint(nextLevel, thisLevel.dropPoint)
+    local path = pathing.pathToDropPoint(nextLevel, thisLevel.dropPoint, isReturningToStart)
     if not self:followPath(path) then
       return false
     end
@@ -537,7 +537,7 @@ function Builder:backToStart() --luacheck: no unused args
   -- first thing we need to do is get to the droppoint for the level we are on.
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   print("Headed home from level " .. thisLevel.num .. " at " .. model.pointStr({-self.move.posX, self.move.posZ}))
-  local path = pathing.pathToDropPoint(thisLevel, {-self.move.posX, self.move.posZ})
+  local path = pathing.pathToDropPoint(thisLevel, {-self.move.posX, self.move.posZ}, true)
   local result, reason = self:followPath(path)
   if not result then
     return false, ("backToStart could not get to droppoint of current level: " .. reason)

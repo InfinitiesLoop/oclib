@@ -87,22 +87,22 @@ end
 local function southOf(point)
   return {point[1]+1, point[2]}
 end
-local function adjacents(l, point)
+local function adjacents(l, point, clearOnly)
   local adjs = {}
   local a = westOf(point)
-  if isBuildable(l, a) then
+  if isBuildable(l, a) and (not clearOnly or at(l.statuses, a) == 'O') then
     adjs[#adjs + 1] = a
   end
   a = eastOf(point)
-  if isBuildable(l, a) then
+  if isBuildable(l, a) and (not clearOnly or at(l.statuses, a) == 'O') then
     adjs[#adjs + 1] = a
   end
   a = northOf(point)
-  if isBuildable(l, a) then
+  if isBuildable(l, a) and (not clearOnly or at(l.statuses, a) == 'O') then
     adjs[#adjs + 1] = a
   end
   a = southOf(point)
-  if isBuildable(l, a) then
+  if isBuildable(l, a) and (not clearOnly or at(l.statuses, a) == 'O') then
     adjs[#adjs + 1] = a
   end
   return adjs
