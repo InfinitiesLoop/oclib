@@ -1,6 +1,12 @@
+local function a(t,...)
+  local arg = {...}
+  for i=1,#arg do
+    table.insert(t, arg[i])
+  end
+end
 
-local function serialize(obj, indent, asArray)
-  local s = ""
+local function serialize(obj, indent, asArray, toTable)
+  local s = toTable or {}
   indent = indent or ''
   if asArray then
     for _,v in ipairs(obj) do
@@ -9,23 +15,33 @@ local function serialize(obj, indent, asArray)
         -- what kind of table, one like a list or a like a map?
         if v[1] == nil then
           -- map
-          s = s .. indent .. t .. "="
-          s = s .. "{\n" .. serialize(v, indent .. '  ') .. indent .. "}\n"
+          a(s, indent, t, "={\n")
+          serialize(v, indent .. '  ', nil, s)
+          a(s, indent, "}\n")
+          --s = s .. indent .. t .. "="
+          --s = s .. "{\n" .. serialize(v, indent .. '  ') .. indent .. "}\n"
         else
           -- list
-          s = s .. indent .. "list="
-          s = s .. "[\n" .. serialize(v, indent .. '  ', true) .. indent .. "]\n"
+          a(s, indent, "list=", "[\n")
+          serialize(v, indent .. '  ', true, s)
+          a(s, indent, "]\n")
+          --s = s .. indent .. "list="
+          --s = s .. "[\n" .. serialize(v, indent .. '  ', true) .. indent .. "]\n"
         end
       elseif t == "boolean" then
-        s = s .. indent .. t .. "="
+        a(s, indent, t, "=")
+        --s = s .. indent .. t .. "="
         if v then
-          s = s .. "true\n"
+          a(s, "true\n")
+          --s = s .. "true\n"
         else
-          s = s .. "false\n"
+          a(s, "false\n")
+          --s = s .. "false\n"
         end
       else
-        s = s .. indent .. t .. "="
-        s = s .. v .. "\n"
+        a(s, indent, t, "=", v, "\n")
+        --s = s .. indent .. t .. "="
+        --s = s .. v .. "\n"
       end
     end
   else
@@ -35,27 +51,41 @@ local function serialize(obj, indent, asArray)
         -- what kind of table, one like a list or a like a map?
         if v[1] == nil then
           -- map
-          s = s .. indent .. k .. ":" .. t .. "="
-          s = s .. "{\n" .. serialize(v, indent .. '  ') .. indent .. "}\n"
+          a(s, indent, k, ":", t, "={\n")
+          serialize(v, indent .. '  ', nil, s)
+          a(s, indent, "}\n")
+          --s = s .. indent .. k .. ":" .. t .. "="
+          --s = s .. "{\n" .. serialize(v, indent .. '  ') .. indent .. "}\n"
         else
           -- list
-          s = s .. indent .. k .. ":list="
-          s = s .. "[\n" .. serialize(v, indent .. '  ', true) .. indent .. "]\n"
+          a(s, indent, k, ":list=[\n")
+          serialize(v, indent .. '  ', true, s)
+          a(s, indent, "]\n")
+          --s = s .. indent .. k .. ":list="
+          --s = s .. "[\n" .. serialize(v, indent .. '  ', true) .. indent .. "]\n"
         end
       elseif t == "boolean" then
-        s = s .. indent .. k .. ":" .. t .. "="
+        a(s, indent, k, ":", t, "=")
+        --s = s .. indent .. k .. ":" .. t .. "="
         if v then
-          s = s .. "true\n"
+          a(s, "true\n")
+          --s = s .. "true\n"
         else
-          s = s .. "false\n"
+          a(s, "false\n")
+          --s = s .. "false\n"
         end
       else
-        s = s .. indent .. k .. ":" .. t .. "="
-        s = s .. v .. "\n"
+        a(s, indent, k, ":", t, "=", v, "\n")
+        --s = s .. indent .. k .. ":" .. t .. "="
+        --s = s .. v .. "\n"
       end
     end
   end
-  return s
+  if toTable then
+    return
+  else
+    return table.concat(s, "")
+  end
 end
 
 local function deserializeFromLines(lines, asArray)
