@@ -18,13 +18,13 @@ local Builder = {}
 local NEEDS_CHARGE_THRESHOLD = 0.25
 local FULL_CHARGE_THRESHOLD = 0.95
 
-function Builder:statusCheck(isReturningToStart)
+function Builder:statusCheck()
   self.eventDispatcher:doEvents()
   if self.returnRequested and not self.returning then
     self.returning = true
     return false, "Return was requested by my master"
   end
-  if not isReturningToStart then
+  if not self.isReturningToStart then
     if self.toolName and inventory.toolIsBroken() then
       if not inventory.equipFreshTool(self.toolName) then
         return false, "Lost durability on tool and can't find a fresh one in my inventory!"
@@ -123,7 +123,9 @@ function Builder:start()
     local result, reason = self:iterate()
     if not result then
       print("Oh no! " .. reason)
+      self.isReturningToStart = true
       result, reason = self:backToStart()
+      self.isReturningToStart = false
       if not result then
         print("I just can't go on :( " .. reason)
         print("Sorry I let you down, master.")
@@ -447,19 +449,19 @@ function Builder:buildCurrentLevel()
   return false, "unknown"
 end
 
-function Builder:followPath(path, isReturningToStart)
+function Builder:followPath(path)
   --print("follow path: " .. model.pathStr(path))
   -- follow the given path, clearing blocks if necessary as we go,
   -- and saving the state of those blocks
   for _,p in ipairs(path) do
     -- required status check
-    local status, reason = self:statusCheck(isReturningToStart)
+    local status, reason = self:statusCheck()
     if not status then
       return false, reason
     end
 
     --print(model.pointStr(p), self.move.orient)
-    if not isReturningToStart then
+    if not self.isReturningToStart then
       -- when returning to start we dont want to do ensureClear
       if not self:ensureClearAdj(p) then
         return false, "could not ensure adjacent spot was clear at " .. model.pointStr(p)
@@ -536,8 +538,9 @@ function Builder:backToStart() --luacheck: no unused args
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   print("Headed home from level " .. thisLevel.num .. " at " .. model.pointStr({-self.move.posX, self.move.posZ}))
   local path = pathing.pathToDropPoint(thisLevel, {-self.move.posX, self.move.posZ})
-  if not self:followPath(path, true) then
-    return false, "backToStart could not get to droppoint of current level"
+  local result, reason = self:followPath(path)
+  if not result then
+    return false, ("backToStart could not get to droppoint of current level: " .. reason)
   end
   -- now we just need to follow drop points down the starting level
   while self.move.posY > self.options.loadedModel.startPoint[3] do
