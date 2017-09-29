@@ -9,17 +9,17 @@ local inventory = require("inventory")
 local s = require("serializer")
 
 --local m = model.load("builder/models/provingground.model")
-local m = model.load("builder/models/simplehouse.model")
+--local m = model.load("builder/models/simplehouse.model")
 
 
-print(s.serialize(m))
-local l = m.levels[1]
+--print(s.serialize(m))
+--local l = m.levels[1]
 
-print("level layout")
-print(s.serialize(l.blocks))
+--print("level layout")
+--print(s.serialize(l.blocks))
 
-print("bot starts at " .. model.pointStr(l.dropPoint))
-print("")
+--print("bot starts at " .. model.pointStr(l.dropPoint))
+--print("")
 --[[
 local currentPoint = l.dropPoint
 repeat

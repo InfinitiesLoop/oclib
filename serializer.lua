@@ -186,6 +186,7 @@ local function deserializeFromLines(lines)
 end
 
 local function deserialize(str)
+  -- todo: broke cuz lines() thing
   local lines = {}
   for line in string.gmatch(str, "([^\n]+)") do
     lines[#lines + 1] = line

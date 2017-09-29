@@ -50,6 +50,12 @@ function Builder:statusCheck()
         return false, "Inventory is full!"
       end
     end
+
+    -- hacking
+    if self._debugFailStatusCheck then
+      return false, "forced failed status check"
+    end
+
     -- need charging?
     if util.needsCharging(NEEDS_CHARGE_THRESHOLD) then
       return false, "Charge level is low!"
@@ -129,7 +135,7 @@ function Builder:start()
     print("I'm off to build stuff, wish me luck!")
     local result, reason = self:iterate()
     if not result then
-      print("Oh no! " .. reason)
+      print("Oh no! " .. (reason or "Unknown iterate failure."))
       self.isReturningToStart = true
       result, reason = self:backToStart()
       self.isReturningToStart = false
@@ -547,6 +553,7 @@ function Builder:backToStart() --luacheck: no unused args
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   print("Headed home from level " .. thisLevel.num .. " at " .. model.pointStr({-self.move.posX, self.move.posZ}))
   local path = pathing.pathToDropPoint(thisLevel, {-self.move.posX, self.move.posZ}, true)
+  self:debugLoc("backToStart, going to droppoint of this level via " .. model.pathStr(path))
   local result, reason = self:followPath(path)
   if not result then
     return false, ("backToStart could not get to droppoint of current level: " .. reason)
@@ -718,7 +725,9 @@ function Builder:applyDefaults() --luacheck: no unused args
 end
 
 function Builder:saveState()
-  return objectStore.saveObject("builder", self.options)
+  if self.options.saveState then
+    return objectStore.saveObject("builder", self.options)
+  end
 end
 
 function Builder:loadState()
