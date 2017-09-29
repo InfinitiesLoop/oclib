@@ -145,17 +145,12 @@ local function serialize(obj, indent, asArray, toTable)
   end
 end
 
-local function deserializeFromLines(lines, asArray, linesAsList)
+local function deserializeFromLinesRec(lines, asArray, untilClose)
   local result = {}
 
-  local i = 1
-  local line
-  if linesAsList then
-    line = lines[i]
-  else
-    line = lines()
-  end
-  while line ~= nil do
+  local line = lines()
+  local isDone = false
+  while not isDone and line ~= nil and (not untilClose or line ~= untilClose) do
     if string.len(line) > 0 then
       local indent, k, t, v
       if asArray then
@@ -171,50 +166,23 @@ local function deserializeFromLines(lines, asArray, linesAsList)
         v = v == "true"
       elseif t == "table" then
         -- find all the lines containing this nested table
-        local tableLines = {}
-        repeat
-          i = i + 1
-          if linesAsList then
-            line = lines[i]
-          else
-            line = lines()
-          end
-          if line then
-            tableLines[#tableLines+1] = line
-          end
-        until not line or (line == (indent .. "}"))
-        table.remove(tableLines, #tableLines)
-        v = deserializeFromLines(tableLines, false, true)
+        v, isDone = deserializeFromLinesRec(lines, false, indent .. "}")
       elseif t == "list" then
         -- find all the lines containing this nested list
-        local listLines = {}
-        repeat
-          i = i + 1
-          if linesAsList then
-            line = lines[i]
-          else
-            line = lines()
-          end
-          if line then
-            listLines[#listLines+1] = line
-          end
-        until not line or (line == (indent .. "]"))
-        table.remove(listLines, #listLines)
-        v = deserializeFromLines(listLines, true, true)
+        v, isDone = deserializeFromLinesRec(lines, true, indent .. "]")
       end
       if asArray then result[#result+1] = v else result[k] = v end
     end
-    if line ~= nil then
-      i = i + 1
-      if linesAsList then
-        line = lines[i]
-      else
-        line = lines()
-      end
+    if not isDone then
+      line = lines()
     end
   end
 
-  return result
+  return result, isDone or line == nil
+end
+
+local function deserializeFromLines(lines)
+  return deserializeFromLinesRec(lines)
 end
 
 local function deserialize(str)
