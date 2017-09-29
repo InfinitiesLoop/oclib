@@ -343,8 +343,8 @@ function model.fromLoadedModel(m)
   -- determines how far away each block is so they can be built in the right order
   calculateDistances(m)
 
-  -- the robot's starting point by definition is already complete
-  set(m.levels[m.startPoint[3]].statuses, m.startPoint, 'D')
+  -- the robot's starting point by definition 'open'
+  set(m.levels[m.startPoint[3]].statuses, m.startPoint, 'O')
 
   return m
 end

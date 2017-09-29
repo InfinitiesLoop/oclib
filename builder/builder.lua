@@ -571,12 +571,17 @@ function Builder:backToStart() --luacheck: no unused args
   self.move:faceDirection(self.originalOrient)
 
   -- we should be back on the charger now.
-  print("Charging...")
+  print("Charging... ")
   if not util.waitUntilCharge(FULL_CHARGE_THRESHOLD, 600) then
     return false, "I'm out of energy sir!"
   end
 
   return true
+end
+
+function Builder:debugLoc(str)
+  print("DEBUG: " .. str .. ": " .. model.pointStr({self.move.posX, self.move.posZ}) .. " y=" .. self.move.posY ..
+    ", orient " .. self.move.orient)
 end
 
 function Builder:buildLowerLevels()

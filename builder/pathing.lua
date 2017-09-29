@@ -109,7 +109,7 @@ end
 function pathing.pathToDropPoint(level, fromPoint, clearPathOnly)
   -- each block has distance information, so just follow the numbers starting at the destination
   -- and go back. For example, if the destination has distance 7, find the adjacent block that has a 6,
-  -- and so on. When we get to 0 we found the source drop point and we have the path. Now reverse that path.
+  -- and so on. When we get to 0 we found the source drop point and we have the path.
   local current = fromPoint
   local currentDist = model.at(level.distances, current)
 
