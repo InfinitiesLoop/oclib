@@ -391,7 +391,8 @@ levels:list=[
       string=----x               x----
       string=-----xx           xx-----
       string=-------xx       xx-------
-      string=---------xxxxxxx^--------
+      string=---------xxxxxxx---------
+      string=---------------^---------
     ]
   }
   table={
