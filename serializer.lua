@@ -145,13 +145,17 @@ local function serialize(obj, indent, asArray, toTable)
   end
 end
 
-local function deserializeFromLines(lines, asArray)
+local function deserializeFromLines(lines, asArray, linesAsList)
   local result = {}
-  if #lines == 0 then return result end
 
   local i = 1
-  repeat
-    local line = lines[i]
+  local line
+  if linesAsList then
+    line = lines[i]
+  else
+    line = lines()
+  end
+  while line ~= nil do
     if string.len(line) > 0 then
       local indent, k, t, v
       if asArray then
@@ -170,26 +174,45 @@ local function deserializeFromLines(lines, asArray)
         local tableLines = {}
         repeat
           i = i + 1
-          line = lines[i]
-          tableLines[#tableLines+1] = line
-        until (line == (indent .. "}"))
+          if linesAsList then
+            line = lines[i]
+          else
+            line = lines()
+          end
+          if line then
+            tableLines[#tableLines+1] = line
+          end
+        until not line or (line == (indent .. "}"))
         table.remove(tableLines, #tableLines)
-        v = deserializeFromLines(tableLines)
+        v = deserializeFromLines(tableLines, false, true)
       elseif t == "list" then
         -- find all the lines containing this nested list
         local listLines = {}
         repeat
           i = i + 1
-          line = lines[i]
-          listLines[#listLines+1] = line
-        until (line == (indent .. "]"))
+          if linesAsList then
+            line = lines[i]
+          else
+            line = lines()
+          end
+          if line then
+            listLines[#listLines+1] = line
+          end
+        until not line or (line == (indent .. "]"))
         table.remove(listLines, #listLines)
-        v = deserializeFromLines(listLines, true)
+        v = deserializeFromLines(listLines, true, true)
       end
       if asArray then result[#result+1] = v else result[k] = v end
     end
-    i = i + 1
-  until i > #lines
+    if line ~= nil then
+      i = i + 1
+      if linesAsList then
+        line = lines[i]
+      else
+        line = lines()
+      end
+    end
+  end
 
   return result
 end
@@ -200,7 +223,7 @@ local function deserialize(str)
     lines[#lines + 1] = line
   end
 
-  return deserializeFromLines(lines)
+  return deserializeFromLines(lines, false, true)
 end
 
 local function clone(o)
@@ -213,12 +236,7 @@ local function deserializeFile(path)
     return nil, "could not open file"
   end
 
-  local lines = {}
-  for line in l do
-    lines[#lines+1] = line
-  end
-
-  return deserializeFromLines(lines)
+  return deserializeFromLines(l)
 end
 
 return {

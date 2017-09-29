@@ -18,6 +18,13 @@ local Builder = {}
 local NEEDS_CHARGE_THRESHOLD = 0.25
 local FULL_CHARGE_THRESHOLD = 0.95
 
+local function assert(cond, msg)
+  if not cond then
+    print(cond)
+    error(msg)
+  end
+end
+
 function Builder:statusCheck()
   self.eventDispatcher:doEvents()
   if self.returnRequested and not self.returning then
@@ -353,8 +360,10 @@ function Builder:ensureClearDown()
 end
 
 function Builder:buildBlock(level, buildPoint)
-  if not self:ensureClearAdj(buildPoint) then
-    return false, "could not ensure buildpoint was clear at " .. model.pointStr(buildPoint)
+  assert(buildPoint, "buildBlock: buildPoint is required")
+  local result, reason = self:ensureClearAdj(buildPoint)
+  if not result then
+    return false, "could not ensure buildpoint was clear at " .. model.pointStr(buildPoint) .. ": " .. reason
   end
   self.move:faceXZ(-buildPoint[1], buildPoint[2])
 
@@ -364,9 +373,9 @@ function Builder:buildBlock(level, buildPoint)
       -- we seem to be out of this material
       return false, "no more " .. blockName
     end
-    local result, reason = robot.place()
+    result, reason = robot.place()
     if not result then
-      return false, "could not place block " .. blockName .. ": " .. reason
+      return false, "could not place block " .. blockName .. ": " .. (reason or "unknown")
     end
     self.options.loadedModel.matCounts[blockName] = self.options.loadedModel.matCounts[blockName] - 1
   end
