@@ -324,6 +324,7 @@ function inventory.desupply(side, maximumCounts, globalMax)
       if not isMat then
         if not inventory.isOneOf(stack, {"!tool"}) then
           -- not a mat we care about and not a tool so we can just drop all of it
+          robot().select(i)
           local dropped = robot().dropDown() -- todo: hard coded direction
           couldNotDrop = couldNotDrop or not dropped
         end
