@@ -26,13 +26,9 @@ function objectstore.loadObject(name)
     return nil
   end
   ensureDirExists()
-  local status, result = pcall(function() return io.lines(objectstore.baseDir .. "/" .. name) end)
+  local status, lines = pcall(function() return io.lines(objectstore.baseDir .. "/" .. name) end)
   if not status then return false end
 
-  local lines = {}
-  for line in result do
-    lines[#lines+1] = line
-  end
   return serializer.deserializeLines(lines)
 end
 
