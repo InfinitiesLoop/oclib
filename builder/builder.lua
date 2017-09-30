@@ -141,7 +141,7 @@ function Builder:start()
       self.isReturningToStart = false
       if not result then
         print("I just can't go on :( " .. reason)
-        print("Sorry I let you down, master.")
+        print("Sorry I let you down, master. I'm at " .. model.pointStr({-self.move.posX,self.move.posY}))
         return false
       end
     else
@@ -468,10 +468,13 @@ function Builder:followPath(path)
   --print("follow path: " .. model.pathStr(path))
   -- follow the given path, clearing blocks if necessary as we go,
   -- and saving the state of those blocks
+  self:debugLoc("followPath is following a path that is " .. #path .. " in length: " .. model.pathStr(path))
   for _,p in ipairs(path) do
+    self:debugLoc("followPath is on " .. model.pointStr(p))
     -- required status check
     local status, reason = self:statusCheck()
     if not status then
+      self:debugLoc("followPath failed the status check: " .. (reason or "nil"))
       return false, reason
     end
 
@@ -484,9 +487,11 @@ function Builder:followPath(path)
     end
     -- move!
     if not self.move:moveToXZ(-p[1], p[2]) then
+      self:debugLoc("followPath failed to move into " .. model.pointStr(p))
       return false, "could not move into " .. model.pointStr(p)
     end
   end
+  self:debugLoc("followPath is complete.")
   return true
 end
 
@@ -556,8 +561,10 @@ function Builder:backToStart() --luacheck: no unused args
   self:debugLoc("backToStart, going to droppoint of this level via " .. model.pathStr(path))
   local result, reason = self:followPath(path)
   if not result then
+    self:debugLoc("backToStart, FAILED to follow path!")
     return false, ("backToStart could not get to droppoint of current level: " .. reason)
   end
+  self:debugLoc("backToStart, finished following path.")
   -- now we just need to follow drop points down the starting level
   while self.move.posY > self.options.loadedModel.startPoint[3] do
     if not self:gotoNextLevelDown(true) then
