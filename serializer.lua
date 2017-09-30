@@ -40,29 +40,31 @@ local function serializeToFileRec(file, obj, indent, asArray)
     end
   else
     for k,v in pairs(obj) do
-      local t = type(v)
-      if t == "table" then
-        -- what kind of table, one like a list or a like a map?
-        if v[1] == nil then
-          -- map
-          f(file, indent, k, ":", t, "={\n")
-          serializeToFileRec(file, v, indent .. '  ')
-          f(file, indent, "}\n")
+      if string.sub(k,1,1) ~= "_" then
+        local t = type(v)
+        if t == "table" then
+          -- what kind of table, one like a list or a like a map?
+          if v[1] == nil then
+            -- map
+            f(file, indent, k, ":", t, "={\n")
+            serializeToFileRec(file, v, indent .. '  ')
+            f(file, indent, "}\n")
+          else
+            -- list
+            f(file, indent, k, ":list=[\n")
+            serializeToFileRec(file, v, indent .. '  ', true)
+            f(file, indent, "]\n")
+          end
+        elseif t == "boolean" then
+          f(file, indent, k, ":", t, "=")
+          if v then
+            f(file, "true\n")
+          else
+            f(file, "false\n")
+          end
         else
-          -- list
-          f(file, indent, k, ":list=[\n")
-          serializeToFileRec(file, v, indent .. '  ', true)
-          f(file, indent, "]\n")
+          f(file, indent, k, ":", t, "=", v, "\n")
         end
-      elseif t == "boolean" then
-        f(file, indent, k, ":", t, "=")
-        if v then
-          f(file, "true\n")
-        else
-          f(file, "false\n")
-        end
-      else
-        f(file, indent, k, ":", t, "=", v, "\n")
       end
     end
   end

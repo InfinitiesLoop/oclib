@@ -722,6 +722,8 @@ end
 function Builder:applyDefaults() --luacheck: no unused args
   self.options.port = tonumber(self.options.port or "888")
   self.options.trashCobble = self.options.trashCobble == true or self.options.trashCobble == "true"
+  self.options.saveState = self.options.saveState == nil or self.options.saveState == true
+    or self.options.saveState == "true"
 end
 
 function Builder:saveState()
@@ -735,6 +737,7 @@ function Builder:loadState()
   if result ~= nil then
     self.options = result
     self:applyDefaults()
+    model.prepareState(self.options.loadedModel)
     return true
   end
   return false

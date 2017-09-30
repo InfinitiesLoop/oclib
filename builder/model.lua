@@ -27,6 +27,9 @@ local function set(arr, rc, value)
   if type(str) == "string" then
     str = string.sub(str, 1, rc[2] - 1) .. value .. string.sub(str, rc[2] + 1)
     arr[rc[1]] = str
+  elseif str == nil then
+    arr[rc[1]] = {}
+    arr[rc[1]][rc[2]] = value
   else
     str[rc[2]] = value
   end
@@ -185,27 +188,8 @@ local function identifyDropPointsBelow(m)
   return true
 end
 
-local function calculateDistancesForLevelRecurse(l, point, distance)
-  set(l.distances, point, distance)
-
-  local adjs = adjacents(l, point)
-  local d = distance + 1
-  local toRecurse = {}
-  for _,adj in ipairs(adjs) do
-    local current = at(l.distances, adj)
-    if current == "-" or current > d then
-      set(l.distances, adj, d)
-      -- its key that we set the values of all our neighbors and THEN recurse into them,
-      -- or else paths from our neighbors, which are going to be longer, will be calculated first
-      toRecurse[#toRecurse + 1] = adj
-    end
-  end
-  for _,adj in ipairs(toRecurse) do
-    calculateDistancesForLevelRecurse(l, adj, d)
-  end
-end
-
 local function calculateDistancesForLevelIterative(l, startPoint)
+  l._distances = {}
   local queue = { {0,startPoint} }
   local queueLen = 1
   while queueLen > 0 do
@@ -214,14 +198,14 @@ local function calculateDistancesForLevelIterative(l, startPoint)
     local point = pointInfo[2]
     local distance = pointInfo[1]
 
-    set(l.distances, point, distance)
+    set(l._distances, point, distance)
 
     local adjs = adjacents(l, point)
     local d = distance + 1
     for _,adj in ipairs(adjs) do
-      local current = at(l.distances, adj)
+      local current = at(l._distances, adj)
       if current == "-" or current > d then
-        set(l.distances, adj, d)
+        set(l._distances, adj, d)
         table.insert(queue, 1, {d,adj})
         queueLen = queueLen + 1
       end
@@ -234,11 +218,7 @@ local function calculateDistances(m)
   -- each level has a drop point from which all building on that level will start, furthest to nearest.
   -- for each level we need to calculate how far away each buildable block point is from
   -- that drop point.
-  for lnum,l in ipairs(m.levels) do
-    print("  Pathing for level " .. lnum)
-      -- this point has distance 0.
-      -- the adjacent ones have +1 of that, do it recursively.
-    --calculateDistancesForLevelRecurse(l, l.dropPoint, 0)
+  for _,l in ipairs(m.levels) do
     calculateDistancesForLevelIterative(l, l.dropPoint)
   end
 end
@@ -255,20 +235,12 @@ function model.fromLoadedModel(m)
   -- here's where we take the raw data that was in the model file
   -- and do some ETL on it to make it easier to deal with. for example,
   -- we shall expand levels with span>1 into multiple copies.
-  -- and we shall make several parallel views of each level's row data
-  -- that will store different information like completion status and distance
-  -- from the drop point.
   local etlLevels = {}
   print("Loading levels...")
   for _,l in ipairs(m.levels) do
-    l.distances = {}
     l.statuses = {}
 
     for i,row in ipairs(l.blocks) do
-      -- distances stores how far away each block is from the drop point
-      local distances = {}
-      --for x=1,string.len(row) do distances[x] = "?" end
-      l.distances[i] = distances
       -- statusRow stores whether the block has been completed or not ('D' for complete, 'O' for
       -- hallowed, '.' for unvisited/unknown)
       -- we use `D` because it kinda stands for 'done' but mainly cuz it's the letter closest to looking like a block
@@ -306,8 +278,6 @@ function model.fromLoadedModel(m)
 
   m.levels = etlLevels
 
-  print("Calculating mat cost...")
-
   -- add up total mat cost for the whole model
   m.matCounts = {}
   for _,matName in pairs(m.mats) do
@@ -316,7 +286,6 @@ function model.fromLoadedModel(m)
     end
   end
 
-  print("Identifying starting point...")
   -- identify where the robot is supposed to start out
   local found = false
   local i = 1
@@ -328,7 +297,6 @@ function model.fromLoadedModel(m)
     error("Could not find the robots start point. Be sure there is a level with one of: v, ^, <, >")
   end
 
-  print("Identifying drop points...")
   -- identify drop points: where the robot can move from level to level safely
   local result, err = identifyDropPointsAbove(m)
   if not result then
@@ -339,14 +307,18 @@ function model.fromLoadedModel(m)
     error(err)
   end
 
-  print("Precalculating paths...")
-  -- determines how far away each block is so they can be built in the right order
-  calculateDistances(m)
+  model.prepareState(m)
 
   -- the robot's starting point by definition 'open'
   set(m.levels[m.startPoint[3]].statuses, m.startPoint, 'O')
 
   return m
+end
+
+function model.prepareState(m)
+  print("Precalculating paths...")
+  -- determines how far away each block is so they can be built in the right order
+  calculateDistances(m)
 end
 
 function model.topMostIncompleteLevel(m)
