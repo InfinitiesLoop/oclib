@@ -508,13 +508,13 @@ function Builder:dumpInventoryAndResupply()
     end
 
     -- remove excess materials that we probably picked up while building...
-    local desupplied = inventory.desupply(sides.bottom, self.options.loadedModel.matCounts, 128)
+    local desupplied = inventory.desupply(sides.bottom, self.options.loadedModel.matCounts, 256)
     -- pick up any materials we are missing, if any are present
-    local _, hasZeroOfSomething = inventory.resupply(sides.bottom, self.options.loadedModel.matCounts, 128)
+    local _, hasZeroOfSomething = inventory.resupply(sides.bottom, self.options.loadedModel.matCounts, 256)
 
     if not desupplied then
       -- maybe now that we picked stuff up we can successfully desupply again
-      desupplied = inventory.desupply(sides.bottom, self.options.loadedModel.matCounts, 128)
+      desupplied = inventory.desupply(sides.bottom, self.options.loadedModel.matCounts, 256)
     end
 
     -- drop broken tools and pick up fresh ones, if we had a tool to begin with
