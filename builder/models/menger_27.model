@@ -34,6 +34,7 @@ levels:list=[
       string=xxxxxxxxxxxxxxxxxxxxxxxxxxx
       string=x xx xx xx xx xx xx xx xx x
       string=xxxxxxxxxxxxxxxxxxxxxxxxxxx
+      string=--------------------------^
     ]
   }
   table={
