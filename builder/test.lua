@@ -67,6 +67,6 @@ mockInv.setMockWorldInventory(sides.bottom, {
 --print(s.serialize(map))
 --print(inventory.getCountOfItems({"cobblestone"}), inventory.getCountOfItems({"glass"}))
 
-local b = builder.new({options = { model = "builder/models/sphere_25.model" } })
+local b = builder.new({options = { model = "builder/models/menger_27.model" } })
 b:start()
 print(s.serialize(b.options.loadedModel.matCounts))

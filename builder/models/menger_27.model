@@ -1,7 +1,7 @@
 title:string=menger_sponge_27
 author:string=InfinitiesLoop
 mats:table={
-  x:string=x
+  x:string=cobblestone
 }
 levels:list=[
   table={
