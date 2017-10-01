@@ -31,12 +31,15 @@ function Builder:statusCheck()
     self.returning = true
     return false, "Return was requested by my master"
   end
-  if not self.isReturningToStart then
-    if self.toolName and inventory.toolIsBroken() then
-      if not inventory.equipFreshTool(self.toolName) then
+  if self.toolName and inventory.toolIsBroken() then -- todo: maybe should allow for more durability than normal.
+    if not inventory.equipFreshTool(self.toolName) then
+      if not self.isReturningToStart then
+        -- we dont bail out if returning to start in this case, just hope we dont actually need the tool
         return false, "Lost durability on tool and can't find a fresh one in my inventory!"
       end
     end
+  end
+  if not self.isReturningToStart then
     if inventory.isLocalFull() then
       -- inventory is full but maybe we can dump some trash to make room
       if self.options.trashCobble then
@@ -468,35 +471,27 @@ function Builder:followPath(path)
   --print("follow path: " .. model.pathStr(path))
   -- follow the given path, clearing blocks if necessary as we go,
   -- and saving the state of those blocks
-  self:debugLoc("followPath is following a path that is " .. #path .. " in length: " .. model.pathStr(path))
   for _,p in ipairs(path) do
-    self:debugLoc("followPath is on " .. model.pointStr(p))
     -- required status check
     local status, reason = self:statusCheck()
     if not status then
-      self:debugLoc("followPath failed the status check: " .. (reason or "nil"))
       return false, reason
     end
 
-    --print(model.pointStr(p), self.move.orient)
-    if not self.isReturningToStart then
-      -- when returning to start we dont want to do ensureClear
-      if not self:ensureClearAdj(p) then
-        return false, "could not ensure adjacent spot was clear at " .. model.pointStr(p)
-      end
+    if not self:ensureClearAdj(p) then
+      return false, "could not ensure adjacent spot was clear at " .. model.pointStr(p)
     end
+
     -- move!
     if not self.move:moveToXZ(-p[1], p[2]) then
       self:debugLoc("followPath failed to move into " .. model.pointStr(p))
       return false, "could not move into " .. model.pointStr(p)
     end
   end
-  self:debugLoc("followPath is complete.")
   return true
 end
 
 function Builder:dumpInventoryAndResupply()
-  -- TODO: this seems to try and dump stuff i already picked up.. need to rethink it.
   local maxAttempts = 10
   local missingMaterial = nil
   while maxAttempts > 0 do
@@ -557,7 +552,7 @@ function Builder:backToStart() --luacheck: no unused args
   -- first thing we need to do is get to the droppoint for the level we are on.
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   print("Headed home from level " .. thisLevel.num .. " at " .. model.pointStr({-self.move.posX, self.move.posZ}))
-  local path = pathing.pathToDropPoint(thisLevel, {-self.move.posX, self.move.posZ}, true)
+  local path = pathing.pathToDropPoint(thisLevel, {-self.move.posX, self.move.posZ})
   self:debugLoc("backToStart, going to droppoint of this level via " .. model.pathStr(path))
   local result, reason = self:followPath(path)
   if not result then

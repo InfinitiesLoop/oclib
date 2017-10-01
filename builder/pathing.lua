@@ -98,15 +98,15 @@ function pathing.reverse(path, actualEndPoint)
   return revPath
 end
 
-function pathing.pathFromDropPoint(level, toPoint, clearPathOnly)
-  local path = pathing.pathToDropPoint(level, toPoint, clearPathOnly)
+function pathing.pathFromDropPoint(level, toPoint)
+  local path = pathing.pathToDropPoint(level, toPoint)
   if not path then
     return path
   end
   return pathing.reverse(path, toPoint)
 end
 
-function pathing.pathToDropPoint(level, fromPoint, clearPathOnly)
+function pathing.pathToDropPoint(level, fromPoint)
   -- each block has distance information, so just follow the numbers starting at the destination
   -- and go back. For example, if the destination has distance 7, find the adjacent block that has a 6,
   -- and so on. When we get to 0 we found the source drop point and we have the path.
@@ -115,7 +115,7 @@ function pathing.pathToDropPoint(level, fromPoint, clearPathOnly)
 
   local path = { }
   while current do
-    local adjs = model.adjacents(level, current, clearPathOnly)
+    local adjs = model.adjacents(level, current)
     local found = false
     local i = 1
     while i <= #adjs and not found do
