@@ -179,10 +179,11 @@ local function identifyDropPointBelow(level, upperLevel)
 end
 
 local function identifyDropPoint(m, l)
+  local result, reason
   if l.lowerLevel then
-    identifyDropPointBelow(l, m.levels[l.num + 1])
+    result, reason = identifyDropPointBelow(l, m.levels[l.num + 1])
   else
-    identifyDropPointAbove(l, m.levels[l.num - 1])
+    result, reason = identifyDropPointAbove(l, m.levels[l.num - 1])
   end
 end
 
@@ -228,13 +229,6 @@ function model.fromLoadedModel(m)
   print("Loading levels...")
   for _,l in ipairs(m.levels) do
     l.statuses = {}
-
-    for i,row in ipairs(l.blocks) do
-      -- statusRow stores whether the block has been completed or not ('D' for complete, 'O' for
-      -- hallowed, '.' for unvisited/unknown)
-      -- we use `D` because it kinda stands for 'done' but mainly cuz it's the letter closest to looking like a block
-      l.statuses[i] = string.gsub(row, "[^_]", ".")
-    end
 
     -- count how many of each material this level needs
     l.matCounts = {}
