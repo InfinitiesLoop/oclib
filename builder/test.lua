@@ -23,7 +23,7 @@ local s = require("serializer")
 --[[
 local currentPoint = l.dropPoint
 repeat
-  local result = pathing.findNearestBuildSite(l, currentPoint)
+  local result = pathing.findNearestBuildSite(m, l, currentPoint)
   if result then
     local buildPoint = result[1]
     local standPoint = result[2][#result[2] ] or currentPoint

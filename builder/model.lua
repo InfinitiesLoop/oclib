@@ -124,68 +124,66 @@ local function identifyStartPoint(m, level)
   return false
 end
 
-local function identifyDropPointsAbove(m)
-  for i=m.startPoint[3]+1,#m.levels do
-    local level = m.levels[i]
-    local lowerLevel = m.levels[i-1]
-
-    -- find the first buildable block in this level that is over a buildable block of the level below it.
-    -- it is that block in which the robot can move from the upper level into the lower one in order to
-    -- complete that level, or to navigate back to the start point for recharging.
-    local ir = 1
-    local found = false
-    while ir <= #level.blocks and not found do
-      local ic = 1
-      while ic <= string.len(level.blocks[ir]) and not found do
-        if isBuildable(level, {ir, ic}) and isBuildable(lowerLevel, {ir, ic}) then
-          found = {ir, ic}
-        end
-        ic = ic + 1
+local function identifyDropPointAbove(level, lowerLevel)
+  -- find the first buildable block in this level that is over a buildable block of the level below it.
+  -- it is that block in which the robot can move from the upper level into the lower one in order to
+  -- complete that level, or to navigate back to the start point for recharging.
+  local ir = 1
+  local found = false
+  while ir <= #level.blocks and not found do
+    local ic = 1
+    while ic <= string.len(level.blocks[ir]) and not found do
+      if isBuildable(level, {ir, ic}) and isBuildable(lowerLevel, {ir, ic}) then
+        found = {ir, ic}
       end
-      ir = ir + 1
+      ic = ic + 1
     end
-
-    if not found then
-      -- uh oh, this means there's no way for the bot to get from a level to the next one down
-      -- without having to break an unbuildable block
-      return false, "Drop point not possible on level " .. i
-    end
-
-    level.dropPoint = found
+    ir = ir + 1
   end
+
+  if not found then
+    -- uh oh, this means there's no way for the bot to get from a level to the next one down
+    -- without having to break an unbuildable block
+    return false, "Drop point not possible on level " .. level.num
+  end
+
+  level.dropPoint = found
   return true
 end
 
-local function identifyDropPointsBelow(m)
-  for i=1,m.startPoint[3]-1 do
-    local level = m.levels[i]
-    local upperLevel = m.levels[i+1]
-
-    -- find the first buildable block in this level that is under a buildable block of the level above it.
-    -- it is that block in which the robot can move from the lower level into the upper one in order to
-    -- complete that level, or to navigate back to the start point for recharging.
-    local ir = 1
-    local found = false
-    while ir <= #level.blocks and not found do
-      local ic = 1
-      while ic <= string.len(level.blocks[ir]) and not found do
-        if isBuildable(level, {ir, ic}) and isBuildable(upperLevel, {ir, ic}) then
-          found = {ir, ic}
-        end
-        ic = ic + 1
+local function identifyDropPointBelow(level, upperLevel)
+  -- find the first buildable block in this level that is under a buildable block of the level above it.
+  -- it is that block in which the robot can move from the lower level into the upper one in order to
+  -- complete that level, or to navigate back to the start point for recharging.
+  local ir = 1
+  local found = false
+  while ir <= #level.blocks and not found do
+    local ic = 1
+    while ic <= string.len(level.blocks[ir]) and not found do
+      if isBuildable(level, {ir, ic}) and isBuildable(upperLevel, {ir, ic}) then
+        found = {ir, ic}
       end
-      ir = ir + 1
+      ic = ic + 1
     end
-
-    if not found then
-      -- uh oh, this means there's no way for the bot to get from a level to the next one down
-      -- without having to break an unbuildable block
-      return false, "Drop point not possible on level " .. i
-    end
-
-    level.dropPoint = found
+    ir = ir + 1
   end
+
+  if not found then
+    -- uh oh, this means there's no way for the bot to get from a level to the next one down
+    -- without having to break an unbuildable block
+    return false, "Drop point not possible on level " .. level.num
+  end
+
+  level.dropPoint = found
   return true
+end
+
+local function identifyDropPoint(m, l)
+  if l.lowerLevel then
+    identifyDropPointBelow(l, m.levels[l.num + 1])
+  else
+    identifyDropPointAbove(l, m.levels[l.num - 1])
+  end
 end
 
 local function calculateDistancesForLevelIterative(l, startPoint)
@@ -212,15 +210,6 @@ local function calculateDistancesForLevelIterative(l, startPoint)
     end
   end
 
-end
-
-local function calculateDistances(m)
-  -- each level has a drop point from which all building on that level will start, furthest to nearest.
-  -- for each level we need to calculate how far away each buildable block point is from
-  -- that drop point.
-  for _,l in ipairs(m.levels) do
-    calculateDistancesForLevelIterative(l, l.dropPoint)
-  end
 end
 
 function model.load(path)
@@ -297,28 +286,15 @@ function model.fromLoadedModel(m)
     error("Could not find the robots start point. Be sure there is a level with one of: v, ^, <, >")
   end
 
-  -- identify drop points: where the robot can move from level to level safely
-  local result, err = identifyDropPointsAbove(m)
-  if not result then
-    error(err)
+  -- flag levels below the starting level as 'lower levels'
+  for lnum = 1, m.startPoint[3]-1 do
+    m.levels[lnum].lowerLevel = true
   end
-  result, err = identifyDropPointsBelow(m)
-  if not result then
-    error(err)
-  end
-
-  model.prepareState(m)
 
   -- the robot's starting point by definition 'open'
   set(m.levels[m.startPoint[3]].statuses, m.startPoint, 'O')
 
   return m
-end
-
-function model.prepareState(m)
-  print("Precalculating paths...")
-  -- determines how far away each block is so they can be built in the right order
-  calculateDistances(m)
 end
 
 function model.topMostIncompleteLevel(m)
@@ -339,6 +315,35 @@ function model.bottomMostIncompleteLevel(m)
   return nil
 end
 
+local function dropPointOf(m, l)
+  if l.dropPoint then
+    return l.dropPoint
+  else
+    identifyDropPoint(m, l)
+    return l.dropPoint
+  end
+end
+
+local function distancesOf(m, l)
+  if l._distances then
+    return l._distances
+  else
+    calculateDistancesForLevelIterative(l, dropPointOf(m, l))
+    return l._distances
+  end
+end
+
+local function markLevelComplete(l)
+  l.isComplete = true
+  -- after a level is complete we dont need to remember
+  -- the distances on it or its status array.
+  l._distances = nil
+  l.statuses = nil
+end
+
+model.markLevelComplete = markLevelComplete
+model.dropPointOf = dropPointOf
+model.distancesOf = distancesOf
 model.westOf = westOf
 model.eastOf = eastOf
 model.northOf = northOf

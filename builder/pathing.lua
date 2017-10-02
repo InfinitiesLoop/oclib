@@ -2,7 +2,7 @@ local model = require("builder/model")
 local util = require("util")
 local pathing = {}
 
-local function findNearestBuildSiteRecr(l, from, cameFrom, limitMap)
+local function findNearestBuildSiteRecr(m, l, from, cameFrom, limitMap)
   -- finds the nearest block to 'from' that needs to be built and is safe to build on without
   -- blocking off any paths to other blocks or to the drop point.
   -- This is tricky, but simple. A block is safe to build on if:
@@ -27,13 +27,13 @@ local function findNearestBuildSiteRecr(l, from, cameFrom, limitMap)
   limitMap[from[1]] = limitMap[from[1]] or {}
   limitMap[from[1]][from[2]] = true
 
-  local thisDistance = model.at(l._distances, from)
+  local thisDistance = model.at(model.distancesOf(m, l), from)
   local adjacents = model.adjacents(l, from)
   local toRecurse = {}
   local standPoint = nil
   local isValid = true
   for _,adj in ipairs(adjacents) do
-    local thatDistance = model.at(l._distances, adj)
+    local thatDistance = model.at(model.distancesOf(m, l), adj)
     local thatIsComplete = model.isComplete(l, adj)
     if thatDistance > thisDistance and not thatIsComplete then
       -- well, we know THIS block isn't a valid build site.
@@ -61,7 +61,7 @@ local function findNearestBuildSiteRecr(l, from, cameFrom, limitMap)
     local shortest = nil
     -- recurse into the neighbors that have something going on, select the one with shortest path
     for _,adj in ipairs(toRecurse) do
-      local adjPath = findNearestBuildSiteRecr(l, adj, from, limitMap)
+      local adjPath = findNearestBuildSiteRecr(m, l, adj, from, limitMap)
       if adjPath then
         -- is that path to get there shorter than the shorted one we found so far?
         if shortest == nil or #adjPath[2] < #shortest[2] then
@@ -84,8 +84,8 @@ local function findNearestBuildSiteRecr(l, from, cameFrom, limitMap)
   end
 end
 
-function pathing.findNearestBuildSite(l, from)
-  return findNearestBuildSiteRecr(l, from, nil, {})
+function pathing.findNearestBuildSite(m, l, from)
+  return findNearestBuildSiteRecr(m, l, from, nil, {})
 end
 
 function pathing.reverse(path, actualEndPoint)
@@ -98,20 +98,20 @@ function pathing.reverse(path, actualEndPoint)
   return revPath
 end
 
-function pathing.pathFromDropPoint(level, toPoint)
-  local path = pathing.pathToDropPoint(level, toPoint)
+function pathing.pathFromDropPoint(m, level, toPoint)
+  local path = pathing.pathToDropPoint(m, level, toPoint)
   if not path then
     return path
   end
   return pathing.reverse(path, toPoint)
 end
 
-function pathing.pathToDropPoint(level, fromPoint)
+function pathing.pathToDropPoint(m, level, fromPoint)
   -- each block has distance information, so just follow the numbers starting at the destination
   -- and go back. For example, if the destination has distance 7, find the adjacent block that has a 6,
   -- and so on. When we get to 0 we found the source drop point and we have the path.
   local current = fromPoint
-  local currentDist = model.at(level._distances, current)
+  local currentDist = model.at(model.distancesOf(m, level), current)
 
   local path = { }
   while current do
@@ -120,7 +120,7 @@ function pathing.pathToDropPoint(level, fromPoint)
     local i = 1
     while i <= #adjs and not found do
       local adj = adjs[i]
-      local adjDistance = model.at(level._distances, adj)
+      local adjDistance = model.at(model.distancesOf(m, level), adj)
       if adjDistance < currentDist then
         path[#path + 1] = adj
         current = adj
