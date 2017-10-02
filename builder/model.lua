@@ -185,10 +185,13 @@ local function identifyDropPoint(m, l)
   else
     result, reason = identifyDropPointAbove(l, m.levels[l.num - 1])
   end
+  if not result then
+    error(reason)
+  end
 end
 
 local function calculateDistancesForLevelIterative(l, startPoint)
-  l._distances = {}
+  local distances = {}
   local queue = { {0,startPoint} }
   local queueLen = 1
   while queueLen > 0 do
@@ -197,20 +200,21 @@ local function calculateDistancesForLevelIterative(l, startPoint)
     local point = pointInfo[2]
     local distance = pointInfo[1]
 
-    set(l._distances, point, distance)
+    set(distances, point, distance)
 
     local adjs = adjacents(l, point)
     local d = distance + 1
     for _,adj in ipairs(adjs) do
-      local current = at(l._distances, adj)
+      local current = at(distances, adj)
       if current == "-" or current > d then
-        set(l._distances, adj, d)
+        set(distances, adj, d)
         table.insert(queue, 1, {d,adj})
         queueLen = queueLen + 1
       end
     end
   end
 
+  return distances
 end
 
 function model.load(path)
@@ -319,19 +323,25 @@ local function dropPointOf(m, l)
 end
 
 local function distancesOf(m, l)
-  if l._distances then
-    return l._distances
-  else
-    calculateDistancesForLevelIterative(l, dropPointOf(m, l))
-    return l._distances
+  -- we only cache the distances calculations for one level at a time.
+  -- because of memory constraints.
+  -- it means we might calculate it again and again for levels but
+  -- the important thing is it is cached while building a particular level
+  if not m._distances or m._distances.forLevel ~= l.num then
+    m._distances = nil -- make sure to free the old one, if any, first
+    m._distances = {
+      forLevel = l.num,
+      distances = calculateDistancesForLevelIterative(l, dropPointOf(m, l))
+    }
   end
+  return m._distances.distances
 end
 
 local function markLevelComplete(l)
   l.isComplete = true
   -- after a level is complete we dont need to remember
-  -- the distances on it or its status array.
-  l._distances = nil
+  -- the blocks on it or its status array.
+  l.blocks = nil
   l.statuses = nil
 end
 
