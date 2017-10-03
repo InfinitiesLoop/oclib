@@ -49,6 +49,9 @@ local function blocksOf(l)
     if dlBlocks and dlBlocks.forLevel == l.num then
       return dlBlocks.blocks
     end
+    -- remove it before downloading, for more memory..
+    l._model._downloadedBlocks = nil
+
     -- download the file...
     print("Downloading blocks for level " .. l.num)
     local data = internet.request("https://raw.githubusercontent.com/" .. l._model.blocksBaseUrl
@@ -232,6 +235,7 @@ local function identifyDropPoint(m, l)
 end
 
 local function calculateDistancesForLevelIterative(l, startPoint)
+  print("Precalculating paths for level " .. l.num)
   local distances = {}
   local queue = { {0,startPoint} }
   local queueLen = 1
@@ -254,6 +258,7 @@ local function calculateDistancesForLevelIterative(l, startPoint)
       end
     end
   end
+  print("Paths have been precalculated for level " .. l.num)
 
   return distances
 end
