@@ -36,6 +36,11 @@ local function set(arr, rc, value)
   return true
 end
 
+local function blocksOf(l)
+  -- todo: will on the fly load external blocks if necessary
+  return l.blocks
+end
+
 local function pointStr(p)
   if p then
     return "(" .. p[1] .. "," .. p[2] .. ")"
@@ -53,7 +58,7 @@ local function pathStr(path)
 end
 
 local function isBuildable(level, point)
-  return at(level.blocks, point) ~= "-"
+  return at(blocksOf(level), point) ~= "-"
 end
 
 local function isComplete(level, point)
@@ -71,7 +76,7 @@ local function blockAt(m, level, point)
   if not isBuildable(level, point) then
     return nil
   end
-  local moniker = at(level.blocks, point)
+  local moniker = at(blocksOf(level), point)
   if moniker == ' ' then
     return "!air"
   end
@@ -112,7 +117,7 @@ local function adjacents(l, point)
 end
 
 local function identifyStartPoint(m, level)
-  for i,row in ipairs(level.blocks) do
+  for i,row in ipairs(blocksOf(level)) do
     local result = string.find(row, "[v^<>]")
     if result then
       level.startPoint = {i, result, level.num, string.sub(row, result, result)}
@@ -130,9 +135,10 @@ local function identifyDropPointAbove(level, lowerLevel)
   -- complete that level, or to navigate back to the start point for recharging.
   local ir = 1
   local found = false
-  while ir <= #level.blocks and not found do
+  local blocks = blocksOf(level)
+  while ir <= #blocks and not found do
     local ic = 1
-    while ic <= string.len(level.blocks[ir]) and not found do
+    while ic <= string.len(blocks[ir]) and not found do
       if isBuildable(level, {ir, ic}) and isBuildable(lowerLevel, {ir, ic}) then
         found = {ir, ic}
       end
@@ -157,9 +163,10 @@ local function identifyDropPointBelow(level, upperLevel)
   -- complete that level, or to navigate back to the start point for recharging.
   local ir = 1
   local found = false
-  while ir <= #level.blocks and not found do
+  local blocks = blocksOf(level)
+  while ir <= #blocks and not found do
     local ic = 1
-    while ic <= string.len(level.blocks[ir]) and not found do
+    while ic <= string.len(blocks[ir]) and not found do
       if isBuildable(level, {ir, ic}) and isBuildable(upperLevel, {ir, ic}) then
         found = {ir, ic}
       end
@@ -233,20 +240,23 @@ function model.fromLoadedModel(m)
   print("Loading levels...")
   for _,l in ipairs(m.levels) do
     l.statuses = {}
+    l._model = m
 
     -- count how many of each material this level needs
-    l.matCounts = {}
-    for matKey,matName in pairs(m.mats) do
-      local matCount = 0
-      for _,blockRow in ipairs(l.blocks) do
-        local patternToMatch = matKey
-        if magicCharsMap[patternToMatch] then
-          patternToMatch = "%" .. patternToMatch
+    if not l.matCounts then
+      l.matCounts = {}
+      for matKey,matName in pairs(m.mats) do
+        local matCount = 0
+        for _,blockRow in ipairs(l.blocks) do
+          local patternToMatch = matKey
+          if magicCharsMap[patternToMatch] then
+            patternToMatch = "%" .. patternToMatch
+          end
+          local _,count = string.gsub(blockRow, patternToMatch, "")
+          matCount = matCount + count
         end
-        local _,count = string.gsub(blockRow, patternToMatch, "")
-        matCount = matCount + count
+        l.matCounts[matName] = matCount
       end
-      l.matCounts[matName] = matCount
     end
 
     -- expand out the levels that have a span
@@ -348,6 +358,7 @@ end
 model.markLevelComplete = markLevelComplete
 model.dropPointOf = dropPointOf
 model.distancesOf = distancesOf
+model.blocksOf = blocksOf
 model.westOf = westOf
 model.eastOf = eastOf
 model.northOf = northOf

@@ -1,5 +1,10 @@
 local shapes = {}
 local s = require("serializer")
+local magicChars = "().%+-*?[^$"
+local magicCharsMap = {}
+for i=1,string.len(magicChars) do
+  magicCharsMap[string.sub(magicChars, i, i)] = true
+end
 
 local function distance(x, y, ratio)
   return math.sqrt((math.pow(y * ratio, 2)) + math.pow(x, 2))
@@ -144,10 +149,25 @@ end
 --print(s.serialize({c=c}))
 --end
 
-local m = shapes.mengerSponge(81, 'x')
+local m = shapes.mengerSponge(81, 'cobblestone')
 m.blocksBaseUrl = "InfinitiesLoop/oclib/builder/models/menger_81/"
 for i,l in ipairs(m.levels) do
   local blocks = l.blocks
+
+  l.matCounts = {}
+  for matKey,matName in pairs(m.mats) do
+    local matCount = 0
+    for _,blockRow in ipairs(blocks) do
+      local patternToMatch = matKey
+      if magicCharsMap[patternToMatch] then
+        patternToMatch = "%" .. patternToMatch
+      end
+      local _,count = string.gsub(blockRow, patternToMatch, "")
+      matCount = matCount + count
+    end
+    l.matCounts[matName] = matCount
+  end
+
   l.blocks = "@internet"
   local f = io.open("./builder/models/menger_81/" .. string.format("%03d",i), "w")
   for _,line in ipairs(blocks) do

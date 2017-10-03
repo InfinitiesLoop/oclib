@@ -2,331 +2,574 @@ title:string=menger_sponge_81
 blocksBaseUrl:string=InfinitiesLoop/oclib/builder/models/menger_81/
 author:string=InfinitiesLoop
 mats:table={
-  x:string=x
+  x:string=cobblestone
 }
 levels:list=[
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 1
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 2
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 3
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 4
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 5
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 6
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 7
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 8
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 9
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 10
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 11
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 12
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 13
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=512
+    }
     name:string=level 14
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 15
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 16
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 17
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 18
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 19
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 20
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 21
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 22
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 23
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 24
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 25
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 26
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 27
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 28
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 29
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 30
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 31
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=512
+    }
     name:string=level 32
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 33
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 34
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 35
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 36
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 37
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=512
+    }
     name:string=level 38
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 39
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=512
+    }
     name:string=level 40
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=256
+    }
     name:string=level 41
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=512
+    }
     name:string=level 42
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 43
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=512
+    }
     name:string=level 44
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 45
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 46
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 47
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 48
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 49
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=512
+    }
     name:string=level 50
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 51
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 52
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 53
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 54
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 55
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 56
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 57
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 58
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 59
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 60
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 61
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 62
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 63
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 64
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 65
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 66
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 67
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=512
+    }
     name:string=level 68
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 69
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 70
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 71
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 72
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 73
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 74
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 75
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 76
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=1024
+    }
     name:string=level 77
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 78
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 79
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=2048
+    }
     name:string=level 80
   }
   table={
     blocks:string=@internet
+    matCounts:table={
+      cobblestone:number=4096
+    }
     name:string=level 81
   }
 ]
