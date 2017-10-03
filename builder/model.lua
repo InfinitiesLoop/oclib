@@ -65,6 +65,7 @@ local function blocksOf(l)
     end
 
     l._model._downloadedBlocks = { blocks = blocks, forLevel = l.num }
+    return blocks
   end
   error("Could not understand where the blocks are defined for level " .. l.num)
 end
