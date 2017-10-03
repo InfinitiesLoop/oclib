@@ -57,12 +57,14 @@ local function blocksOf(l)
     for chunk in data do
       chunks[#chunks+1] = chunk
     end
+    print("Blocks downloaded, parsing...")
     -- convert the raw string content into the array of lines
     blocks = {}
     local allLines = table.concat(chunks, "")
     for line in string.gmatch(allLines, "([^\n]+)") do
       blocks[#blocks+1] = line
     end
+    print("Blocks have been loaded into memory.")
 
     l._model._downloadedBlocks = { blocks = blocks, forLevel = l.num }
     return blocks
