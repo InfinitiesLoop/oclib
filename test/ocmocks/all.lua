@@ -4,6 +4,7 @@ require("test/ocmocks/component")
 require("test/ocmocks/sides")
 require("test/ocmocks/robot")
 require("test/ocmocks/computer")
+require("test/ocmocks/internet")
 
 require("test/ocmocks/mock_inventory")
 

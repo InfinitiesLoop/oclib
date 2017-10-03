@@ -1,14 +1,14 @@
 title:string=menger_sponge_81
-blocksBaseUrl:string=InfinitiesLoop/oclib/builder/models/menger_81/
+blocksBaseUrl:string=InfinitiesLoop/oclib/builder/models/menger_81
 author:string=InfinitiesLoop
 mats:table={
   x:string=cobblestone
 }
 startPoint:list=[
-  string:82
-  string:81
-  string:2
-  string:^
+  number=82
+  number=81
+  number=2
+  string=^
 ]
 levels:list=[
   table={

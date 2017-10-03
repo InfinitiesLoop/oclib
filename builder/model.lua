@@ -1,4 +1,5 @@
 local serializer = require("serializer")
+local internet = require("internet")
 
 local model = {}
 
@@ -37,8 +38,35 @@ local function set(arr, rc, value)
 end
 
 local function blocksOf(l)
-  -- todo: will on the fly load external blocks if necessary
-  return l.blocks
+  local blocks = l.blocks
+  if type(blocks) == "table" then
+    return blocks
+  elseif blocks == "@internet" then
+    -- the blocks for this level are loaded from an internet level file
+    -- so download the block list, unless its the same as the last one we
+    -- have loaded.
+    local dlBlocks = l._model._downloadedBlocks
+    if dlBlocks and dlBlocks.forLevel == l.num then
+      return dlBlocks.blocks
+    end
+    -- download the file...
+    print("Downloading blocks for level " .. l.num)
+    local data = internet.request("https://raw.githubusercontent.com/" .. l._model.blocksBaseUrl
+      .. "/" .. string.format("%03d", l.num) .. "?" .. math.random() .. " ")
+    local chunks = {}
+    for chunk in data do
+      chunks[#chunks+1] = chunk
+    end
+    -- convert the raw string content into the array of lines
+    blocks = {}
+    local allLines = table.concat(chunks, "")
+    for line in string.gmatch(allLines, "([^\n]+)") do
+      blocks[#blocks+1] = line
+    end
+
+    l._model._downloadedBlocks = { blocks = blocks, forLevel = l.num }
+  end
+  error("Could not understand where the blocks are defined for level " .. l.num)
 end
 
 local function pointStr(p)
