@@ -75,6 +75,7 @@ function shapes.mengerSponge(len, material)
       for c=1,len do
         grid[l][r][c] = ' '
       end
+      grid[l][r][len+1] = '-'
     end
   end
 
@@ -143,8 +144,8 @@ end
 --print(s.serialize({c=c}))
 --end
 
---local m = shapes.mengerSponge(81, 'x')
-local m = shapes.mengerSponge(27, 'x')
+local m = shapes.mengerSponge(81, 'x')
+--local m = shapes.mengerSponge(27, 'x')
 print(s.serialize(m))
 
 return shapes
