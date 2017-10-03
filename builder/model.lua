@@ -189,6 +189,9 @@ local function identifyDropPoint(m, l)
   local result, reason
   if l.lowerLevel then
     result, reason = identifyDropPointBelow(l, m.levels[l.num + 1])
+  elseif l.num == m.startPoint[3] then
+    l.dropPoint = m.startPoint
+    result = true
   else
     result, reason = identifyDropPointAbove(l, m.levels[l.num - 1])
   end
@@ -284,14 +287,16 @@ function model.fromLoadedModel(m)
   end
 
   -- identify where the robot is supposed to start out
-  local found = false
-  local i = 1
-  while not found and i <= #m.levels do
-    found = identifyStartPoint(m, m.levels[i])
-    i = i + 1
-  end
-  if not found then
-    error("Could not find the robots start point. Be sure there is a level with one of: v, ^, <, >")
+  if not m.startPoint then
+    local found = false
+    local i = 1
+    while not found and i <= #m.levels do
+      found = identifyStartPoint(m, m.levels[i])
+      i = i + 1
+    end
+    if not found then
+      error("Could not find the robots start point. Be sure there is a level with one of: v, ^, <, >")
+    end
   end
 
   -- flag levels below the starting level as 'lower levels'

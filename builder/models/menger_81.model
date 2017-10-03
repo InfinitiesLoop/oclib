@@ -4,6 +4,12 @@ author:string=InfinitiesLoop
 mats:table={
   x:string=cobblestone
 }
+startPoint:list=[
+  string:82
+  string:81
+  string:2
+  string:^
+]
 levels:list=[
   table={
     blocks:string=@internet
