@@ -75,7 +75,7 @@ function shapes.mengerSponge(len, material)
       for c=1,len do
         grid[l][r][c] = ' '
       end
-      grid[l][r][len+1] = '-'
+      --grid[l][r][len+1] = '-'
     end
   end
 
@@ -145,6 +145,17 @@ end
 --end
 
 local m = shapes.mengerSponge(81, 'x')
+m.blocksBaseUrl = "InfinitiesLoop/oclib/builder/models/menger_81/"
+for i,l in ipairs(m.levels) do
+  local blocks = l.blocks
+  l.blocks = "@internet"
+  local f = io.open("./builder/models/menger_81/" .. string.format("%03d",i), "w")
+  for _,line in ipairs(blocks) do
+    f:write(line, "\n")
+  end
+  f:flush()
+  f:close()
+end
 --local m = shapes.mengerSponge(27, 'x')
 print(s.serialize(m))
 
