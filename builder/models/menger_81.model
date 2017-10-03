@@ -1,5 +1,5 @@
 title:string=menger_sponge_81
-blocksBaseUrl:string=InfinitiesLoop/oclib/builder/models/menger_81
+blocksBaseUrl:string=InfinitiesLoop/oclib/master/builder/models/menger_81
 author:string=InfinitiesLoop
 mats:table={
   x:string=cobblestone
