@@ -129,26 +129,6 @@ end
 local function southOf(point)
   return {point[1]+1, point[2]}
 end
-local function adjacents(l, point)
-  local adjs = {}
-  local a = westOf(point)
-  if isBuildable(l, a) then
-    adjs[#adjs + 1] = a
-  end
-  a = eastOf(point)
-  if isBuildable(l, a) then
-    adjs[#adjs + 1] = a
-  end
-  a = northOf(point)
-  if isBuildable(l, a) then
-    adjs[#adjs + 1] = a
-  end
-  a = southOf(point)
-  if isBuildable(l, a) then
-    adjs[#adjs + 1] = a
-  end
-  return adjs
-end
 
 local function identifyStartPoint(m, level)
   for i,row in ipairs(blocksOf(level)) do
@@ -234,35 +214,6 @@ local function identifyDropPoint(m, l)
   end
 end
 
-local function calculateDistancesForLevelIterative(l, startPoint)
-  print("Precalculating paths for level " .. l.num)
-  local distances = {}
-  local queue = { {0,startPoint} }
-  local queueLen = 1
-  while queueLen > 0 do
-    local pointInfo = table.remove(queue)
-    queueLen = queueLen - 1
-    local point = pointInfo[2]
-    local distance = pointInfo[1]
-
-    set(distances, point, distance)
-
-    local adjs = adjacents(l, point)
-    local d = distance + 1
-    for _,adj in ipairs(adjs) do
-      local current = at(distances, adj)
-      if current == "-" or current > d then
-        set(distances, adj, d)
-        table.insert(queue, 1, {d,adj})
-        queueLen = queueLen + 1
-      end
-    end
-  end
-  print("Paths have been precalculated for level " .. l.num)
-
-  return distances
-end
-
 function model.load(path)
   local obj, err = serializer.deserializeFile(path)
   if not obj then
@@ -303,7 +254,9 @@ function model.fromLoadedModel(m)
     l.span = nil
     if span > 1 then
       for _=1,span do
-        etlLevels[#etlLevels + 1] = serializer.clone(l)
+        local cloneLevel = serializer.clone(l)
+        cloneLevel._model = l._model
+        etlLevels[#etlLevels + 1] = cloneLevel
         etlLevels[#etlLevels].num = #etlLevels
       end
     else
@@ -373,6 +326,54 @@ local function dropPointOf(m, l)
   end
 end
 
+local function adjacents(l, point)
+  local adjs = {}
+  local a = westOf(point)
+  if isBuildable(l, a) then
+    adjs[#adjs + 1] = a
+  end
+  a = eastOf(point)
+  if isBuildable(l, a) then
+    adjs[#adjs + 1] = a
+  end
+  a = northOf(point)
+  if isBuildable(l, a) then
+    adjs[#adjs + 1] = a
+  end
+  a = southOf(point)
+  if isBuildable(l, a) then
+    adjs[#adjs + 1] = a
+  end
+  return adjs
+end
+
+local function calculateDistancesForLevelIterative(l, startPoint)
+  local distances = {}
+  local queue = { {0,startPoint} }
+  local queueLen = 1
+  while queueLen > 0 do
+    local pointInfo = table.remove(queue)
+    queueLen = queueLen - 1
+    local point = pointInfo[2]
+    local distance = pointInfo[1]
+
+    set(distances, point, distance)
+
+    local adjs = adjacents(l, point)
+    local d = distance + 1
+    for _,adj in ipairs(adjs) do
+      local current = at(distances, adj)
+      if current == "-" or current > d then
+        set(distances, adj, d)
+        table.insert(queue, 1, {d,adj})
+        queueLen = queueLen + 1
+      end
+    end
+  end
+
+  return distances
+end
+
 local function distancesOf(m, l)
   -- we only cache the distances calculations for one level at a time.
   -- because of memory constraints.
@@ -388,6 +389,26 @@ local function distancesOf(m, l)
   return m._distances.distances
 end
 
+local function furtherThan(l, points, distance)
+  local distances = distancesOf(l._model, l)
+  for _,point in ipairs(points) do
+    if at(distances, point) > distance and not isComplete(l, point) then
+      return point
+    end
+  end
+  return nil
+end
+
+local function closerThan(l, points, distance)
+  local distances = distancesOf(l._model, l)
+  for _,point in ipairs(points) do
+    if at(distances, point) < distance and not isComplete(l, point) then
+      return point
+    end
+  end
+  return nil
+end
+
 local function markLevelComplete(l)
   l.isComplete = true
   -- after a level is complete we dont need to remember
@@ -396,6 +417,26 @@ local function markLevelComplete(l)
   l.statuses = nil
 end
 
+local function getFurtherAdjacent(level, pos)
+  -- see if any of the adjacent blocks from `pos` are incomplete
+  -- and have a larger distance than this pos.
+  local distances = distancesOf(level._model, level)
+  local curDistance = at(distances, pos)
+  local adjs = adjacents(level, pos)
+  return furtherThan(level, adjs, curDistance)
+end
+
+local function getCloserAdjacent(level, pos)
+  -- see if any of the adjacent blocks from `pos` are incomplete
+  -- and have a larger distance than this pos.
+  local distances = distancesOf(level._model, level)
+  local curDistance = at(distances, pos)
+  local adjs = adjacents(level, pos)
+  return closerThan(level, adjs, curDistance)
+end
+
+model.getCloserAdjacent = getCloserAdjacent
+model.getFurtherAdjacent = getFurtherAdjacent
 model.markLevelComplete = markLevelComplete
 model.dropPointOf = dropPointOf
 model.distancesOf = distancesOf

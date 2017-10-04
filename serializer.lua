@@ -114,29 +114,31 @@ local function serialize(obj, indent, asArray, toTable)
     end
   else
     for k,v in pairs(obj) do
-      local t = type(v)
-      if t == "table" then
-        -- what kind of table, one like a list or a like a map?
-        if v[1] == nil then
-          -- map
-          a(s, indent, k, ":", t, "={\n")
-          serialize(v, indent .. '  ', nil, s)
-          a(s, indent, "}\n")
+      if string.sub(k,1,1) ~= "_" then
+        local t = type(v)
+        if t == "table" then
+          -- what kind of table, one like a list or a like a map?
+          if v[1] == nil then
+            -- map
+            a(s, indent, k, ":", t, "={\n")
+            serialize(v, indent .. '  ', nil, s)
+            a(s, indent, "}\n")
+          else
+            -- list
+            a(s, indent, k, ":list=[\n")
+            serialize(v, indent .. '  ', true, s)
+            a(s, indent, "]\n")
+          end
+        elseif t == "boolean" then
+          a(s, indent, k, ":", t, "=")
+          if v then
+            a(s, "true\n")
+          else
+            a(s, "false\n")
+          end
         else
-          -- list
-          a(s, indent, k, ":list=[\n")
-          serialize(v, indent .. '  ', true, s)
-          a(s, indent, "]\n")
+          a(s, indent, k, ":", t, "=", v, "\n")
         end
-      elseif t == "boolean" then
-        a(s, indent, k, ":", t, "=")
-        if v then
-          a(s, "true\n")
-        else
-          a(s, "false\n")
-        end
-      else
-        a(s, indent, k, ":", t, "=", v, "\n")
       end
     end
   end
@@ -150,7 +152,12 @@ end
 local function deserializeFromLinesRec(lines, asArray, untilClose)
   local result = {}
 
-  local line = lines()
+  local line
+  if type(lines) == "table" then
+    line = table.remove(lines, 1)
+  else
+    line = lines()
+  end
   local isDone = false
   while not isDone and line ~= nil and (not untilClose or line ~= untilClose) do
     if string.len(line) > 0 then
@@ -176,7 +183,11 @@ local function deserializeFromLinesRec(lines, asArray, untilClose)
       if asArray then result[#result+1] = v else result[k] = v end
     end
     if not isDone then
-      line = lines()
+      if type(lines) == "table" then
+        line = table.remove(lines, 1)
+      else
+        line = lines()
+      end
     end
   end
 
@@ -188,13 +199,12 @@ local function deserializeFromLines(lines)
 end
 
 local function deserialize(str)
-  -- todo: broke cuz lines() thing
   local lines = {}
   for line in string.gmatch(str, "([^\n]+)") do
     lines[#lines + 1] = line
   end
 
-  return deserializeFromLines(lines, false, true)
+  return deserializeFromLines(lines, false)
 end
 
 local function clone(o)
