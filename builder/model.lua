@@ -299,6 +299,12 @@ function model.fromLoadedModel(m)
   return m
 end
 
+function prepareState(m)
+  for _,l in ipairs(m.levels) do
+    l._model = m
+  end
+end
+
 function model.topMostIncompleteLevel(m)
   for i=#m.levels,m.startPoint[3]+1,-1 do
     if not m.levels[i].isComplete then
@@ -435,6 +441,7 @@ local function getCloserAdjacent(level, pos)
   return closerThan(level, adjs, curDistance)
 end
 
+model.prepareState = prepareState
 model.getCloserAdjacent = getCloserAdjacent
 model.getFurtherAdjacent = getFurtherAdjacent
 model.markLevelComplete = markLevelComplete

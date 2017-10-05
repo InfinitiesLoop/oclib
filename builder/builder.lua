@@ -745,6 +745,7 @@ function Builder:loadState()
   if result ~= nil then
     self.options = result
     self:applyDefaults()
+    model.prepareState(self.options.loadedModel)
     return true
   end
   return false
