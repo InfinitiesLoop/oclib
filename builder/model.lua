@@ -388,6 +388,7 @@ end
 
 local function calculateDistancesForLevelIterative(l, startPoint)
   local distances = {}
+  local notSet = {}
   local blocks = blocksOf(l)
   print("Calculating distances for level " .. l.num)
   set(distances, startPoint, 0)
@@ -398,14 +399,14 @@ local function calculateDistancesForLevelIterative(l, startPoint)
       for c=1,#row do
         local p = { r, c }
         if isBuildable(l, p) then
-          local thisDistance = at(distances, p, nil)
-          if thisDistance ~= nil then
+          local thisDistance = at(distances, p, notSet)
+          if thisDistance ~= notSet then
             local shouldDistance = thisDistance + 1
             -- does this point have a distance and has an adjacent that needs updating?
             local adjs = adjacents(l, p)
             for _,adj in ipairs(adjs) do
-              local thatDistance = at(distances, adj, nil)
-              if thatDistance == nil or thatDistance > shouldDistance then
+              local thatDistance = at(distances, adj, notSet)
+              if thatDistance == notSet or thatDistance > shouldDistance then
                 modified = true
                 set(distances, adj, shouldDistance)
               end
@@ -445,7 +446,7 @@ end
 local function furtherThan(l, points, distance)
   local distances = distancesOf(l._model, l)
   for _,point in ipairs(points) do
-    if at(distances, point) > distance and not isComplete(l, point) then
+    if at(distances, point, -1) > distance and not isComplete(l, point) then
       return point
     end
   end
@@ -455,7 +456,7 @@ end
 local function closerThan(l, points, distance)
   local distances = distancesOf(l._model, l)
   for _,point in ipairs(points) do
-    if at(distances, point) < distance and not isComplete(l, point) then
+    if at(distances, point, 100000) < distance and not isComplete(l, point) then
       return point
     end
   end
@@ -473,7 +474,7 @@ local function getFurtherAdjacent(level, pos)
   -- see if any of the adjacent blocks from `pos` are incomplete
   -- and have a larger distance than this pos.
   local distances = distancesOf(level._model, level)
-  local curDistance = at(distances, pos)
+  local curDistance = at(distances, pos, 100000)
   local adjs = adjacents(level, pos)
   return furtherThan(level, adjs, curDistance)
 end
@@ -482,7 +483,7 @@ local function getCloserAdjacent(level, pos)
   -- see if any of the adjacent blocks from `pos` are incomplete
   -- and have a larger distance than this pos.
   local distances = distancesOf(level._model, level)
-  local curDistance = at(distances, pos)
+  local curDistance = at(distances, pos, -1)
   local adjs = adjacents(level, pos)
   return closerThan(level, adjs, curDistance)
 end
