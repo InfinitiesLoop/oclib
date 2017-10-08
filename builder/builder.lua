@@ -500,8 +500,9 @@ function Builder:followPath(path)
       return false, reason
     end
 
-    if not self:ensureClearAdj(p) then
-      return false, "could not ensure adjacent spot was clear at " .. model.pointStr(p)
+    status, reason = self:ensureClearAdj(p)
+    if not status then
+      return false, "could not ensure adjacent spot was clear at " .. model.pointStr(p) .. ": " .. reason
     end
 
     -- move!
