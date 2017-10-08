@@ -240,9 +240,10 @@ function Builder:gotoNextLevelUp(isReturningToStart)
     end
     -- we will check if we actually already on the drop point and be sure not to load
     -- block data for this level if we are.
-    local dropPoint = model.dropPointOf(self.options.loadedModel, thisLevel)
-    if self.move.posZ ~= dropPoint[1] or self.move.posX ~= -dropPoint[2] then
-      local path = pathing.pathToDropPoint(self.options.loadedModel, nextLevel, dropPoint, isReturningToStart)
+    local thisDropPoint = model.dropPointOf(self.options.loadedModel, thisLevel)
+    local nextDropPoint = model.dropPointOf(self.options.loadedModel, nextLevel)
+    if thisDropPoint[1] ~= nextDropPoint[1] or thisDropPoint[2] ~= nextDropPoint[2] then
+      local path = pathing.pathToDropPoint(self.options.loadedModel, nextLevel, thisDropPoint, isReturningToStart)
       if not self:followPath(path) then
         return false
       end
@@ -252,10 +253,11 @@ function Builder:gotoNextLevelUp(isReturningToStart)
     -- navigate to the next upper-most level in order to continue building.
     -- In that case, we need to go from the droppoint of the current level to the
     -- droppoint of the upper level, then go up.
+    local thisDropPoint = model.dropPointOf(self.options.loadedModel, thisLevel)
     local nextDropPoint = model.dropPointOf(self.options.loadedModel, nextLevel)
     -- in many cases we may already be standing on the droppoint, so avoid getting block
     -- and distance information
-    if self.move.posZ ~= nextDropPoint[1] or self.move.posX ~= -nextDropPoint[2] then
+    if thisDropPoint[1] ~= nextDropPoint[1] or thisDropPoint[2] ~= nextDropPoint[2] then
       local path = pathing.pathFromDropPoint(self.options.loadedModel, thisLevel, nextDropPoint)
       if not self:followPath(path) then
         return false
@@ -282,10 +284,10 @@ function Builder:gotoNextLevelDown(isReturningToStart)
     end
     -- we will check if we actually already on the drop point and be sure not to load
     -- block data for this level if we are.
-    local dropPoint = model.dropPointOf(self.options.loadedModel, thisLevel)
-    if self.move.posZ ~= dropPoint[1] or self.move.posX ~= -dropPoint[2] then
-      local path = pathing.pathToDropPoint(self.options.loadedModel,
-        nextLevel, dropPoint, isReturningToStart)
+    local thisDropPoint = model.dropPointOf(self.options.loadedModel, thisLevel)
+    local nextDropPoint = model.dropPointOf(self.options.loadedModel, nextLevel)
+    if thisDropPoint[1] ~= nextDropPoint[1] or thisDropPoint[2] ~= nextDropPoint[2] then
+      local path = pathing.pathToDropPoint(self.options.loadedModel, nextLevel, thisDropPoint, isReturningToStart)
       if not self:followPath(path) then
         return false
       end
@@ -295,10 +297,11 @@ function Builder:gotoNextLevelDown(isReturningToStart)
     -- navigate to the next lower-most level in order to continue building.
     -- In that case, we need to go from the droppoint of the current level to the
     -- droppoint of the lower level, then go down.
+    local thisDropPoint = model.dropPointOf(self.options.loadedModel, thisLevel)
     local nextDropPoint = model.dropPointOf(self.options.loadedModel, nextLevel)
     -- in many cases we may already be standing on the droppoint, so avoid getting block
     -- and distance information
-    if self.move.posZ ~= nextDropPoint[1] or self.move.posX ~= -nextDropPoint[2] then
+    if thisDropPoint[1] ~= nextDropPoint[1] or thisDropPoint[2] ~= nextDropPoint[2] then
       local path = pathing.pathFromDropPoint(self.options.loadedModel, thisLevel, nextDropPoint)
       if not self:followPath(path) then
         return false
@@ -327,10 +330,9 @@ function Builder:ensureClearAdj(p)
     end
   end
   -- make sure the block we're about to move into is cleared.
-  -- is the spot we're about to move into occupied by something we should clear out?
+  self.move:faceXZ(-p[1], p[2])
   local isBlocking, entityType = robot.detect()
   if isBlocking or entityType ~= "air" then
-    self.move:faceXZ(-p[1], p[2])
     local result = robot.swing()
     if not result then
       -- something is in the way and we couldnt deal with it
