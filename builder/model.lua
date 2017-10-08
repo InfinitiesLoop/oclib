@@ -424,9 +424,11 @@ local function calculateDistancesForLevelIterative(l, startPoint)
       print("Finished calculating distances for level " .. l.num)
       return distances
     end
-    if iterations % 10 == 0 then
+    if iterations % 2 == 0 then
       -- this thing takes a while, so we need to yield every now and then
       if os.sleep then
+        os.sleep(0)
+        os.sleep(0)
         os.sleep(0)
       end
     end
