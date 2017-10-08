@@ -392,7 +392,9 @@ local function calculateDistancesForLevelIterative(l, startPoint)
   local blocks = blocksOf(l)
   print("Calculating distances for level " .. l.num)
   set(distances, startPoint, 0)
+  local iterations = 0
   while true do
+    iterations = iterations + 1
     local modified = false
     for r=1,#blocks do
       local row = blocks[r]
@@ -421,6 +423,12 @@ local function calculateDistancesForLevelIterative(l, startPoint)
     if not modified then
       print("Finished calculating distances for level " .. l.num)
       return distances
+    end
+    if iterations % 10 == 0 then
+      -- this thing takes a while, so we need to yield every now and then
+      if os.sleep then
+        os.sleep(0)
+      end
     end
   end -- while true
 end
