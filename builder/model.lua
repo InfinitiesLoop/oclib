@@ -387,6 +387,7 @@ local function calculateDistancesForLevelIterative(l, startPoint)
   local queue = { {0,startPoint} }
   local queueLen = 1
   while queueLen > 0 do
+    print(queueLen)
     local pointInfo = table.remove(queue)
     queueLen = queueLen - 1
     local point = pointInfo[2]
@@ -405,7 +406,7 @@ local function calculateDistancesForLevelIterative(l, startPoint)
       end
     end
   end
-
+print ("done calculating distances")
   return distances
 end
 
