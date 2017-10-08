@@ -334,7 +334,7 @@ function Builder:ensureClearAdj(p)
     local result = robot.swing()
     if not result then
       -- something is in the way and we couldnt deal with it
-      return false, "could not clear whatever is in " .. model.pointStr(p)
+      return false, "could not swing at " .. (entityType or "unknown") .. " in " .. model.pointStr(p)
     end
   end
   -- save the fact that it is clear so we dont need to do it again
