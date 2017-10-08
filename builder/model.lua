@@ -11,9 +11,9 @@ for i=1,string.len(magicChars) do
   magicCharsMap[string.sub(magicChars, i, i)] = true
 end
 
-local function at(arr, rc)
+local function at(arr, rc, defaultValue)
   local s = arr[rc[1]]
-  if s == nil then return BLOCK_DND end
+  if s == nil then return (defaultValue or BLOCK_DND) end
 
   local result
   if type(s) == "string" then
@@ -21,7 +21,7 @@ local function at(arr, rc)
   else
     result = s[rc[2]]
   end
-  if result == "" or result == nil then result = BLOCK_DND end
+  if result == "" or result == nil then result = (defaultValue or BLOCK_DND) end
   return result
 end
 
@@ -388,28 +388,38 @@ end
 
 local function calculateDistancesForLevelIterative(l, startPoint)
   local distances = {}
-  local queue = { {0,startPoint} }
-  local queueLen = 1
+  local blocks = blocksOf(l)
   set(distances, startPoint, 0)
+  while true do
+    local modified = false
+    for r=1,#blocks do
+      local row = blocks[r]
+      for c=1,#row do
+        local p = { r, c }
+        if isBuildable(l, p) then
+          local thisDistance = at(distances, p, nil)
+          if thisDistance ~= nil then
+            local shouldDistance = thisDistance + 1
+            -- does this point have a distance and has an adjacent that needs updating?
+            local adjs = adjacents(l, p)
+            for _,adj in ipairs(adjs) do
+              local thatDistance = at(distances, adj, nil)
+              if thatDistance == nil or thatDistance > shouldDistance then
+                modified = true
+                set(distances, adj, shouldDistance)
+              end
+            end
+          end -- thisDistance
+        end -- isBuildable
+      end -- col
+    end -- row
 
-  while queueLen > 0 do
-    local pointInfo = table.remove(queue)
-    queueLen = queueLen - 1
-    local distance = pointInfo[1]
-    local point = pointInfo[2]
-
-    local adjs = adjacents(l, point)
-    local d = distance + 1
-    for _,adj in ipairs(adjs) do
-      local current = at(distances, adj)
-      if current == BLOCK_DND or current > d then
-        set(distances, adj, d)
-        table.insert(queue, 1, {d,adj})
-        queueLen = queueLen + 1
-      end
+    -- we went through every row and col and there no changes necessary,
+    -- so we're done here!
+    if not modified then
+      return distances
     end
-  end
-  return distances
+  end -- while true
 end
 
 local function distancesOf(m, l)
