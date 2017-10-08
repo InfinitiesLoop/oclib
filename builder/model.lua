@@ -164,7 +164,11 @@ local function southOf(point)
 end
 
 local function dropPointOf(m, l)
-  return l.dropPoint or m.defaultDropPoint
+  if m.startPoint[3] == l.num then
+    return m.startPoint
+  else
+    return l.dropPoint or m.defaultDropPoint
+  end
 end
 
 local function identifyStartPoint(m, level)
@@ -386,14 +390,13 @@ local function calculateDistancesForLevelIterative(l, startPoint)
   local distances = {}
   local queue = { {0,startPoint} }
   local queueLen = 1
+  set(distances, startPoint, 0)
+
   while queueLen > 0 do
-    print(queueLen)
     local pointInfo = table.remove(queue)
     queueLen = queueLen - 1
-    local point = pointInfo[2]
     local distance = pointInfo[1]
-
-    set(distances, point, distance)
+    local point = pointInfo[2]
 
     local adjs = adjacents(l, point)
     local d = distance + 1
@@ -406,7 +409,6 @@ local function calculateDistancesForLevelIterative(l, startPoint)
       end
     end
   end
-print ("done calculating distances")
   return distances
 end
 

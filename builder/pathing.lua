@@ -151,7 +151,6 @@ function pathing.pathToDropPoint(m, level, fromPoint)
   -- and so on. When we get to 0 we found the source drop point and we have the path.
   local current = fromPoint
   local currentDist = model.at(model.distancesOf(m, level), current)
-
   local path = { }
   while current do
     local adjs = model.adjacents(level, current)
@@ -178,6 +177,5 @@ function pathing.pathToDropPoint(m, level, fromPoint)
     end
   end
 end
-
 
 return pathing
