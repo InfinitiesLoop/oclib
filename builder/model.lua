@@ -390,6 +390,7 @@ end
 local function calculateDistancesForLevelIterative(l, startPoint)
   local distances = {}
   local blocks = blocksOf(l)
+  print("Calculating distances for level " .. l.num)
   set(distances, startPoint, 0)
   while true do
     local modified = false
@@ -418,6 +419,7 @@ local function calculateDistancesForLevelIterative(l, startPoint)
     -- we went through every row and col and there no changes necessary,
     -- so we're done here!
     if not modified then
+      print("Finished calculating distances for level " .. l.num)
       return distances
     end
   end -- while true
