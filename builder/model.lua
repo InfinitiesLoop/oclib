@@ -41,10 +41,9 @@ local function set(arr, rc, value)
 end
 
 local function loadStatuses(l)
-  local statuses = objectStore.loadObject("builder_statuses")
-  if statuses then
-    l._model._downloadedBlocks = statuses
-  end
+  -- first delete so we can free up memory
+  l._model._downloadedBlocks = nil
+  l._model._downloadedBlocks = objectStore.loadObject("builder_statuses")
 end
 local function saveStatuses(l)
   if l._model._downloadedBlocks then
