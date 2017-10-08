@@ -3,6 +3,10 @@ author:string=InfinitiesLoop
 mats:table={
   x:string=cobblestone
 }
+defaultDropPoint:list=[
+  number=27
+  number=27
+]
 levels:list=[
   table={
     name:string=level 1

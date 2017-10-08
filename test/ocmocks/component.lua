@@ -59,5 +59,9 @@ function filesystem.makeDirectory(dir)
   os.execute("mkdir -p " .. dir)
   print("component.filesystem: makeDirectory " .. dir)
 end
+function filesystem.remove(path)
+  os.execute("rm " .. path)
+  print("component.filesystem: rm " .. path)
+end
 
 package.preload.component = function() return component end

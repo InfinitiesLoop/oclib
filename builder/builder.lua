@@ -83,6 +83,11 @@ function Builder:start()
     self:saveState()
   end
 
+  if not self.options.resuming then
+    -- a new build, make sure we don't think saved statuses are from a previous one.
+    model.clearStatuses()
+  end
+
   print("Checking things out...")
 
   -- require stuff, open port
@@ -179,6 +184,10 @@ function Builder:completeLevelDown()
   else
     model.markLevelComplete(thisLevel)
     self:saveState()
+    -- be sure statuses are cleared and saved that way, in case
+    -- we crash between now and when the blocks of the next level load,
+    -- else we could confuse the saved statuses for the next level.
+    model.clearStatuses()
   end
 
   -- we're on the level, lets get to the droppoint for it
@@ -204,8 +213,12 @@ function Builder:completeLevelUp()
     return false, "could not build final block on level " .. nextLevel.num ..
       " point " .. model.pointStr(buildPoint)
   else
-    thisLevel.isComplete = true
+    model.markLevelComplete(thisLevel)
     self:saveState()
+    -- be sure statuses are cleared and saved that way, in case
+    -- we crash between now and when the blocks of the next level load,
+    -- else we could confuse the saved statuses for the next level.
+    model.clearStatuses()
   end
 
   -- we're on the level, lets get to the droppoint for it
@@ -225,20 +238,28 @@ function Builder:gotoNextLevelUp(isReturningToStart)
     if not self:ensureClearUp() or not self.move:up() then
       return false
     end
-    local path = pathing.pathToDropPoint(self.options.loadedModel,
-      nextLevel, model.dropPointOf(self.options.loadedModel, thisLevel), isReturningToStart)
-    if not self:followPath(path) then
-      return false
+    -- we will check if we actually already on the drop point and be sure not to load
+    -- block data for this level if we are.
+    local dropPoint = model.dropPointOf(self.options.loadedModel, thisLevel)
+    if self.move.posZ ~= dropPoint[1] or self.move.posX ~= -dropPoint[2] then
+      local path = pathing.pathToDropPoint(self.options.loadedModel, nextLevel, dropPoint, isReturningToStart)
+      if not self:followPath(path) then
+        return false
+      end
     end
   else
     -- This means we are on an upper level, and we need to go up in order to
     -- navigate to the next upper-most level in order to continue building.
     -- In that case, we need to go from the droppoint of the current level to the
     -- droppoint of the upper level, then go up.
-    local path = pathing.pathFromDropPoint(self.options.loadedModel,
-      thisLevel, model.dropPointOf(self.options.loadedModel, nextLevel))
-    if not self:followPath(path) then
-      return false
+    local nextDropPoint = model.dropPointOf(self.options.loadedModel, nextLevel)
+    -- in many cases we may already be standing on the droppoint, so avoid getting block
+    -- and distance information
+    if self.move.posZ ~= nextDropPoint[1] or self.move.posX ~= -nextDropPoint[2] then
+      local path = pathing.pathFromDropPoint(self.options.loadedModel, thisLevel, nextDropPoint)
+      if not self:followPath(path) then
+        return false
+      end
     end
     if not self:ensureClearUp() or not self.move:up() then
       return false
@@ -259,20 +280,29 @@ function Builder:gotoNextLevelDown(isReturningToStart)
     if not self:ensureClearDown() or not self.move:down() then
       return false
     end
-    local path = pathing.pathToDropPoint(self.options.loadedModel,
-      nextLevel, model.dropPointOf(self.options.loadedModel, thisLevel), isReturningToStart)
-    if not self:followPath(path) then
-      return false
+    -- we will check if we actually already on the drop point and be sure not to load
+    -- block data for this level if we are.
+    local dropPoint = model.dropPointOf(self.options.loadedModel, thisLevel)
+    if self.move.posZ ~= dropPoint[1] or self.move.posX ~= -dropPoint[2] then
+      local path = pathing.pathToDropPoint(self.options.loadedModel,
+        nextLevel, dropPoint, isReturningToStart)
+      if not self:followPath(path) then
+        return false
+      end
     end
   else
     -- This means we are on lower level, and we need to go down in order to
     -- navigate to the next lower-most level in order to continue building.
     -- In that case, we need to go from the droppoint of the current level to the
     -- droppoint of the lower level, then go down.
-    local path = pathing.pathFromDropPoint(self.options.loadedModel,
-      thisLevel, model.dropPointOf(self.options.loadedModel, nextLevel))
-    if not self:followPath(path) then
-      return false
+    local nextDropPoint = model.dropPointOf(self.options.loadedModel, nextLevel)
+    -- in many cases we may already be standing on the droppoint, so avoid getting block
+    -- and distance information
+    if self.move.posZ ~= nextDropPoint[1] or self.move.posX ~= -nextDropPoint[2] then
+      local path = pathing.pathFromDropPoint(self.options.loadedModel, thisLevel, nextDropPoint)
+      if not self:followPath(path) then
+        return false
+      end
     end
     if not self:ensureClearDown() or not self.move:down() then
       return false
@@ -288,24 +318,29 @@ function Builder:ensureClearAdj(p)
   if not status then
     return false, reason
   end
-
-  local level = self.options.loadedModel.levels[self.move.posY]
-
-  if not model.isClear(level, p) then
-    -- make sure the block we're about to move into is cleared.
-    self.move:faceXZ(-p[1], p[2])
-    -- is the spot we're about to move into occupied by something we should clear out?
-    local isBlocking, entityType = robot.detect()
-    if isBlocking or entityType ~= "air" then
-      local result = robot.swing()
-      if not result then
-        -- something is in the way and we couldnt deal with it
-        return false, "could not clear whatever is in " .. model.pointStr(p)
-      end
+  local level
+  if not self.isReturningToStart then
+    level = self.options.loadedModel.levels[self.move.posY]
+    if model.isClear(level, p) then
+      -- already clear
+      return true
     end
-    -- the space is clear or we just made it clear, mark it as so
-    model.set(level.statuses, p, "O")
-    self:saveState()
+  end
+  -- make sure the block we're about to move into is cleared.
+  -- is the spot we're about to move into occupied by something we should clear out?
+  local isBlocking, entityType = robot.detect()
+  if isBlocking or entityType ~= "air" then
+    self.move:faceXZ(-p[1], p[2])
+    local result = robot.swing()
+    if not result then
+      -- something is in the way and we couldnt deal with it
+      return false, "could not clear whatever is in " .. model.pointStr(p)
+    end
+  end
+  -- save the fact that it is clear so we dont need to do it again
+  if not self.isReturningToStart then
+    model.setStatus(level, p, 1)
+    model.saveStatuses(level)
   end
   return true
 end
@@ -321,23 +356,15 @@ function Builder:ensureClearUp()
   if not upperLevel then
     error("Tried to clearUp but no level above us at posY=" .. self.move.posY)
   end
-
   local p = {-self.move.posX, self.move.posZ}
-  if not model.isClear(upperLevel, p) then
-    -- is the spot we're about to move into occupied by something we should clear out?
-    local isBlocking, entityType = robot.detectUp()
-    if isBlocking or entityType ~= "air" then
-      local result = robot.swingUp()
-      if not result then
-        -- something is in the way and we couldnt deal with it
-        return false, "could not clear whatever is above me at " .. model.pointStr(p)
-      end
+  -- is the spot we're about to move into occupied by something we should clear out?
+  local isBlocking, entityType = robot.detectUp()
+  if isBlocking or entityType ~= "air" then
+    local result = robot.swingUp()
+    if not result then
+      -- something is in the way and we couldnt deal with it
+      return false, "could not clear whatever is above me at " .. model.pointStr(p)
     end
-
-    -- the space is clear or we just made it clear, mark it as so
-    model.set(upperLevel.statuses, p, "O")
-
-    self:saveState()
   end
   return true
 end
@@ -353,23 +380,15 @@ function Builder:ensureClearDown()
   if not lowerLevel then
     error("Tried to clearDown but no level below us at posY=" .. self.move.posY)
   end
-
   local p = {-self.move.posX, self.move.posZ}
-  if not model.isClear(lowerLevel, p) then
-    -- is the spot we're about to move into occupied by something we should clear out?
-    local isBlocking, entityType = robot.detectDown()
-    if isBlocking or entityType ~= "air" then
-      local result = robot.swingDown()
-      if not result then
-        -- something is in the way and we couldnt deal with it
-        return false, "could not clear whatever is below me at " .. model.pointStr(p)
-      end
+  -- is the spot we're about to move into occupied by something we should clear out?
+  local isBlocking, entityType = robot.detectDown()
+  if isBlocking or entityType ~= "air" then
+    local result = robot.swingDown()
+    if not result then
+      -- something is in the way and we couldnt deal with it
+      return false, "could not clear whatever is below me at " .. model.pointStr(p)
     end
-
-    -- the space is clear or we just made it clear, mark it as so
-    model.set(lowerLevel.statuses, p, "O")
-
-    self:saveState()
   end
   return true
 end
@@ -380,7 +399,6 @@ function Builder:buildBlock(level, buildPoint)
   if not result then
     return false, "could not ensure buildpoint was clear at " .. model.pointStr(buildPoint) .. ": " .. reason
   end
-  self.move:faceXZ(-buildPoint[1], buildPoint[2])
 
   local blockName = model.blockAt(self.options.loadedModel, level, buildPoint)
   if (blockName and blockName ~= "!air") then
@@ -388,6 +406,7 @@ function Builder:buildBlock(level, buildPoint)
       -- we seem to be out of this material
       return false, "no more " .. blockName
     end
+    self.move:faceXZ(-buildPoint[1], buildPoint[2])
     result, reason = robot.place()
     if not result then
       return false, "could not place block " .. blockName .. ": " .. (reason or "unknown")
@@ -396,9 +415,8 @@ function Builder:buildBlock(level, buildPoint)
   end
 
   -- mark that we have indeed built this point
-  model.set(level.statuses, buildPoint, 'D')
-  self:saveState()
-
+  model.setStatus(level, buildPoint, 2)
+  model.saveStatuses(level)
   return true
 end
 
@@ -417,9 +435,8 @@ function Builder:buildBlockUp(level, buildPoint)
   end
 
   -- mark that we have indeed built this point
-  model.set(level.statuses, buildPoint, 'D')
-  self:saveState()
-
+  model.setStatus(level, buildPoint, 2)
+  model.saveStatuses(level)
   return true
 end
 
@@ -438,9 +455,8 @@ function Builder:buildBlockDown(level, buildPoint)
   end
 
   -- mark that we have indeed built this point
-  model.set(level.statuses, buildPoint, 'D')
-  self:saveState()
-
+  model.setStatus(level, buildPoint, 2)
+  model.saveStatuses(level)
   return true
 end
 
@@ -559,13 +575,13 @@ function Builder:backToStart() --luacheck: no unused args
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   print("Headed home from level " .. thisLevel.num .. " at " .. model.pointStr({-self.move.posX, self.move.posZ}))
   local path = pathing.pathToDropPoint(self.options.loadedModel, thisLevel, {-self.move.posX, self.move.posZ})
-  self:debugLoc("backToStart, going to droppoint of this level via " .. model.pathStr(path))
+
   local result, reason = self:followPath(path)
   if not result then
     self:debugLoc("backToStart, FAILED to follow path!")
     return false, ("backToStart could not get to droppoint of current level: " .. reason)
   end
-  self:debugLoc("backToStart, finished following path.")
+
   -- now we just need to follow drop points down the starting level
   while self.move.posY > self.options.loadedModel.startPoint[3] do
     if not self:gotoNextLevelDown(true) then
@@ -625,6 +641,9 @@ function Builder:buildLowerLevels()
     end
   end
 
+  -- now that we are here we need to restore the statuses that were saved to disk
+  model.loadStatuses(level)
+
   -- iterate through the levels
   local firstLevel = true
   repeat
@@ -652,6 +671,10 @@ function Builder:buildLowerLevels()
   return true
 end
 
+function Builder:loadStatuses() -- luacheck: no unused args
+  model.loadStatuses()
+end
+
 function Builder:buildUpperLevels()
   local level = model.topMostIncompleteLevel(self.options.loadedModel)
   if not level then
@@ -668,6 +691,9 @@ function Builder:buildUpperLevels()
       return false, reason
     end
   end
+
+  -- now that we are here we need to restore the statuses that were saved to disk
+  model.loadStatuses(level)
 
   -- iterate through the levels
   local firstLevel = true
@@ -770,11 +796,13 @@ elseif args[1] == 'start' then
   if (args[2] == 'help') then
     print("usage: builder start --model=mymodel.model")
   else
+    options.resuming = false
     local b = builder.new({options = options})
     b:applyDefaults()
     b:start()
   end
 elseif args[1] == 'resume' then
+  options.resuming = true
   local b = builder.new({options = options})
   if b:loadState() then
     b:start()

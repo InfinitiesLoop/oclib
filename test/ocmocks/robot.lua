@@ -95,6 +95,11 @@ function robot.placeDown()
   return true
 end
 
+function robot.swing()
+  print("robot: swing")
+  return true
+end
+
 function robot.dropDown(count)
   local toDrop = mockInv.get()
   if not toDrop then

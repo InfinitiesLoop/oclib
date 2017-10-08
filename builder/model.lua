@@ -1,7 +1,9 @@
 local serializer = require("serializer")
 local internet = require("internet")
-
+local objectStore = require("objectStore")
 local model = {}
+
+local BLOCK_DND = string.byte('-')
 
 local magicChars = "().%+-*?[^$"
 local magicCharsMap = {}
@@ -11,7 +13,7 @@ end
 
 local function at(arr, rc)
   local s = arr[rc[1]]
-  if s == nil then return "-" end
+  if s == nil then return BLOCK_DND end
 
   local result
   if type(s) == "string" then
@@ -19,7 +21,7 @@ local function at(arr, rc)
   else
     result = s[rc[2]]
   end
-  if result == "" or result == nil then result = "-" end
+  if result == "" or result == nil then result = BLOCK_DND end
   return result
 end
 
@@ -37,25 +39,42 @@ local function set(arr, rc, value)
   return true
 end
 
+local function loadStatuses(l)
+  local statuses = objectStore.loadObject("builder_statuses")
+  if statuses then
+    l._model._downloadedBlocks = statuses
+  end
+end
+local function saveStatuses(l)
+  if l._model._downloadedBlocks then
+    objectStore.saveObject("builder_statuses", l._model._downloadedBlocks)
+  elseif type(l.blocks) == 'table' then
+    objectStore.saveObject("builder_statuses", { blocks = l.blocks, forLevel = l.num })
+  end
+end
+local function clearStatuses()
+  objectStore.deleteObject("builder_statuses")
+end
+
 local function blocksOf(l)
+  local blocksInfo = l._model._downloadedBlocks
+  if blocksInfo and blocksInfo.forLevel == l.num then
+    return blocksInfo.blocks
+  end
+
   local blocks = l.blocks
   if type(blocks) == "table" then
     return blocks
   elseif blocks == "@internet" then
     -- the blocks for this level are loaded from an internet level file
-    -- so download the block list, unless its the same as the last one we
-    -- have loaded.
-    local dlBlocks = l._model._downloadedBlocks
-    if dlBlocks and dlBlocks.forLevel == l.num then
-      return dlBlocks.blocks
-    end
+    -- so download the block list
     -- remove it before downloading, for more memory..
     l._model._downloadedBlocks = nil
 
     -- download the file...
     print("Downloading blocks for level " .. l.num)
     local data = internet.request("https://raw.githubusercontent.com/" .. l._model.blocksBaseUrl
-      .. "/" .. string.format("%03d", l.num) .. "?" .. math.random() .. " ")
+      .. "/" .. string.format("%03d", l.num) .. "?" .. math.random())
     local chunks = {}
     for chunk in data do
       chunks[#chunks+1] = chunk
@@ -65,7 +84,7 @@ local function blocksOf(l)
     blocks = {}
     local allLines = table.concat(chunks, "")
     for line in string.gmatch(allLines, "([^\n]+)") do
-      blocks[#blocks+1] = line
+      blocks[#blocks+1] = {string.byte(line, 1, string.len(line))}
     end
     print("Blocks have been loaded into memory.")
 
@@ -73,6 +92,20 @@ local function blocksOf(l)
     return blocks
   end
   error("Could not understand where the blocks are defined for level " .. l.num)
+end
+
+
+local function rawBlockAt(level, point)
+  return at(blocksOf(level), point) % 1000
+end
+
+local function statusAt(level, point)
+  return math.floor(at(blocksOf(level), point) / 1000)
+end
+
+local function setStatus(level, point, status)
+  local value = rawBlockAt(level, point) + (status * 1000)
+  set(blocksOf(level), point, value)
 end
 
 local function pointStr(p)
@@ -92,29 +125,29 @@ local function pathStr(path)
 end
 
 local function isBuildable(level, point)
-  return at(blocksOf(level), point) ~= "-"
+  return rawBlockAt(level, point) ~= BLOCK_DND
 end
 
 local function isComplete(level, point)
-  return (not isBuildable(level, point)) or at(level.statuses, point) == "D"
+  return (not isBuildable(level, point)) or statusAt(level, point) == 2
 end
 local function isClear(level, point)
   if not isBuildable(level, point) then
     return true
   end
-  local status = at(level.statuses, point)
-  return status == "O" or status == "D"
+  local status = statusAt(level, point)
+  return status == 1 or status == 2
 end
 
 local function blockAt(m, level, point)
   if not isBuildable(level, point) then
     return nil
   end
-  local moniker = at(blocksOf(level), point)
-  if moniker == ' ' then
+  local moniker = rawBlockAt(level, point)
+  if moniker == BLOCK_DND then
     return "!air"
   end
-  return m.mats[moniker] or "!air"
+  return m.mats[string.char(moniker)] or "!air"
 end
 
 local function westOf(point)
@@ -130,14 +163,20 @@ local function southOf(point)
   return {point[1]+1, point[2]}
 end
 
+local function dropPointOf(m, l)
+  return l.dropPoint or m.defaultDropPoint
+end
+
 local function identifyStartPoint(m, level)
-  for i,row in ipairs(blocksOf(level)) do
-    local result = string.find(row, "[v^<>]")
-    if result then
-      level.startPoint = {i, result, level.num, string.sub(row, result, result)}
-      m.startPoint = level.startPoint
-      level.dropPoint = {i,result}
-      return true
+  for r,row in ipairs(blocksOf(level)) do
+    for c,col in ipairs(row) do
+      local result = string.char(col)
+      if result == 'v' or result == '^' or result == '<' or result == '>' then
+        level.startPoint = {r, c, level.num, result}
+        m.startPoint = level.startPoint
+        level.dropPoint = {r,c}
+        return true
+      end
     end
   end
   return false
@@ -147,60 +186,43 @@ local function identifyDropPointAbove(level, lowerLevel)
   -- find the first buildable block in this level that is over a buildable block of the level below it.
   -- it is that block in which the robot can move from the upper level into the lower one in order to
   -- complete that level, or to navigate back to the start point for recharging.
-  local ir = 1
-  local found = false
   local blocks = blocksOf(level)
-  while ir <= #blocks and not found do
-    local ic = 1
-    while ic <= string.len(blocks[ir]) and not found do
-      if isBuildable(level, {ir, ic}) and isBuildable(lowerLevel, {ir, ic}) then
-        found = {ir, ic}
+  local lowerBlocks = blocksOf(lowerLevel)
+  for r,row in ipairs(blocks) do
+    for c,_ in ipairs(row) do
+      if at(blocks, {r, c}) ~= BLOCK_DND and at(lowerBlocks, {r, c}) ~= BLOCK_DND then
+        level.dropPoint = {r, c}
+        return true
       end
-      ic = ic + 1
     end
-    ir = ir + 1
   end
-
-  if not found then
-    -- uh oh, this means there's no way for the bot to get from a level to the next one down
-    -- without having to break an unbuildable block
-    return false, "Drop point not possible on level " .. level.num
-  end
-
-  level.dropPoint = found
-  return true
+  -- uh oh, this means there's no way for the bot to get from a level to the next one down
+  -- without having to break an unbuildable block
+  return false, "Drop point not possible on level " .. level.num
 end
 
 local function identifyDropPointBelow(level, upperLevel)
   -- find the first buildable block in this level that is under a buildable block of the level above it.
   -- it is that block in which the robot can move from the lower level into the upper one in order to
   -- complete that level, or to navigate back to the start point for recharging.
-  local ir = 1
-  local found = false
   local blocks = blocksOf(level)
-  while ir <= #blocks and not found do
-    local ic = 1
-    while ic <= string.len(blocks[ir]) and not found do
-      if isBuildable(level, {ir, ic}) and isBuildable(upperLevel, {ir, ic}) then
-        found = {ir, ic}
+  local upperBlocks = blocksOf(upperLevel)
+  for r,row in ipairs(blocks) do
+    for c,_ in ipairs(row) do
+      if at(blocks, {r, c}) ~= BLOCK_DND and at(upperBlocks, {r, c}) ~= BLOCK_DND then
+        level.dropPoint = {r, c}
+        return true
       end
-      ic = ic + 1
     end
-    ir = ir + 1
   end
-
-  if not found then
-    -- uh oh, this means there's no way for the bot to get from a level to the next one down
-    -- without having to break an unbuildable block
-    return false, "Drop point not possible on level " .. level.num
-  end
-
-  level.dropPoint = found
-  return true
+  -- uh oh, this means there's no way for the bot to get from a level to the next one down
+  -- without having to break an unbuildable block
+  return false, "Drop point not possible on level " .. level.num
 end
 
-local function identifyDropPoint(m, l)
+local function identifyDropPoint(l)
   local result, reason
+  local m = l._model
   if l.lowerLevel then
     result, reason = identifyDropPointBelow(l, m.levels[l.num + 1])
   elseif l.num == m.startPoint[3] then
@@ -222,6 +244,16 @@ function model.load(path)
   return model.fromLoadedModel(obj)
 end
 
+local function convertBlocks(blocks)
+  if blocks == "@internet" then
+    return blocks
+  end
+  local t = {}
+  for _,row in ipairs(blocks) do
+    t[#t + 1] = {string.byte(row, 1, string.len(row))}
+  end
+  return t
+end
 function model.fromLoadedModel(m)
   -- here's where we take the raw data that was in the model file
   -- and do some ETL on it to make it easier to deal with. for example,
@@ -229,7 +261,6 @@ function model.fromLoadedModel(m)
   local etlLevels = {}
   print("Loading levels...")
   for _,l in ipairs(m.levels) do
-    l.statuses = {}
     l._model = m
 
     -- count how many of each material this level needs
@@ -248,6 +279,9 @@ function model.fromLoadedModel(m)
         l.matCounts[matName] = matCount
       end
     end
+
+    -- convert the blocks from an ascii layout to a numeric table based one
+    l.blocks = convertBlocks(l.blocks)
 
     -- expand out the levels that have a span
     local span = l.span or 1
@@ -293,13 +327,17 @@ function model.fromLoadedModel(m)
     m.levels[lnum].lowerLevel = true
   end
 
-  -- the robot's starting point by definition 'open'
-  set(m.levels[m.startPoint[3]].statuses, m.startPoint, 'O')
+  -- calculate drop points if not specified already
+  for _,l in ipairs(m.levels) do
+    if not dropPointOf(l._model, l) then
+      identifyDropPoint(l)
+    end
+  end
 
   return m
 end
 
-function prepareState(m)
+local function prepareState(m)
   for _,l in ipairs(m.levels) do
     l._model = m
   end
@@ -321,15 +359,6 @@ function model.bottomMostIncompleteLevel(m)
     end
   end
   return nil
-end
-
-local function dropPointOf(m, l)
-  if l.dropPoint then
-    return l.dropPoint
-  else
-    identifyDropPoint(m, l)
-    return l.dropPoint
-  end
 end
 
 local function adjacents(l, point)
@@ -369,7 +398,7 @@ local function calculateDistancesForLevelIterative(l, startPoint)
     local d = distance + 1
     for _,adj in ipairs(adjs) do
       local current = at(distances, adj)
-      if current == "-" or current > d then
+      if current == BLOCK_DND or current > d then
         set(distances, adj, d)
         table.insert(queue, 1, {d,adj})
         queueLen = queueLen + 1
@@ -418,9 +447,8 @@ end
 local function markLevelComplete(l)
   l.isComplete = true
   -- after a level is complete we dont need to remember
-  -- the blocks on it or its status array.
+  -- the blocks on it
   l.blocks = nil
-  l.statuses = nil
 end
 
 local function getFurtherAdjacent(level, pos)
@@ -441,6 +469,9 @@ local function getCloserAdjacent(level, pos)
   return closerThan(level, adjs, curDistance)
 end
 
+model.loadStatuses = loadStatuses
+model.saveStatuses = saveStatuses
+model.clearStatuses = clearStatuses
 model.prepareState = prepareState
 model.getCloserAdjacent = getCloserAdjacent
 model.getFurtherAdjacent = getFurtherAdjacent
@@ -457,6 +488,7 @@ model.isBuildable = isBuildable
 model.isComplete = isComplete
 model.isClear = isClear
 model.set = set
+model.setStatus = setStatus
 model.at = at
 model.pointStr = pointStr
 model.pathStr = pathStr

@@ -32,4 +32,11 @@ function objectstore.loadObject(name)
   return serializer.deserializeLines(lines)
 end
 
+function objectstore.deleteObject(name)
+  if filesystem == nil then
+    return nil
+  end
+  filesystem.remove(objectstore.baseDir .. "/" .. name)
+end
+
 return objectstore
