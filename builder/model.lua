@@ -1,6 +1,7 @@
 local serializer = require("serializer")
 local internet = require("internet")
 local objectStore = require("objectStore")
+local os = require("os")
 local model = {}
 
 local BLOCK_DND = string.byte('-')
@@ -429,6 +430,9 @@ local function distancesOf(m, l)
   -- the important thing is it is cached while building a particular level
   if not m._distances or m._distances.forLevel ~= l.num then
     m._distances = nil -- make sure to free the old one, if any, first
+    if os.sleep then
+      for i=1,10 do os.sleep(0) end
+    end
     m._distances = {
       forLevel = l.num,
       distances = calculateDistancesForLevelIterative(l, dropPointOf(m, l))
