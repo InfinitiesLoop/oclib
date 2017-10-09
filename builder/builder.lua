@@ -340,7 +340,6 @@ function Builder:ensureClearAdj(p)
   -- save the fact that it is clear so we dont need to do it again
   if not self.isReturningToStart then
     model.setStatus(level, p, 1)
-    model.saveStatuses(level)
   end
   return true
 end
@@ -416,7 +415,6 @@ function Builder:buildBlock(level, buildPoint)
 
   -- mark that we have indeed built this point
   model.setStatus(level, buildPoint, 2)
-  model.saveStatuses(level)
   return true
 end
 
@@ -436,7 +434,6 @@ function Builder:buildBlockUp(level, buildPoint)
 
   -- mark that we have indeed built this point
   model.setStatus(level, buildPoint, 2)
-  model.saveStatuses(level)
   return true
 end
 
@@ -456,7 +453,6 @@ function Builder:buildBlockDown(level, buildPoint)
 
   -- mark that we have indeed built this point
   model.setStatus(level, buildPoint, 2)
-  model.saveStatuses(level)
   return true
 end
 
@@ -473,16 +469,19 @@ function Builder:buildCurrentLevel()
       -- go where we need to go
       local followResult, followReason = self:followPath(result[2])
       if not followResult then
+        model.saveStatuses(l)
         return false, "Couldn't follow path to build site: " .. followReason
       end
 
       -- build the block we need to build
       local buildResult, reason = self:buildBlock(l, buildPoint)
       if not buildResult then
+        model.saveStatuses(l)
         return false, reason
       end
       currentPoint = standPoint
     else
+      model.saveStatuses(l)
       return true
     end
   until not result
