@@ -191,8 +191,7 @@ function Builder:completeLevelDown()
   end
 
   -- we're on the level, lets get to the droppoint for it
-  local path = pathing.pathToDropPoint(self.options.loadedModel,
-    nextLevel, model.dropPointOf(self.options.loadedModel, thisLevel))
+  local path = pathing.pathToDropPoint(nextLevel, model.dropPointOf(self.options.loadedModel, thisLevel))
   return self:followPath(path)
 end
 
@@ -222,8 +221,7 @@ function Builder:completeLevelUp()
   end
 
   -- we're on the level, lets get to the droppoint for it
-  local path = pathing.pathToDropPoint(self.options.loadedModel,
-    nextLevel, model.dropPointOf(self.options.loadedModel, thisLevel))
+  local path = pathing.pathToDropPoint(nextLevel, model.dropPointOf(self.options.loadedModel, thisLevel))
   return self:followPath(path)
 end
 
@@ -243,7 +241,7 @@ function Builder:gotoNextLevelUp(isReturningToStart)
     local thisDropPoint = model.dropPointOf(self.options.loadedModel, thisLevel)
     local nextDropPoint = model.dropPointOf(self.options.loadedModel, nextLevel)
     if thisDropPoint[1] ~= nextDropPoint[1] or thisDropPoint[2] ~= nextDropPoint[2] then
-      local path = pathing.pathToDropPoint(self.options.loadedModel, nextLevel, thisDropPoint, isReturningToStart)
+      local path = pathing.pathToDropPoint(nextLevel, thisDropPoint, isReturningToStart)
       if not self:followPath(path) then
         return false
       end
@@ -258,7 +256,7 @@ function Builder:gotoNextLevelUp(isReturningToStart)
     -- in many cases we may already be standing on the droppoint, so avoid getting block
     -- and distance information
     if thisDropPoint[1] ~= nextDropPoint[1] or thisDropPoint[2] ~= nextDropPoint[2] then
-      local path = pathing.pathFromDropPoint(self.options.loadedModel, thisLevel, nextDropPoint)
+      local path = pathing.pathFromDropPoint(thisLevel, nextDropPoint)
       if not self:followPath(path) then
         return false
       end
@@ -287,7 +285,7 @@ function Builder:gotoNextLevelDown(isReturningToStart)
     local thisDropPoint = model.dropPointOf(self.options.loadedModel, thisLevel)
     local nextDropPoint = model.dropPointOf(self.options.loadedModel, nextLevel)
     if thisDropPoint[1] ~= nextDropPoint[1] or thisDropPoint[2] ~= nextDropPoint[2] then
-      local path = pathing.pathToDropPoint(self.options.loadedModel, nextLevel, thisDropPoint, isReturningToStart)
+      local path = pathing.pathToDropPoint(nextLevel, thisDropPoint, isReturningToStart)
       if not self:followPath(path) then
         return false
       end
@@ -302,7 +300,7 @@ function Builder:gotoNextLevelDown(isReturningToStart)
     -- in many cases we may already be standing on the droppoint, so avoid getting block
     -- and distance information
     if thisDropPoint[1] ~= nextDropPoint[1] or thisDropPoint[2] ~= nextDropPoint[2] then
-      local path = pathing.pathFromDropPoint(self.options.loadedModel, thisLevel, nextDropPoint)
+      local path = pathing.pathFromDropPoint(thisLevel, nextDropPoint)
       if not self:followPath(path) then
         return false
       end
@@ -577,7 +575,7 @@ function Builder:backToStart() --luacheck: no unused args
   -- first thing we need to do is get to the droppoint for the level we are on.
   local thisLevel = self.options.loadedModel.levels[self.move.posY]
   print("Headed home from level " .. thisLevel.num .. " at " .. model.pointStr({-self.move.posX, self.move.posZ}))
-  local path = pathing.pathToDropPoint(self.options.loadedModel, thisLevel, {-self.move.posX, self.move.posZ})
+  local path = pathing.pathToDropPoint(thisLevel, {-self.move.posX, self.move.posZ})
 
   local result, reason = self:followPath(path)
   if not result then
