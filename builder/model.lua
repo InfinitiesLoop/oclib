@@ -71,23 +71,30 @@ local function blocksOf(l)
     -- so download the block list
     -- remove it before downloading, for more memory..
     l._model._downloadedBlocks = nil
+    -- yield to help gc?
+    if os.sleep then
+      for _=1,10 do os.sleep(0) end
+    end
 
     -- download the file...
     print("Downloading blocks for level " .. l.num)
     local data = internet.request("https://raw.githubusercontent.com/" .. l._model.blocksBaseUrl
       .. "/" .. string.format("%03d", l.num) .. "?" .. math.random())
-    local chunks = {}
+    local tmpFile = io.open("/tmp/builder_model_tmp", "w")
     for chunk in data do
-      chunks[#chunks+1] = chunk
+      tmpFile:write(chunk)
     end
+    tmpFile:flush()
+    tmpFile:close()
     print("Blocks downloaded, parsing...")
     -- convert the raw string content into the array of lines
     blocks = {}
-    local allLines = table.concat(chunks, "")
-    for line in string.gmatch(allLines, "([^\n]+)") do
+    tmpFile = io.lines("/tmp/builder_model_tmp")
+    for line in tmpFile do
       blocks[#blocks+1] = {string.byte(line, 1, string.len(line))}
     end
     print("Blocks have been loaded into memory.")
+    os.remove("/tmp/builder_model_tmp")
 
     l._model._downloadedBlocks = { blocks = blocks, forLevel = l.num }
     model.calculateDistancesForLevelIterative(l, model.dropPointOf(l._model, l))
