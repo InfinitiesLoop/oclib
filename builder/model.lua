@@ -2,6 +2,7 @@ local serializer = require("serializer")
 local internet = require("internet")
 local objectStore = require("objectStore")
 local os = require("os")
+local bit32 = require("bit32")
 local model = {}
 
 local BLOCK_DND = string.byte('-')
@@ -89,6 +90,7 @@ local function blocksOf(l)
     print("Blocks have been loaded into memory.")
 
     l._model._downloadedBlocks = { blocks = blocks, forLevel = l.num }
+    model.calculateDistancesForLevelIterative(l, model.dropPointOf(l._model, l))
     return blocks
   end
   error("Could not understand where the blocks are defined for level " .. l.num)
@@ -96,15 +98,40 @@ end
 
 
 local function rawBlockAt(level, point)
-  return at(blocksOf(level), point) % 1000
+  return bit32.extract(at(blocksOf(level), point), 0, 8) -- bits 0-7
 end
 
 local function statusAt(level, point)
-  return math.floor(at(blocksOf(level), point) / 1000)
+  local nope = {}
+  local val = at(blocksOf(level), point, nope)
+  if val == nope then return BLOCK_DND end
+  return bit32.extract(val, 8, 2) -- bits 8-9
+end
+
+local function hasDistanceAt(level, point)
+  local notSet = {}
+  local val = at(blocksOf(level), point, notSet)
+  if val == notSet then return false end
+  return bit32.extract(val, 10, 1) == 1 -- bit 10
+end
+
+local function distanceAt(level, point, defaultValue)
+  if not hasDistanceAt(level, point) then
+    return defaultValue
+  end
+  local val = at(blocksOf(level), point)
+  val = bit32.extract(val, 11, 21) -- bits 11-31
+  return val
 end
 
 local function setStatus(level, point, status)
-  local value = rawBlockAt(level, point) + (status * 1000)
+  local value = bit32.replace(at(blocksOf(level), point), status, 8, 2)
+  set(blocksOf(level), point, value)
+end
+
+local function setDistance(level, point, dist)
+  local value = bit32.replace(at(blocksOf(level), point), dist, 11, 21) -- set dist
+  value = bit32.replace(value, 1, 10, 1) -- hasDistance=true
   set(blocksOf(level), point, value)
 end
 
@@ -387,11 +414,10 @@ local function adjacents(l, point)
 end
 
 local function calculateDistancesForLevelIterative(l, startPoint)
-  local distances = {}
   local notSet = {}
   local blocks = blocksOf(l)
   print("Calculating distances for level " .. l.num)
-  set(distances, startPoint, 0)
+  setDistance(l, startPoint, 0)
   local iterations = 0
   while true do
     iterations = iterations + 1
@@ -401,16 +427,16 @@ local function calculateDistancesForLevelIterative(l, startPoint)
       for c=1,#row do
         local p = { r, c }
         if isBuildable(l, p) then
-          local thisDistance = at(distances, p, notSet)
+          local thisDistance = distanceAt(l, p, notSet)
           if thisDistance ~= notSet then
             local shouldDistance = thisDistance + 1
             -- does this point have a distance and has an adjacent that needs updating?
             local adjs = adjacents(l, p)
             for _,adj in ipairs(adjs) do
-              local thatDistance = at(distances, adj, notSet)
+              local thatDistance = distanceAt(l, adj, notSet)
               if thatDistance == notSet or thatDistance > shouldDistance then
                 modified = true
-                set(distances, adj, shouldDistance)
+                setDistance(l, adj, shouldDistance)
               end
             end
           end -- thisDistance
@@ -422,7 +448,7 @@ local function calculateDistancesForLevelIterative(l, startPoint)
     -- so we're done here!
     if not modified then
       print("Finished calculating distances for level " .. l.num)
-      return distances
+      return
     end
     if iterations % 2 == 0 then
       -- this thing takes a while, so we need to yield every now and then
@@ -435,28 +461,9 @@ local function calculateDistancesForLevelIterative(l, startPoint)
   end -- while true
 end
 
-local function distancesOf(m, l)
-  -- we only cache the distances calculations for one level at a time.
-  -- because of memory constraints.
-  -- it means we might calculate it again and again for levels but
-  -- the important thing is it is cached while building a particular level
-  if not m._distances or m._distances.forLevel ~= l.num then
-    m._distances = nil -- make sure to free the old one, if any, first
-    if os.sleep then
-      for i=1,10 do os.sleep(0) end
-    end
-    m._distances = {
-      forLevel = l.num,
-      distances = calculateDistancesForLevelIterative(l, dropPointOf(m, l))
-    }
-  end
-  return m._distances.distances
-end
-
 local function furtherThan(l, points, distance)
-  local distances = distancesOf(l._model, l)
   for _,point in ipairs(points) do
-    if at(distances, point, -1) > distance and not isComplete(l, point) then
+    if distanceAt(l, point, -1) > distance and not isComplete(l, point) then
       return point
     end
   end
@@ -464,9 +471,8 @@ local function furtherThan(l, points, distance)
 end
 
 local function closerThan(l, points, distance)
-  local distances = distancesOf(l._model, l)
   for _,point in ipairs(points) do
-    if at(distances, point, 100000) < distance and not isComplete(l, point) then
+    if distanceAt(l, point, 100000) < distance and not isComplete(l, point) then
       return point
     end
   end
@@ -483,8 +489,7 @@ end
 local function getFurtherAdjacent(level, pos)
   -- see if any of the adjacent blocks from `pos` are incomplete
   -- and have a larger distance than this pos.
-  local distances = distancesOf(level._model, level)
-  local curDistance = at(distances, pos, 100000)
+  local curDistance = distanceAt(level, pos, 100000)
   local adjs = adjacents(level, pos)
   return furtherThan(level, adjs, curDistance)
 end
@@ -492,12 +497,12 @@ end
 local function getCloserAdjacent(level, pos)
   -- see if any of the adjacent blocks from `pos` are incomplete
   -- and have a larger distance than this pos.
-  local distances = distancesOf(level._model, level)
-  local curDistance = at(distances, pos, -1)
+  local curDistance = distanceAt(level, pos, -1)
   local adjs = adjacents(level, pos)
   return closerThan(level, adjs, curDistance)
 end
 
+model.calculateDistancesForLevelIterative = calculateDistancesForLevelIterative
 model.loadStatuses = loadStatuses
 model.saveStatuses = saveStatuses
 model.clearStatuses = clearStatuses
@@ -506,7 +511,6 @@ model.getCloserAdjacent = getCloserAdjacent
 model.getFurtherAdjacent = getFurtherAdjacent
 model.markLevelComplete = markLevelComplete
 model.dropPointOf = dropPointOf
-model.distancesOf = distancesOf
 model.blocksOf = blocksOf
 model.westOf = westOf
 model.eastOf = eastOf
@@ -518,6 +522,7 @@ model.isComplete = isComplete
 model.isClear = isClear
 model.set = set
 model.setStatus = setStatus
+model.distanceAt = distanceAt
 model.at = at
 model.pointStr = pointStr
 model.pathStr = pathStr
