@@ -83,12 +83,12 @@ function Quary:placeTorch()
   end
 end
 
-function Quary:advanceWhileMining(direction, dontPlaceTorch)
+function Quary:advanceWhileMining(direction, dontPlaceTorch, dontClearCurrent)
   if not self:canMine() then
     return false
   end
   self.move:swing(direction)
-  return self.move:advance(direction) and self:clearCurrent(dontPlaceTorch)
+  return self.move:advance(direction) and (dontClearCurrent or self:clearCurrent(dontPlaceTorch))
 end
 
 function Quary:clearCurrent(dontPlaceTorch)
@@ -107,15 +107,17 @@ function Quary:clearCurrent(dontPlaceTorch)
 end
 
 function Quary:findStartingLevel()
-  print("start level: " .. self.options.currentHeight)
   -- we need to movedown 1 level at a time, which is 3 blocks each
   local height = 3
   while height < self.options.currentHeight do
     self.eventDispatcher:doEvents()
     if self.returnRequested then return false end
-
-    if not self.move:down(3, true) then
-      return false
+    for _=1,3 do
+      robot.swingDown()
+      if not self.move:down() then
+        print("could not move down to starting level")
+        return false
+      end
     end
     height = height + 3
   end
@@ -128,25 +130,22 @@ function Quary:findStartingPoint()
     return false
   end
 
-  if self.options.currentWidth >= 3 then
-    -- go to where we left off horizontally
-    if not self.move:moveToXZ(1, -(self.options.currentWidth - 2) * self.sideFactor) then
+  local width = 1
+  while width < self.options.currentWidth do
+    if not self:advanceWhileMining(-2 * self.sideFactor, true, true) then
       return false
     end
-    -- we made it, but since we decided to go the previous lane instead of where
-    -- we actually were, `currentWidth` is now a lie. Fix that!
-    self.options.currentWidth = self.options.currentWidth - 1
-  else
-    print("already in a good starting lane.")
+    width = width + 1
   end
 
   return true
 end
 
 function Quary:backToStart()
-  if self.move:moveToXZ(1, 0) and -- first part of current level
-    self.move:moveToY(0) and -- start of quary area
-    self.move:moveToX(0) then -- charging station
+  if self.move:moveToZ(0) and -- try Z movement first as we might on the return of the lane, X is blocked
+     self.move:moveToXZ(1, 0) and -- first part of current level
+     self.move:moveToY(0) and -- start of quary area
+     self.move:moveToX(0) then -- charging station
 
     if self.returnRequested then
       self.move:faceDirection(1)
@@ -330,11 +329,11 @@ function Quary:start()
 end
 
 function Quary:saveState()
-  return objectStore.saveObject("quary", self.options)
+  return objectStore.saveObject("quarry", self.options)
 end
 
 function Quary:loadState()
-  local result = objectStore.loadObject("quary")
+  local result = objectStore.loadObject("quarry")
   if result ~= nil then
     self.options = result
     self:applyDefaults()
@@ -352,7 +351,7 @@ function Quary:on_modem_message(localAddr, remoteAddr, port, distance, command) 
 end
 
 function Quary:applyDefaults()
-  self.move = self.move or smartmove.new({ moveTimeout = 10 })
+  self.move = self.move or smartmove.new({ moveTimeout = 60 })
   self.options = self.options or {}
   self.options.width = tonumber(self.options.width or "10")
   self.options.depth = tonumber(self.options.depth or "10")
