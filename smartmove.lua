@@ -56,12 +56,15 @@ end
 
 function SmartMove:_tryMove(direction)
   local timeout = self.moveTimeout
-  local result
+  local result, reason
   repeat
     if direction == 1 then
-      result = robot.forward()
+      result, reason = robot.forward()
     else
-      result = robot.back()
+      result, reason = robot.back()
+    end
+    if not result then
+      print("smartmove: move fail: " .. reason)
     end
     if not result and timeout > 0 then
       event.pull(1, "_smartmove")

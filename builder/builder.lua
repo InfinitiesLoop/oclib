@@ -119,7 +119,7 @@ function Builder:start()
 
   -- set up a smartmove object that is configured to indicate we are standing
   -- where the robot's starting point and orientation is.
-  self.move = smartmove:new({ moveTimeout = 10 })
+  self.move = smartmove:new({ moveTimeout = 60 })
   local startPoint = self.options.loadedModel.startPoint
   self.move.posX = -startPoint[1]
   self.move.posZ = startPoint[2]
