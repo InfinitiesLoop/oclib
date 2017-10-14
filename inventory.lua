@@ -280,6 +280,9 @@ function inventory.resupply(side, maximumCounts, globalMax)
         local tookAny = ic().suckFromSlot(side, i, max-counts[whichMat])
         if tookAny then
           -- we must recount what we have, no other way to know how many we took
+          for k,_ in pairs(maximumCounts) do
+            counts[k] = 0
+          end
           inventory.setCountOfItems(counts)
         end
       end
@@ -333,6 +336,9 @@ function inventory.desupply(side, maximumCounts, globalMax)
           local dropped = robot().dropDown(surplus) -- todo: hard coded direction
           couldNotDrop = couldNotDrop or not dropped
           if dropped then
+            for k,_ in pairs(maximumCounts) do
+              counts[k] = 0
+            end
             inventory.setCountOfItems(counts)
           end
         end
