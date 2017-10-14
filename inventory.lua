@@ -277,16 +277,11 @@ function inventory.resupply(side, maximumCounts, globalMax)
       -- this is a mat we care about, do we need any?
       local max = math.min(globalMax, maximumCounts[whichMat])
       if counts[whichMat] < max then
-        local before = stack.size
-        ic().suckFromSlot(side, i, max-counts[whichMat])
-        stack = ic().getStackInSlot(side, i)
-        local taken
-        if not stack then
-          taken = before
-        else
-          taken = before - stack.size
+        local tookAny = ic().suckFromSlot(side, i, max-counts[whichMat])
+        if tookAny then
+          -- we must recount what we have, no other way to know how many we took
+          inventory.setCountOfItems(counts)
         end
-        counts[whichMat] = counts[whichMat] + taken
       end
     end
   end
@@ -334,19 +329,12 @@ function inventory.desupply(side, maximumCounts, globalMax)
         local surplus = counts[whichMat] - max
         if surplus > 0 then
           -- we have too may!
-          local before = stack.size
           robot().select(i)
           local dropped = robot().dropDown(surplus) -- todo: hard coded direction
           couldNotDrop = couldNotDrop or not dropped
-          stack = ic().getStackInInternalSlot(i)
-          local taken
-          if not stack then
-            taken = before
-          else
-            taken = before - stack.size
+          if dropped then
+            inventory.setCountOfItems(counts)
           end
-          -- we dropped `taken` amount so subject that from what we have
-          counts[whichMat] = counts[whichMat] - taken
         end
       end
     end
