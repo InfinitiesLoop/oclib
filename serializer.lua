@@ -24,7 +24,7 @@ local function serializeToFileRec(file, obj, indent, asArray)
         else
           -- list
           f(file, indent, "list=", "[\n")
-          serializeToFileRec(file, v, indent .. '  ')
+          serializeToFileRec(file, v, indent .. '  ', true)
           f(file, indent, "]\n")
         end
       elseif t == "boolean" then
