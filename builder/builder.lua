@@ -330,12 +330,15 @@ function Builder:ensureClearAdj(p)
   -- make sure the block we're about to move into is cleared.
   self.move:faceXZ(-p[1], p[2])
   local isBlocking, entityType = robot.detect()
-  if isBlocking or entityType ~= "air" then
+  while isBlocking or entityType ~= "air" do
+    -- this is a LOOP because even after clearing the space there might still be something there,
+    -- such as when gravel falls, or an entity has moved in the way.
     local result = robot.swing()
     if not result then
       -- something is in the way and we couldnt deal with it
       return false, "could not swing at " .. (entityType or "unknown") .. " in " .. model.pointStr(p)
     end
+    isBlocking, entityType = robot.detect()
   end
   -- save the fact that it is clear so we dont need to do it again
   if not self.isReturningToStart then
@@ -493,13 +496,7 @@ function Builder:followPath(path)
   -- follow the given path, clearing blocks if necessary as we go,
   -- and saving the state of those blocks
   for _,p in ipairs(path) do
-    -- required status check
-    local status, reason = self:statusCheck()
-    if not status then
-      return false, reason
-    end
-
-    status, reason = self:ensureClearAdj(p)
+    local status, reason = self:ensureClearAdj(p)
     if not status then
       return false, "could not ensure adjacent spot was clear at " .. model.pointStr(p) .. ": " .. reason
     end
@@ -547,11 +544,6 @@ function Builder:dumpInventoryAndResupply()
     end
     if self.toolName then
       inventory.pickUpFreshTools(sides.bottom, self.toolName)
-    end
-
-    if not desupplied then
-      -- if we couldn't desupply, it's ok as long as we have inventory space available
-      desupplied = not inventory.isLocalFull()
     end
 
     -- are we good?
