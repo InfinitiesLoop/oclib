@@ -372,6 +372,13 @@ function model.fromLoadedModel(m)
     end
   end
 
+  -- preloaded level block info can have distances set
+  for _,l in ipairs(m.levels) do
+    if l.blocks ~= "@internet" then
+      model.calculateDistancesForLevelIterative(l, model.dropPointOf(l._model, l))
+    end
+  end
+
   return m
 end
 
