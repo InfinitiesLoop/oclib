@@ -13,6 +13,15 @@ for i=1,string.len(magicChars) do
   magicCharsMap[string.sub(magicChars, i, i)] = true
 end
 
+local function isSame(a, b)
+  return a[1] == b[1] and a[2] == b[2]
+end
+
+local function isAdjacent(a, b)
+  return (a[1] == b[1] and math.abs(a[2]-b[2]) == 1) or
+    (a[2] == b[2] and math.abs(a[1]-b[1]) == 1)
+end
+
 local function at(arr, rc, defaultValue)
   local s = arr[rc[1]]
   if s == nil then return (defaultValue or BLOCK_DND) end
@@ -115,18 +124,14 @@ local function statusAt(level, point)
   return bit32.extract(val, 8, 2) -- bits 8-9
 end
 
-local function hasDistanceAt(level, point)
-  local notSet = {}
-  local val = at(blocksOf(level), point, notSet)
-  if val == notSet then return false end
-  return bit32.extract(val, 10, 1) == 1 -- bit 10
-end
-
 local function distanceAt(level, point, defaultValue)
-  if not hasDistanceAt(level, point) then
+  -- do we _have_ a distance for this point?
+  local val = at(blocksOf(level), point, defaultValue)
+  if val == defaultValue then return defaultValue end
+  if bit32.extract(val, 10, 1) ~= 1 then
     return defaultValue
   end
-  local val = at(blocksOf(level), point)
+  -- extract distance
   val = bit32.extract(val, 11, 21) -- bits 11-31
   return val
 end
@@ -287,7 +292,8 @@ local function convertBlocks(blocks)
     return blocks
   end
   local t = {}
-  for _,row in ipairs(blocks) do
+  for r=1,#blocks do
+    local row = blocks[r]
     t[#t + 1] = {string.byte(row, 1, string.len(row))}
   end
   return t
@@ -406,11 +412,14 @@ function model.bottomMostIncompleteLevel(m)
   return nil
 end
 
-local function adjacents(l, point)
+local function adjacents(l, point, notWest)
   local adjs = {}
-  local a = westOf(point)
-  if isBuildable(l, a) then
-    adjs[#adjs + 1] = a
+  local a
+  if not notWest then
+    a = westOf(point)
+    if isBuildable(l, a) then
+      adjs[#adjs + 1] = a
+    end
   end
   a = eastOf(point)
   if isBuildable(l, a) then
@@ -428,43 +437,65 @@ local function adjacents(l, point)
 end
 
 local function calculateDistancesForLevelIterative(l, startPoint)
+  local tStart = os.time()
   local notSet = {}
   local blocks = blocksOf(l)
+  local completeRows = {}
   print("Calculating distances for level " .. l.num)
   setDistance(l, startPoint, 0)
+  local range_low = startPoint[1]
+  local range_high = startPoint[1]
+
   local iterations = 0
   while true do
     iterations = iterations + 1
     local modified = false
-    for r=1,#blocks do
-      local row = blocks[r]
-      for c=1,#row do
-        local p = { r, c }
-        if isBuildable(l, p) then
+    for r=range_low,range_high do
+      if not completeRows[r] then
+        local row = blocks[r]
+        local lastC = 0
+        local isCompleteRow = true
+
+        for c=1,#row do
+          local p = { r, c }
           local thisDistance = distanceAt(l, p, notSet)
-          if thisDistance ~= notSet then
+          if thisDistance == notSet then
+            isCompleteRow = false
+          else
             local shouldDistance = thisDistance + 1
             -- does this point have a distance and has an adjacent that needs updating?
-            local adjs = adjacents(l, p)
-            for _,adj in ipairs(adjs) do
+            -- adjacents avoids looking west if we were just there
+            local adjs = adjacents(l, p, lastC == (c-1))
+            lastC = c
+            for a=1,#adjs do
+              local adj = adjs[a]
               local thatDistance = distanceAt(l, adj, notSet)
               if thatDistance == notSet or thatDistance > shouldDistance then
                 modified = true
                 setDistance(l, adj, shouldDistance)
+                completeRows[adj[1]] = false -- invalidate that row
+                if adj[1] < range_low then
+                  range_low = adj[1]
+                elseif adj[1] > range_high then
+                  range_high = adj[1]
+                end
               end
             end
           end -- thisDistance
-        end -- isBuildable
-      end -- col
+        end -- col
+
+        completeRows[r] = isCompleteRow
+      end -- completerows
     end -- row
 
     -- we went through every row and col and there no changes necessary,
     -- so we're done here!
     if not modified then
-      print("Finished calculating distances for level " .. l.num)
+      local took = os.time() - tStart
+      print("Finished calculating distances for level " .. l.num .. " (took " .. took .. ")")
       return
     end
-    if iterations % 2 == 0 then
+    if iterations % 3 == 0 then
       -- this thing takes a while, so we need to yield every now and then
       if os.sleep then
         os.sleep(0)
@@ -516,6 +547,8 @@ local function getCloserAdjacent(level, pos)
   return closerThan(level, adjs, curDistance)
 end
 
+model.isAdjacent = isAdjacent
+model.isSame = isSame
 model.calculateDistancesForLevelIterative = calculateDistancesForLevelIterative
 model.loadStatuses = loadStatuses
 model.saveStatuses = saveStatuses

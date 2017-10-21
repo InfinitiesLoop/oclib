@@ -1,5 +1,4 @@
 local model = require("builder/model")
-local util = require("util")
 local pathing = {}
 
 function pathing.findNearestBuildSite(_, l, from)
@@ -60,6 +59,17 @@ function pathing.pathFromDropPoint(level, toPoint)
 end
 
 function pathing.pathToDropPoint(level, fromPoint)
+  local targetDropPoint = model.dropPointOf(level._model, level)
+  -- trivial cases:
+  -- (1) we're already standing on the droppoint
+  if model.isSame(targetDropPoint, fromPoint) then
+    return {}
+  end
+  -- (2) the drop point is adjacent to us so just move into it
+  if model.isAdjacent(targetDropPoint, fromPoint) then
+    return { targetDropPoint }
+  end
+
   -- each block has distance information, so just follow the numbers starting at the destination
   -- and go back. For example, if the destination has distance 7, find the adjacent block that has a 6,
   -- and so on. When we get to 0 we found the source drop point and we have the path.
