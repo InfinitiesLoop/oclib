@@ -586,19 +586,6 @@ function Builder:backToStart() --luacheck: no unused args
     end
   end
 
-  local posX = self.move.posX
-  local posZ = self.move.posZ
-  local dumped = self:dumpInventoryAndResupply()
-  if not dumped then
-    self.move:moveToXZ(posX, posZ)
-    self.move:faceDirection(self.originalOrient)
-    return false, "Problem dumping inventory or picking up supplies."
-  end
-  if not self.move:moveToXZ(posX, posZ) then
-    self.move:faceDirection(self.originalOrient)
-    return false, "Could not dump inventory, resupply, and return safely."
-  end
-
   -- just to look nice and make restarts easy to deal with.
   self.move:faceDirection(self.originalOrient)
 
