@@ -764,7 +764,7 @@ function builder.new(o)
   o = o or {}
   setmetatable(o, { __index = Builder })
   o:applyDefaults()
-  o.eventDispatcher = eventDispatcher.new({}, o)
+  o.eventDispatcher = eventDispatcher.new({ debounce = 10 }, o)
   return o
 end
 

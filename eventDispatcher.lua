@@ -7,6 +7,7 @@ function eventDispatcher.new(o, handlers)
   o = o or {}
   setmetatable(o, { __index = EventDispatcher })
   o.handlers = handlers
+  o.counter = 0
   return o
 end
 
@@ -21,6 +22,13 @@ function EventDispatcher:handleEvent(eventName, ...)
 end
 
 function EventDispatcher:doEvents()
+  if self.debounce then
+    self.counter = self.counter + 1
+    if self.counter % self.debounce ~= 0 then
+      return
+    end
+    self.counter = 0
+  end
   while true do
     if not self:handleEvent(event.pull(0)) then
       return
