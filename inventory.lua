@@ -111,6 +111,14 @@ function inventory.selectItem(pattern)
   return false
 end
 
+function inventory.equip(pattern)
+  if inventory.selectItem(pattern) then
+    ic().equip()
+    return true
+  end
+  return false
+end
+
 function inventory.placeTorch(sideOfRobot, sideOfBlock)
   if inventory.selectItem("torch$") then
     local success

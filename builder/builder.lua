@@ -334,23 +334,40 @@ function Builder:ensureClearAdj(p)
   end
   -- make sure the block we're about to move into is cleared.
   self.move:faceXZ(-p[1], p[2])
+  status, reason = self.smartSwing()
+  if not status then
+    return false, "could not swing at " .. reason .. " in " .. model.pointStr(p)
+  end
+  -- inventory could be full now
+  self.cachedIsNotFull = false
+
+  -- save the fact that it is clear so we dont need to do it again
+  if not self.isReturningToStart then
+    model.setStatus(level, p, 1)
+  end
+  return true
+end
+
+function Builder:smartSwing() -- luacheck: no unused args
   local isBlocking, entityType = robot.detect()
   while isBlocking or entityType ~= "air" do
     -- this is a LOOP because even after clearing the space there might still be something there,
     -- such as when gravel falls, or an entity has moved in the way.
     local result = robot.swing()
     if not result then
-      -- something is in the way and we couldnt deal with it
-      return false, "could not swing at " .. (entityType or "unknown") .. " in " .. model.pointStr(p)
+      -- perhaps the thing is a bee hive, which requires a scoop to clear.
+      -- equip a scoop if we have one and try again.
+      if inventory.equip("scoop") then
+        result = robot.swing()
+        -- switch back off the scoop
+        ic.equip()
+      end
+      if not result then
+        -- something is in the way and we couldnt deal with it
+        return false, entityType
+      end
     end
-    -- inventory could be full now
-    self.cachedIsNotFull = false
-
     isBlocking, entityType = robot.detect()
-  end
-  -- save the fact that it is clear so we dont need to do it again
-  if not self.isReturningToStart then
-    model.setStatus(level, p, 1)
   end
   return true
 end
