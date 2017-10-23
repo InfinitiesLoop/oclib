@@ -15,7 +15,7 @@ local ic
 local builder = {}
 local Builder = {}
 
-local NEEDS_CHARGE_THRESHOLD = 0.25
+local NEEDS_CHARGE_THRESHOLD = 0.20
 local FULL_CHARGE_THRESHOLD = 0.95
 
 local function assert(cond, msg)
