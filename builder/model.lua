@@ -75,7 +75,7 @@ local function blocksOf(l)
   local blocks = l.blocks
   if type(blocks) == "table" then
     return blocks
-  elseif blocks == "@github" or not blocks then
+  elseif blocks == "@github" or blocks == "@internet" or not blocks then
     -- the blocks for this level are loaded from an internet level file
     -- so download the block list
     -- remove it before downloading, for more memory..
