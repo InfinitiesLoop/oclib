@@ -75,7 +75,7 @@ local function blocksOf(l)
   local blocks = l.blocks
   if type(blocks) == "table" then
     return blocks
-  elseif blocks == "@internet" then
+  elseif blocks == "@github" or not blocks then
     -- the blocks for this level are loaded from an internet level file
     -- so download the block list
     -- remove it before downloading, for more memory..
@@ -290,7 +290,7 @@ function model.load(path)
 end
 
 local function convertBlocks(blocks)
-  if blocks == "@internet" then
+  if blocks == "@github" then
     return blocks
   end
   local t = {}
@@ -382,7 +382,7 @@ function model.fromLoadedModel(m)
 
   -- preloaded level block info can have distances set
   for _,l in ipairs(m.levels) do
-    if l.blocks ~= "@internet" then
+    if l.blocks ~= "@github" then
       model.calculateDistancesForLevelIterative(l, model.dropPointOf(l._model, l))
     end
   end

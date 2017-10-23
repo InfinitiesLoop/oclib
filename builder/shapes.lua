@@ -168,7 +168,7 @@ for i,l in ipairs(m.levels) do
     l.matCounts[matName] = matCount
   end
 
-  l.blocks = "@internet"
+  l.blocks = "@github"
   local f = io.open("./builder/models/menger_81/" .. string.format("%03d",i), "w")
   for _,line in ipairs(blocks) do
     f:write(line, "\n")
