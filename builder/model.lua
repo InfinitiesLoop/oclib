@@ -528,9 +528,6 @@ end
 
 local function markLevelComplete(l)
   l.isComplete = true
-  -- after a level is complete we dont need to remember
-  -- the blocks on it
-  l.blocks = nil
 end
 
 local function getFurtherAdjacent(level, pos)
