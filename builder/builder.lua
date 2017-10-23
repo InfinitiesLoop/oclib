@@ -40,17 +40,22 @@ function Builder:statusCheck()
     end
   end
   if not self.isReturningToStart then
-    if inventory.isLocalFull() then
-      -- inventory is full but maybe we can dump some trash to make room
-      if self.options.trashCobble then
-        --todo: more specific so we dont drop mossy cobble, for example
-        inventory.trash(sides.bottom, {"cobblestone","netherrack"})
-        -- if it is STILL full then we're done here
-        if inventory.isLocalFull() then
+    if not self.cachedIsNotFull then
+      local isFull = inventory.isLocalFull()
+      if isFull then
+        -- inventory is full but maybe we can dump some trash to make room
+        if self.options.trashCobble then
+          --todo: more specific so we dont drop mossy cobble, for example
+          inventory.trash(sides.bottom, {"cobblestone","netherrack"})
+          -- if it is STILL full then we're done here
+          if inventory.isLocalFull() then
+            return false, "Inventory is full!"
+          end
+        else
           return false, "Inventory is full!"
         end
       else
-        return false, "Inventory is full!"
+        self.cachedIsNotFull = true
       end
     end
 
@@ -338,6 +343,9 @@ function Builder:ensureClearAdj(p)
       -- something is in the way and we couldnt deal with it
       return false, "could not swing at " .. (entityType or "unknown") .. " in " .. model.pointStr(p)
     end
+    -- inventory could be full now
+    self.cachedIsNotFull = false
+
     isBlocking, entityType = robot.detect()
   end
   -- save the fact that it is clear so we dont need to do it again
@@ -367,6 +375,8 @@ function Builder:ensureClearUp()
       -- something is in the way and we couldnt deal with it
       return false, "could not clear whatever is above me at " .. model.pointStr(p)
     end
+    -- inventory could be full now
+    self.cachedIsNotFull = false
   end
   return true
 end
@@ -391,6 +401,8 @@ function Builder:ensureClearDown()
       -- something is in the way and we couldnt deal with it
       return false, "could not clear whatever is below me at " .. model.pointStr(p)
     end
+    -- inventory could be full now
+    self.cachedIsNotFull = false
   end
   return true
 end
