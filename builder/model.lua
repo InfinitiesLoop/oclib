@@ -109,7 +109,9 @@ local function blocksOf(l)
     model.calculateDistancesForLevelIterative(l, model.dropPointOf(l._model, l))
     return blocks
   end
-  error("Could not understand where the blocks are defined for level " .. l.num)
+  print("Could not understand where the blocks are defined for level " .. l.num)
+  print(serializer.serialize(l))
+  error("Cannot load level " .. l.num)
 end
 
 
