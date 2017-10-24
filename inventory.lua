@@ -6,17 +6,24 @@ local util = require("util")
 
 local inventory = {}
 
-function inventory.isOneOf(item, checkList)
-  if item == nil then
+function inventory.isItem(stack, pattern)
+  if pattern == "!tool" then
+    if type(stack.maxDamage) == "number" and stack.maxDamage > 0 then
+      return true
+    end
+    return false
+  else
+    return string.match(stack.name, pattern)
+  end
+end
+
+function inventory.isOneOf(stack, checkList)
+  if stack == nil then
     return false
   end
   for i=1,#checkList do
     local chk = checkList[i]
-    if chk == "!tool" then
-      if type(item.maxDamage) == "number" and item.maxDamage > 0 then
-        return true, chk
-      end
-    elseif string.match(item.name, chk) then
+    if inventory.isItem(stack, chk) then
       return true, chk
     end
   end
@@ -329,7 +336,7 @@ function inventory.desupply(side, maximumCounts, globalMax)
       -- is this any of the materials we need?
       local isMat, whichMat = inventory.isOneOf(stack, matList)
       if not isMat then
-        if not inventory.isOneOf(stack, {"!tool"}) then
+        if not inventory.isItem(stack, "!tool") then
           -- not a mat we care about and not a tool so we can just drop all of it
           robot().select(i)
           local dropped = robot().dropDown() -- todo: hard coded direction
@@ -375,7 +382,7 @@ function inventory.setCountOfItems(itemMap)
     local stack = ic().getStackInInternalSlot(i)
     if stack ~= nil then
       for name,count in pairs(itemMap) do
-        if inventory.isOneOf(stack, {name}) then
+        if inventory.isItem(stack, name) then
           itemMap[name] = count + stack.size
         end
       end
