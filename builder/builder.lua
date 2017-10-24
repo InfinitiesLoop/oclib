@@ -577,8 +577,6 @@ function Builder:dumpInventoryAndResupply()
     -- its kinda complex. If we end up without a tool we may not even need one, so I dunno.
     if self.toolName then
       inventory.dropBrokenTools(sides.bottom, self.toolName)
-    end
-    if self.toolName then
       inventory.pickUpFreshTools(sides.bottom, self.toolName)
     end
 

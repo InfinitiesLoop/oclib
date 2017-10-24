@@ -10,7 +10,8 @@ function inventory.isOneOf(item, checkList)
   if item == nil then
     return false
   end
-  for _,chk in ipairs(checkList) do
+  for i=1,#checkList do
+    local chk = checkList[i]
     if chk == "!tool" then
       if type(item.maxDamage) == "number" and item.maxDamage > 0 then
         return true, chk
