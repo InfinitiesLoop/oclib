@@ -1,7 +1,38 @@
 local model = require("builder/model")
 local pathing = {}
 
-function pathing.findNearestBuildSite(_, l, from)
+function pathing.findNearestBuildSite(m, l, from)
+  local continue = true
+  local result
+  --local firstAnswer = false
+  --local skippedAir
+  while continue do
+    result = pathing.tryFindNearestBuildSite(l, from)
+    --firstAnswer = firstAnswer or result
+    if result then
+      -- if the found point is already marked as clear, and the block to build is
+      -- air, we can just mark it as complete and then try another one.
+      -- this prevents the robot from revisiting cleared blocks just to put air there.
+      -- it means the robot isn't in the right place, but thats ok, as it turns out.
+      -- todo: disabled for now.
+      if false and model.blockAt(m, l, result[1]) == "!air" and model.statusAt(l, result[1]) == 1 then
+        -- todo: broke cuz we get stuck when standing on self. odd pathing problem to solve here...
+        --skippedAir = true
+        model.setStatus(l, result[1], 2)
+      else
+        continue = false
+      end
+    else
+      continue = false
+    end
+  end
+  --if skippedAir then
+    --print("would have gone to " .. model.pointStr(firstAnswer[1]) .. ", went to " .. model.pointStr(result[1]))
+  --end
+  return result
+end
+
+function pathing.tryFindNearestBuildSite(l, from)
   -- the return value is a two-element array where
   -- [1] == the build site point (point for block that should be placed next)
   -- [2] == an array of points that represent the path that should be taken to get to the stand point

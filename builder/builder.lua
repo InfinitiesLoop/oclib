@@ -334,7 +334,7 @@ function Builder:ensureClearAdj(p)
   end
   -- make sure the block we're about to move into is cleared.
   self.move:faceXZ(-p[1], p[2])
-  status, reason = self.smartSwing()
+  status, reason = self:smartSwing()
   if not status then
     return false, "could not swing at " .. reason .. " in " .. model.pointStr(p)
   end
@@ -513,7 +513,14 @@ function Builder:buildCurrentLevel()
       end
       currentPoint = standPoint
     else
+      -- due to air blocks and optimizations, when the level is complete we might
+      -- not be standing on the dropoint. so just be sure we are...
+      local returnPath = pathing.pathToDropPoint(l, currentPoint)
+      local followResult, followReason = self:followPath(returnPath)
       model.saveStatuses(l)
+      if not followResult then
+        return false, "Couldn't follow path to droppoint after level completion: " .. followReason
+      end
       return true
     end
   until not result

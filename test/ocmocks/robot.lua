@@ -3,12 +3,15 @@ local sides = require("sides")
 local robot = {}
 
 function robot.detect()
+  print("robot: detect")
   return false, "air"
 end
 function robot.detectUp()
+  print("robot: detectUp")
   return false, "air"
 end
 function robot.detectDown()
+  print("robot: detectDown")
   return false, "air"
 end
 function robot.forward()

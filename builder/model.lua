@@ -179,6 +179,8 @@ local function isClear(level, point)
   local status = statusAt(level, point)
   return status == 1 or status == 2
 end
+--local function isNavigatable(level, point)
+--end
 
 local function blockAt(m, level, point)
   if not isBuildable(level, point) then
@@ -509,7 +511,8 @@ local function calculateDistancesForLevelIterative(l, startPoint)
 end
 
 local function furtherThan(l, points, distance)
-  for _,point in ipairs(points) do
+  for i=1,#points do
+    local point = points[i]
     if distanceAt(l, point, -1) > distance and not isComplete(l, point) then
       return point
     end
@@ -518,7 +521,8 @@ local function furtherThan(l, points, distance)
 end
 
 local function closerThan(l, points, distance)
-  for _,point in ipairs(points) do
+  for i=1,#points do
+    local point = points[i]
     if distanceAt(l, point, 100000) < distance and not isComplete(l, point) then
       return point
     end
@@ -568,6 +572,7 @@ model.isComplete = isComplete
 model.isClear = isClear
 model.set = set
 model.setStatus = setStatus
+model.statusAt = statusAt
 model.distanceAt = distanceAt
 model.at = at
 model.pointStr = pointStr
