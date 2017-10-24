@@ -1,5 +1,6 @@
 InfinitiesLoop/oclib
 crash.lua
+autolevel.lua
 init.lua
 inventory.lua
 util.lua
