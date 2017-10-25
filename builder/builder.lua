@@ -95,9 +95,7 @@ function Builder:start()
 
   print("Checking things out...")
 
-  -- require stuff, open port
-  robot = require("robot")
-  ic = component.inventory_controller
+  -- open port
   modem.open(self.options.port)
 
   -- see what our tool is
@@ -796,10 +794,16 @@ end
 
 function builder.new(o)
   o = o or {}
+  builder.require()
   setmetatable(o, { __index = Builder })
   o:applyDefaults()
   o.eventDispatcher = eventDispatcher.new({ debounce = 10 }, o)
   return o
+end
+
+function builder.require()
+  robot = require("robot")
+  ic = component.inventory_controller
 end
 
 local args, options = shell.parse( ... )
