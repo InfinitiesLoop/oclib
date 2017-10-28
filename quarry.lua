@@ -21,6 +21,7 @@ local Quarry = {
 }
 
 function Quarry:smartSwing(direction) -- luacheck: no unused args
+  self.move:faceDirection(direction)
   local isBlocking, entityType = robot.detect()
   while isBlocking or entityType ~= "air" do
     -- this is a LOOP because even after clearing the space there might still be something there,
