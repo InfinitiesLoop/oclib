@@ -32,7 +32,8 @@ function Quarry:canMine() --luacheck: no unused args
       return false
     end
   end
-  if inventory.isLocalFull() then
+  if self.hasSwung and inventory.isLocalFull() then
+    self.hasSung = false
     -- inventory is full but maybe we can dump some trash to make room
     if self.options.trashCobble then
       inventory.trash(sides.bottom, {"cobblestone"})
@@ -87,7 +88,8 @@ function Quarry:advanceWhileMining(direction, dontPlaceTorch, dontClearCurrent)
   if not self:canMine() then
     return false
   end
-  self.move:swing(direction)
+  local swung = self.move:swing(direction)
+  self.hasSwung = self.hasSwung or swung
   return self.move:advance(direction) and (dontClearCurrent or self:clearCurrent(dontPlaceTorch))
 end
 
@@ -95,11 +97,13 @@ function Quarry:clearCurrent(dontPlaceTorch)
   if not self:canMine() then
     return false
   end
-  robot.swingUp()
+  local swung = robot.swingUp()
+  self.hasSwung = self.hasSwung or swung
   if not self:canMine() then
     return false
   end
-  robot.swingDown()
+  swung = robot.swingDown()
+  self.hasSwung = self.hasSwung or swung
   if not dontPlaceTorch then
     self:placeTorch()
   end
@@ -370,7 +374,7 @@ function quarry.new(o)
   o = o or {}
   setmetatable(o, { __index = Quarry })
   o:applyDefaults()
-  o.eventDispatcher = eventDispatcher.new({}, o)
+  o.eventDispatcher = eventDispatcher.new({ debounce = 10 }, o)
   return o
 end
 
