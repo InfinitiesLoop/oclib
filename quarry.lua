@@ -20,6 +20,33 @@ local FULL_CHARGE_THRESHOLD = 0.95
 local Quarry = {
 }
 
+function Quarry:smartSwing(direction) -- luacheck: no unused args
+  local isBlocking, entityType = robot.detect()
+  while isBlocking or entityType ~= "air" do
+    -- this is a LOOP because even after clearing the space there might still be something there,
+    -- such as when gravel falls, or an entity has moved in the way.
+    local result = self.move:swing(direction)
+    if not result then
+      -- perhaps the thing is a bee hive, which requires a scoop to clear.
+      -- equip a scoop if we have one and try again.
+      if inventory.equip("scoop") then
+        result = robot.swing()
+        -- switch back off the scoop
+        ic.equip()
+        self.hasSwung = self.hasSwung or result
+      end
+      if not result then
+        -- something is in the way and we couldnt deal with it
+        return false, entityType
+      end
+    else
+      self.hasSwung = true
+    end
+    isBlocking, entityType = robot.detect()
+  end
+  return true
+end
+
 function Quarry:canMine() --luacheck: no unused args
   self.eventDispatcher:doEvents()
   if self.returnRequested then
@@ -88,8 +115,7 @@ function Quarry:advanceWhileMining(direction, dontPlaceTorch, dontClearCurrent)
   if not self:canMine() then
     return false
   end
-  local swung = self.move:swing(direction)
-  self.hasSwung = self.hasSwung or swung
+  self:smartSwing(direction)
   return self.move:advance(direction) and (dontClearCurrent or self:clearCurrent(dontPlaceTorch))
 end
 

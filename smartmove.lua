@@ -124,7 +124,7 @@ function SmartMove:faceXZ(x, z)
 end
 
 function SmartMove:swing(direction)
-  return self:faceDirection(direction), robot.swing()
+  return self:faceDirection(direction) and robot.swing()
 end
 
 function SmartMove:_turn(direction)
