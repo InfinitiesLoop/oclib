@@ -12,15 +12,15 @@ local ic
 local robot
 
 local modem = component.modem
-local quary = {}
+local quarry = {}
 
 local NEEDS_CHARGE_THRESHOLD = 0.1
 local FULL_CHARGE_THRESHOLD = 0.95
 
-local Quary = {
+local Quarry = {
 }
 
-function Quary:canMine() --luacheck: no unused args
+function Quarry:canMine() --luacheck: no unused args
   self.eventDispatcher:doEvents()
   if self.returnRequested then
     print("return was requested by my master")
@@ -54,7 +54,7 @@ function Quary:canMine() --luacheck: no unused args
   return true
 end
 
-function Quary:mineDownLevel()
+function Quarry:mineDownLevel()
   -- mine down 3 times. it's ok if the swing fails, might be air
   for i=1,3 do
     robot.swingDown()
@@ -73,7 +73,7 @@ function Quary:mineDownLevel()
   return true
 end
 
-function Quary:placeTorch()
+function Quarry:placeTorch()
   if self.options.torches then
     if inventory.isIdealTorchSpot(self.move.posZ, self.move.posX - 1) then
       inventory.placeTorch()
@@ -83,7 +83,7 @@ function Quary:placeTorch()
   end
 end
 
-function Quary:advanceWhileMining(direction, dontPlaceTorch, dontClearCurrent)
+function Quarry:advanceWhileMining(direction, dontPlaceTorch, dontClearCurrent)
   if not self:canMine() then
     return false
   end
@@ -91,7 +91,7 @@ function Quary:advanceWhileMining(direction, dontPlaceTorch, dontClearCurrent)
   return self.move:advance(direction) and (dontClearCurrent or self:clearCurrent(dontPlaceTorch))
 end
 
-function Quary:clearCurrent(dontPlaceTorch)
+function Quarry:clearCurrent(dontPlaceTorch)
   if not self:canMine() then
     return false
   end
@@ -106,7 +106,7 @@ function Quary:clearCurrent(dontPlaceTorch)
   return true
 end
 
-function Quary:findStartingLevel()
+function Quarry:findStartingLevel()
   -- we need to movedown 1 level at a time, which is 3 blocks each
   local height = 3
   while height < self.options.currentHeight do
@@ -124,7 +124,7 @@ function Quary:findStartingLevel()
   return true
 end
 
-function Quary:findStartingPoint()
+function Quarry:findStartingPoint()
   -- go to where we left off vertically
   if not self:findStartingLevel() then
     return false
@@ -141,10 +141,10 @@ function Quary:findStartingPoint()
   return true
 end
 
-function Quary:backToStart()
+function Quarry:backToStart()
   if self.move:moveToZ(0) and -- try Z movement first as we might on the return of the lane, X is blocked
      self.move:moveToXZ(1, 0) and -- first part of current level
-     self.move:moveToY(0) and -- start of quary area
+     self.move:moveToY(0) and -- start of quarry area
      self.move:moveToX(0) then -- charging station
 
     if self.returnRequested then
@@ -193,7 +193,7 @@ function Quary:backToStart()
   return true
 end
 
-function Quary:dumpInventory()
+function Quarry:dumpInventory()
   while true do
     local result = self.move:findInventory(-2 * self.sideFactor, 5, true, 16)
     if result == nil or result <= 0 then
@@ -208,9 +208,9 @@ function Quary:dumpInventory()
   end
 end
 
-function Quary:iterate()
+function Quarry:iterate()
   if not self:advanceWhileMining(1, true) then
-    print("could not enter quary area.")
+    print("could not enter quarry area.")
     return self:backToStart()
   end
 
@@ -232,7 +232,7 @@ function Quary:iterate()
     if not firstLevel then
       -- return to the (1,0,_) point for the level we're currently on
       if not self.move:moveToXZ(1, 0) then
-        print("failed to return to starting point to begin the next quary level")
+        print("failed to return to starting point to begin the next quarry level")
         return self:backToStart()
       end
       self.options.currentWidth = 1
@@ -276,7 +276,7 @@ function Quary:iterate()
   return returnedToStart, true
 end
 
-function Quary:start()
+function Quarry:start()
   -- need these things to actually be here now
   robot = require("robot")
   ic = component.inventory_controller
@@ -318,7 +318,7 @@ function Quary:start()
   end
 
   if isDone then
-    print("Quary complete.")
+    print("Quarry complete.")
   elseif self.returnRequested then
     print("You called, master?")
   elseif not result then
@@ -328,11 +328,11 @@ function Quary:start()
   return isDone or false
 end
 
-function Quary:saveState()
+function Quarry:saveState()
   return objectStore.saveObject("quarry", self.options)
 end
 
-function Quary:loadState()
+function Quarry:loadState()
   local result = objectStore.loadObject("quarry")
   if result ~= nil then
     self.options = result
@@ -342,7 +342,7 @@ function Quary:loadState()
   return false
 end
 
-function Quary:on_modem_message(localAddr, remoteAddr, port, distance, command) --luacheck: no unused args
+function Quarry:on_modem_message(localAddr, remoteAddr, port, distance, command) --luacheck: no unused args
   print("received message from " .. remoteAddr .. ", distance of " .. distance .. ": " .. command)
   if command == "return" then
     self.returnRequested = true
@@ -350,7 +350,7 @@ function Quary:on_modem_message(localAddr, remoteAddr, port, distance, command) 
   end
 end
 
-function Quary:applyDefaults()
+function Quarry:applyDefaults()
   self.move = self.move or smartmove.new({ moveTimeout = 60 })
   self.options = self.options or {}
   self.options.width = tonumber(self.options.width or "10")
@@ -366,9 +366,9 @@ function Quary:applyDefaults()
   self.options.trashCobble = self.options.trashCobble == true or self.options.trashCobble == "true"
 end
 
-function quary.new(o)
+function quarry.new(o)
   o = o or {}
-  setmetatable(o, { __index = Quary })
+  setmetatable(o, { __index = Quarry })
   o:applyDefaults()
   o.eventDispatcher = eventDispatcher.new({}, o)
   return o
@@ -379,17 +379,17 @@ if args[1] == 'help' then
   print("commands: start, resume, summon")
 elseif args[1] == 'start' then
   if (args[2] == 'help') then
-    print("usage: quary start --width=100 --depth=100 --height=9 \
+    print("usage: quarry start --width=100 --depth=100 --height=9 \
       --torches=true|false --chunkloader=true|false --currentHeight=3 --currentWidth=5 --port=444 \
       --side=left|right --trashCobble=false|true")
   else
-    local q = quary.new({options = options})
+    local q = quarry.new({options = options})
     q:applyDefaults()
     q:saveState()
     q:start()
   end
 elseif args[1] == 'resume' then
-  local q = quary.new()
+  local q = quarry.new()
   if q:loadState() then
     q:start()
   else
@@ -399,4 +399,4 @@ elseif args[1] == 'summon' then
   modem.broadcast(tonumber(options.port or "444"), "return")
 end
 
-return quary
+return quarry

@@ -4,7 +4,7 @@ autolevel.lua
 init.lua
 inventory.lua
 util.lua
-quary.lua
+quarry.lua
 cleanup.lua
 smartmove.lua
 objectStore.lua
