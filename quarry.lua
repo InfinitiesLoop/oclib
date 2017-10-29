@@ -23,10 +23,10 @@ local Quarry = {
 function Quarry:smartSwing(direction) -- luacheck: no unused args
   self.move:faceDirection(direction)
   local isBlocking, entityType = robot.detect()
-  while isBlocking or entityType ~= "air" do
+  while isBlocking do
     -- this is a LOOP because even after clearing the space there might still be something there,
     -- such as when gravel falls, or an entity has moved in the way.
-    local result = self.move:swing(direction)
+    local result = robot.swing()
     if not result then
       -- perhaps the thing is a bee hive, which requires a scoop to clear.
       -- equip a scoop if we have one and try again.
