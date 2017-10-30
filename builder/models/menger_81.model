@@ -7,7 +7,7 @@ mats:table={
 startPoint:list=[
   number=82
   number=81
-  number=2
+  number=1
   string=^
 ]
 defaultDropPoint:list=[
