@@ -30,7 +30,7 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     //val inputPath = "sample-structures/ochill.nbt"
-    val inputPath = "sample-structures/WorldTree.nbt"
+    val inputPath = "sample-structures/worldtree.nbt"
     val levelName = new File(inputPath).getName.takeWhile(c => c != '.')
 
     val outputLevelsDirectory = Paths.get(s"output/${levelName}")
