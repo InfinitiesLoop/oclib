@@ -60,6 +60,7 @@ object Main {
     val materialMaps = generateMaterialMaps(paletteList.distinct)
 
     val layout = Array.ofDim[Char](height, depth, width)
+    val middleDropPoint = (depth/2, width/2)
 
     for (blockTag <- blockTags) {
       val map = blockTag.getValue
@@ -74,7 +75,7 @@ object Main {
       layout(y)(x)(z) = blockMoniker
     }
 
-    trimAir(layout)
+    trimAir(layout, middleDropPoint)
 
     for (i <- 0 until height) {
       // output each layer as a file
@@ -83,13 +84,14 @@ object Main {
     }
 
     // output the level.model file
-    writeModelFile(outputModelPath, levelName, materialMaps, layout)
+    writeModelFile(outputModelPath, levelName, materialMaps, middleDropPoint, layout)
 
   }
 
   private def writeModelFile(modelPath: Path,
                              levelName: String,
                              materialMaps: (Map[String,Char], Map[Char,String]),
+                             dropPoint: (Int, Int),
                              layout: Array[Array[Array[Char]]]): Unit = {
     val printWriter = new PrintWriter(modelPath.toString)
     printWriter.println(s"title:string=${levelName}")
@@ -110,8 +112,8 @@ object Main {
     printWriter.println(s"]")
     // Make the droppoints in the middle. Ideally we'd calculate them for each level though.
     printWriter.println(s"defaultDropPoint:list=[")
-    printWriter.println(s"  number=${layout(0).length/2}")
-    printWriter.println(s"  number=${layout(0).last.length/2}")
+    printWriter.println(s"  number=${dropPoint._1}")
+    printWriter.println(s"  number=${dropPoint._2}")
     printWriter.println(s"]")
     printWriter.println(s"levels:list=[")
     var levelNum = 0
@@ -145,18 +147,53 @@ object Main {
     counts.toMap
   }
 
-  private def trimAir(layout: Array[Array[Array[Char]]]): Unit = {
+  private def trimAir(layout: Array[Array[Array[Char]]], dropPoint: (Int, Int)): Unit = {
     for (level <- layout) {
       for (row <- level) {
         // replace leading and trailing 'air' with DND blocks
-        // leading...
-        val firstBlock = row.indexWhere(c => c != 0)
-        val lastBlock = row.lastIndexWhere(c => c != 0)
+        // except take care to make sure there's at least an airway from the droppoint
+        val firstBlockIndex = row.indexWhere(c => c != 0)
+        val firstBlock = Math.min(firstBlockIndex, dropPoint._2) match {
+          case -1 => dropPoint._2
+          case i => i
+        }
+        val lastBlock = Math.max(row.lastIndexWhere(c => c != 0), dropPoint._2)
         for (i <- 0 until firstBlock) {
           row(i) = '-'
         }
+        // tailing...
         for (i <- lastBlock + 1 until row.length) {
           row(i) = '-'
+        }
+      }
+
+      // this level is done, but we can prune leading and trailing rows that are nothing but an empty
+      // airway to the drop point...
+      // fix leading rows...
+      var foundNonEmpty = false
+      for (i <- 0 until dropPoint._1) {
+        if (!foundNonEmpty) {
+          val row = level(i)
+          val isEmptyRow = (row.count(c => c == '-') == row.length - 1) && (row.count(c => c == 0) == 1)
+          if (isEmptyRow) {
+            row(row.indexOf(0)) = '-'
+          } else {
+            foundNonEmpty = true
+          }
+        }
+      }
+
+      // fix trailing rows..
+      foundNonEmpty = false
+      for (i <- level.length - 1 until dropPoint._1 by -1) {
+        if (!foundNonEmpty) {
+          val row = level(i)
+          val isEmptyRow = (row.count(c => c == '-') == row.length - 1) && (row.count(c => c == 0) == 1)
+          if (isEmptyRow) {
+            row(row.indexOf(0)) = '-'
+          } else {
+            foundNonEmpty = true
+          }
         }
       }
     }
