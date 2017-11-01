@@ -149,6 +149,10 @@ end
 --print(s.serialize({c=c}))
 --end
 
+--local c = shapes.circle(128)
+--print(s.serialize(c))
+
+--[[
 local m = shapes.mengerSponge(81, 'cobblestone')
 m.blocksBaseUrl = "InfinitiesLoop/oclib/builder/models/menger_81/"
 for i,l in ipairs(m.levels) do
@@ -178,5 +182,7 @@ for i,l in ipairs(m.levels) do
 end
 --local m = shapes.mengerSponge(27, 'x')
 print(s.serialize(m))
+
+--]]
 
 return shapes
