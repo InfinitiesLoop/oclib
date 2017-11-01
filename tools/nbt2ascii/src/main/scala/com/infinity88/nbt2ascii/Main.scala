@@ -10,8 +10,27 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 object Main {
+  val DIRT = "minecraft:dirt"
+  val AIR = "minecraft:air"
+  val STONE = "minecraft:stone"
+
+  val subs = Map(
+     { "minecraft:grass" -> DIRT }
+    ,{ "minecraft:coal_ore" -> STONE }
+    ,{ "minecraft:cocoa" -> AIR }
+    ,{ "minecraft:gravel" -> STONE }
+    ,{ "minecraft:red_flower" -> AIR }
+    ,{ "minecraft:yellow_flower" -> AIR }
+    ,{ "minecraft:red_mushroom" -> AIR }
+    ,{ "minecraft:brown_mushroom" -> AIR }
+    ,{ "minecraft:snow_layer" -> AIR }
+    ,{ "minecraft:tallgrass" -> AIR }
+    ,{ "minecraft:vine" -> AIR }
+  )
+
   def main(args: Array[String]): Unit = {
-    val inputPath = "sample-structures/ochill.nbt"
+    //val inputPath = "sample-structures/ochill.nbt"
+    val inputPath = "sample-structures/WorldTree.nbt"
     val levelName = new File(inputPath).getName.takeWhile(c => c != '.')
 
     val outputLevelsDirectory = Paths.get(s"output/${levelName}")
@@ -33,6 +52,7 @@ object Main {
     val paletteTag = structureRoot.get("palette").asInstanceOf[ListTag[CompoundTag]]
     val paletteEntries = paletteTag.getValue.asScala.toList
     val paletteList = paletteEntries.map(e => e.getValue.get("Name").asInstanceOf[Tag[String]].getValue)
+      .map(name => subs.getOrElse(name, name))
 
     val blocksTag = structureRoot.get("blocks").asInstanceOf[ListTag[CompoundTag]]
     val blockTags = blocksTag.getValue.asScala.toList
@@ -53,6 +73,8 @@ object Main {
 
       layout(y)(x)(z) = blockMoniker
     }
+
+    trimAir(layout)
 
     for (i <- 0 until height) {
       // output each layer as a file
@@ -123,17 +145,37 @@ object Main {
     counts.toMap
   }
 
+  private def trimAir(layout: Array[Array[Array[Char]]]): Unit = {
+    for (level <- layout) {
+      for (row <- level) {
+        // replace leading and trailing 'air' with DND blocks
+        // leading...
+        val firstBlock = row.indexWhere(c => c != 0)
+        val lastBlock = row.lastIndexWhere(c => c != 0)
+        for (i <- 0 until firstBlock) {
+          row(i) = '-'
+        }
+        for (i <- lastBlock + 1 until row.length) {
+          row(i) = '-'
+        }
+      }
+    }
+  }
+
   private def writeLevelFile(directory: Path, levelNum: Int, layout: Array[Array[Char]]): Unit = {
     val printWriter = new PrintWriter(directory.resolve("%03d".format(levelNum)).toString)
     for (row <- layout) {
-      printWriter.println(row)
+      for (col <- row) {
+        printWriter.print(if (col == 0) ' ' else col)
+      }
+      printWriter.println()
     }
     printWriter.close()
   }
 
   def generateMaterialMaps(paletteList: List[String]): (Map[String, Char], Map[Char, String]) = {
     // artificially put vanilla blocks first as they are usually the most important and should get
-    // priority when assinging monikers to them.
+    // priority when assigning monikers to them.
     val sortedPaletteList = paletteList.sortBy(p => (if (p.startsWith("minecraft:")) "a" else "b", p))
     val monikerMap = mutable.Map[String, Char]()
     val materialsMap = mutable.Map[Char, String]()
