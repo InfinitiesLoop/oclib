@@ -1,0 +1,566 @@
+title:string=worldtree
+author:string=nbt2ascii
+mats:table={
+  l:string=minecraft:leaves
+  o:string=minecraft:log
+}
+startPoint:list=[
+  number=156
+  number=158
+  number=1
+  string=^
+]
+defaultDropPoint:list=[
+  number=77
+  number=79
+]
+levels:list=[
+  table={
+    name:string=level 1
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=90
+      minecraft:log:number=692
+    }
+  }
+  table={
+    name:string=level 2
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=93
+      minecraft:log:number=606
+    }
+  }
+  table={
+    name:string=level 3
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=43
+      minecraft:log:number=554
+    }
+  }
+  table={
+    name:string=level 4
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=47
+      minecraft:log:number=506
+    }
+  }
+  table={
+    name:string=level 5
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=42
+      minecraft:log:number=435
+    }
+  }
+  table={
+    name:string=level 6
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=21
+      minecraft:log:number=384
+    }
+  }
+  table={
+    name:string=level 7
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=18
+      minecraft:log:number=353
+    }
+  }
+  table={
+    name:string=level 8
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=11
+      minecraft:log:number=343
+    }
+  }
+  table={
+    name:string=level 9
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=7
+      minecraft:log:number=345
+    }
+  }
+  table={
+    name:string=level 10
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=4
+      minecraft:log:number=349
+    }
+  }
+  table={
+    name:string=level 11
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=4
+      minecraft:log:number=341
+    }
+  }
+  table={
+    name:string=level 12
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=5
+      minecraft:log:number=347
+    }
+  }
+  table={
+    name:string=level 13
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=7
+      minecraft:log:number=350
+    }
+  }
+  table={
+    name:string=level 14
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=5
+      minecraft:log:number=373
+    }
+  }
+  table={
+    name:string=level 15
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=1
+      minecraft:log:number=415
+    }
+  }
+  table={
+    name:string=level 16
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=448
+    }
+  }
+  table={
+    name:string=level 17
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=4
+      minecraft:log:number=474
+    }
+  }
+  table={
+    name:string=level 18
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=3
+      minecraft:log:number=511
+    }
+  }
+  table={
+    name:string=level 19
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=610
+    }
+  }
+  table={
+    name:string=level 20
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=753
+    }
+  }
+  table={
+    name:string=level 21
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=865
+    }
+  }
+  table={
+    name:string=level 22
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=970
+    }
+  }
+  table={
+    name:string=level 23
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1058
+    }
+  }
+  table={
+    name:string=level 24
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=1
+      minecraft:log:number=1167
+    }
+  }
+  table={
+    name:string=level 25
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1311
+    }
+  }
+  table={
+    name:string=level 26
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1437
+    }
+  }
+  table={
+    name:string=level 27
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1525
+    }
+  }
+  table={
+    name:string=level 28
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1516
+    }
+  }
+  table={
+    name:string=level 29
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1496
+    }
+  }
+  table={
+    name:string=level 30
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1457
+    }
+  }
+  table={
+    name:string=level 31
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1353
+    }
+  }
+  table={
+    name:string=level 32
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1293
+    }
+  }
+  table={
+    name:string=level 33
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1257
+    }
+  }
+  table={
+    name:string=level 34
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=1115
+    }
+  }
+  table={
+    name:string=level 35
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=998
+    }
+  }
+  table={
+    name:string=level 36
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=948
+    }
+  }
+  table={
+    name:string=level 37
+    blocks:string=@github
+    matCounts:table={
+      minecraft:log:number=912
+    }
+  }
+  table={
+    name:string=level 38
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=2
+      minecraft:log:number=933
+    }
+  }
+  table={
+    name:string=level 39
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=6
+      minecraft:log:number=914
+    }
+  }
+  table={
+    name:string=level 40
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=52
+      minecraft:log:number=902
+    }
+  }
+  table={
+    name:string=level 41
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=236
+      minecraft:log:number=881
+    }
+  }
+  table={
+    name:string=level 42
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=684
+      minecraft:log:number=930
+    }
+  }
+  table={
+    name:string=level 43
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=1412
+      minecraft:log:number=947
+    }
+  }
+  table={
+    name:string=level 44
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=2420
+      minecraft:log:number=1038
+    }
+  }
+  table={
+    name:string=level 45
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=3435
+      minecraft:log:number=1287
+    }
+  }
+  table={
+    name:string=level 46
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=4265
+      minecraft:log:number=1818
+    }
+  }
+  table={
+    name:string=level 47
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=4944
+      minecraft:log:number=2510
+    }
+  }
+  table={
+    name:string=level 48
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=5695
+      minecraft:log:number=3386
+    }
+  }
+  table={
+    name:string=level 49
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=6334
+      minecraft:log:number=4171
+    }
+  }
+  table={
+    name:string=level 50
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=6954
+      minecraft:log:number=4871
+    }
+  }
+  table={
+    name:string=level 51
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=7082
+      minecraft:log:number=5645
+    }
+  }
+  table={
+    name:string=level 52
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=7026
+      minecraft:log:number=6227
+    }
+  }
+  table={
+    name:string=level 53
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=6961
+      minecraft:log:number=6658
+    }
+  }
+  table={
+    name:string=level 54
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=7040
+      minecraft:log:number=6741
+    }
+  }
+  table={
+    name:string=level 55
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=7190
+      minecraft:log:number=6658
+    }
+  }
+  table={
+    name:string=level 56
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=7110
+      minecraft:log:number=6389
+    }
+  }
+  table={
+    name:string=level 57
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=6956
+      minecraft:log:number=5926
+    }
+  }
+  table={
+    name:string=level 58
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=6780
+      minecraft:log:number=5169
+    }
+  }
+  table={
+    name:string=level 59
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=6472
+      minecraft:log:number=4204
+    }
+  }
+  table={
+    name:string=level 60
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=6150
+      minecraft:log:number=3111
+    }
+  }
+  table={
+    name:string=level 61
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=5624
+      minecraft:log:number=2090
+    }
+  }
+  table={
+    name:string=level 62
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=4963
+      minecraft:log:number=1129
+    }
+  }
+  table={
+    name:string=level 63
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=3888
+      minecraft:log:number=558
+    }
+  }
+  table={
+    name:string=level 64
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=2712
+      minecraft:log:number=259
+    }
+  }
+  table={
+    name:string=level 65
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=1684
+      minecraft:log:number=112
+    }
+  }
+  table={
+    name:string=level 66
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=887
+      minecraft:log:number=46
+    }
+  }
+  table={
+    name:string=level 67
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=425
+      minecraft:log:number=27
+    }
+  }
+  table={
+    name:string=level 68
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=175
+      minecraft:log:number=11
+    }
+  }
+  table={
+    name:string=level 69
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=80
+      minecraft:log:number=6
+    }
+  }
+  table={
+    name:string=level 70
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=25
+      minecraft:log:number=2
+    }
+  }
+  table={
+    name:string=level 71
+    blocks:string=@github
+    matCounts:table={
+      minecraft:leaves:number=8
+    }
+  }
+]
