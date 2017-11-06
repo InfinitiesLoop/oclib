@@ -67,6 +67,11 @@ function SmartMove:_tryMove(direction)
       print("smartmove: move fail: " .. reason)
     end
     if not result and timeout > 0 then
+      if direction == -1 then
+        direction = 1
+        robot.turnAround()
+      end
+      robot.swing()
       event.pull(1, "_smartmove")
     end
     timeout = timeout - 1

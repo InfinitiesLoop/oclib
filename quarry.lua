@@ -382,7 +382,7 @@ function Quarry:on_modem_message(localAddr, remoteAddr, port, distance, command)
 end
 
 function Quarry:applyDefaults()
-  self.move = self.move or smartmove.new({ moveTimeout = 60 })
+  self.move = self.move or smartmove.new({ moveTimeout = 600 })
   self.options = self.options or {}
   self.options.width = tonumber(self.options.width or "10")
   self.options.depth = tonumber(self.options.depth or "10")
