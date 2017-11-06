@@ -1,4 +1,5 @@
 title:string=worldtree
+blocksBaseUrl:string=InfinitiesLoop/oclib/master/builder/models/worldtree
 author:string=nbt2ascii
 mats:table={
   l:string=minecraft:leaves

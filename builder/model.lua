@@ -353,7 +353,7 @@ function model.fromLoadedModel(m)
   m.matCounts = {}
   for _,matName in pairs(m.mats) do
     for _,etlLevel in ipairs(etlLevels) do
-      m.matCounts[matName] = (m.matCounts[matName] or 0) + etlLevel.matCounts[matName]
+      m.matCounts[matName] = (m.matCounts[matName] or 0) + (etlLevel.matCounts[matName] or 0)
     end
   end
 

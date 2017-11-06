@@ -56,7 +56,9 @@ mockInv.setMockWorldInventory(sides.bottom, {
   { name = "minecraft:glass", size = 64 },
   { name = "minecraft:dirt", size = 64 },
   { name = "minecraft:dirt", size = 64 },
-  { name = "minecraft:dirt", size = 64 }
+  { name = "minecraft:dirt", size = 64 },
+  { name = "minecraft:log", size = 1000000 },
+  { name = "minecraft:leaves", size = 1000000 }
 }, 32)
 
 --local counts, hasZero = inventory.resupply(sides.bottom, { cobblestone = 400, glass = 100, marble = 100 }, 200)
@@ -67,7 +69,7 @@ mockInv.setMockWorldInventory(sides.bottom, {
 --print(s.serialize(map))
 --print(inventory.getCountOfItems({"cobblestone"}), inventory.getCountOfItems({"glass"}))
 
-local b = builder.new({options = { model = "builder/models/menger_27.model" } })
+local b = builder.new({options = { model = "builder/models/worldtree.model" } })
 --local b = builder.new({options = { model = "builder/models/simplehouse.model" } })
 b:start()
 print(s.serialize(b.options.loadedModel.matCounts))
