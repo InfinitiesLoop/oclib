@@ -15,20 +15,31 @@ robot.placeMap = placeMap
 
 function robot.drawPlacemap()
   for y,level in pairs(placeMap) do
-    print("")
-    print("LEVEL " .. y)
-    print("===========================")
+    y = tonumber(y) + 1
+    local fname = string.format("%04d", y)
+    local f = io.open("placemap/" .. fname, "w")
+    for _=1,255 do
+      f:write(string.rep("-", 255))
+      f:write("\n")
+    end
 
     for x,row in pairs(level) do
+      x = tonumber(x)
       for z,col in pairs(row) do
-        print(x,z,col)
+        z = tonumber(z)
+        local pos = (x+128) * (255+1) + (z+128)
+        f:seek("set", pos)
+        f:write(col)
       end
     end
+    f:flush()
+    f:close()
   end
 end
 
 function robot.detect()
   print("robot: detect")
+  setPlacemap(robot.sm:facing(), ' ')
   return false, "air"
 end
 function robot.detectUp()
@@ -133,6 +144,7 @@ end
 
 function robot.swing()
   print("robot: swing")
+  setPlacemap(robot.sm:facing(), ' ')
   return true
 end
 

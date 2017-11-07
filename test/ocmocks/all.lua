@@ -23,3 +23,4 @@ require("robot").sm = require("smartmove").new({
     turnAround = noop
   }
 })
+require("robot").sm.orient = -1
