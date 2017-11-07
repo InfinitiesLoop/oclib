@@ -90,7 +90,7 @@ function Builder:start()
 
   if not self.options.resuming then
     -- a new build, make sure we don't think saved statuses are from a previous one.
-    model.clearStatuses()
+    model.clearStatuses(true)
   end
 
   print("Checking things out...")
@@ -526,7 +526,6 @@ function Builder:buildCurrentLevel()
 end
 
 function Builder:followPath(path)
-  --print("follow path: " .. model.pathStr(path))
   -- follow the given path, clearing blocks if necessary as we go,
   -- and saving the state of those blocks
   for _,p in ipairs(path) do

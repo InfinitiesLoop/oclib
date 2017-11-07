@@ -62,8 +62,11 @@ local function saveStatuses(l)
     objectStore.saveObject("builder_statuses", { blocks = l.blocks, forLevel = l.num })
   end
 end
-local function clearStatuses()
+local function clearStatuses(isNewBuild)
   objectStore.deleteObject("builder_statuses")
+  if isNewBuild then
+    objectStore.deleteObject("builder_statuses_startlevel")
+  end
 end
 
 local function blocksOf(l)
@@ -76,6 +79,15 @@ local function blocksOf(l)
   if type(blocks) == "table" then
     return blocks
   elseif blocks == "@github" or blocks == "@internet" or not blocks then
+
+    if l.num == l._model.startPoint[3] then
+      local result = objectStore.loadObject("builder_statuses_startlevel")
+      if result ~= false then
+        l._model._downloadedBlocks = result
+        return result.blocks
+      end
+    end
+
     -- the blocks for this level are loaded from an internet level file
     -- so download the block list
     -- remove it before downloading, for more memory..
@@ -107,6 +119,11 @@ local function blocksOf(l)
 
     l._model._downloadedBlocks = { blocks = blocks, forLevel = l.num }
     model.calculateDistancesForLevelIterative(l, model.dropPointOf(l._model, l))
+
+    if l.num == l._model.startPoint[3] then
+      objectStore.saveObject("builder_statuses_startlevel", l._model._downloadedBlocks)
+    end
+
     return blocks
   end
   print("Could not understand where the blocks are defined for level " .. l.num)
@@ -441,73 +458,29 @@ local function adjacents(l, point, notWest)
 end
 
 local function calculateDistancesForLevelIterative(l, startPoint)
-  local tStart = os.time()
-  local notSet = {}
-  local blocks = blocksOf(l)
-  local completeRows = {}
-  print("Calculating distances for level " .. l.num)
+  local distances = {}
+  local queue = { startPoint }
+  local queueLen = 1
   setDistance(l, startPoint, 0)
-  local range_low = startPoint[1]
-  local range_high = startPoint[1]
 
-  local iterations = 0
-  while true do
-    iterations = iterations + 1
-    local modified = false
-    for r=range_low,range_high do
-      if not completeRows[r] then
-        local row = blocks[r]
-        local lastC = 0
-        local isCompleteRow = true
+  while queueLen > 0 do
+    local point = table.remove(queue)
+    queueLen = queueLen - 1
+    local distance = distanceAt(l, point)
 
-        for c=1,#row do
-          local p = { r, c }
-          local thisDistance = distanceAt(l, p, notSet)
-          if thisDistance == notSet then
-            isCompleteRow = false
-          else
-            local shouldDistance = thisDistance + 1
-            -- does this point have a distance and has an adjacent that needs updating?
-            -- adjacents avoids looking west if we were just there
-            local adjs = adjacents(l, p, lastC == (c-1))
-            lastC = c
-            for a=1,#adjs do
-              local adj = adjs[a]
-              local thatDistance = distanceAt(l, adj, notSet)
-              if thatDistance == notSet or thatDistance > shouldDistance then
-                modified = true
-                setDistance(l, adj, shouldDistance)
-                completeRows[adj[1]] = false -- invalidate that row
-                if adj[1] < range_low then
-                  range_low = adj[1]
-                elseif adj[1] > range_high then
-                  range_high = adj[1]
-                end
-              end
-            end
-          end -- thisDistance
-        end -- col
-
-        completeRows[r] = isCompleteRow
-      end -- completerows
-    end -- row
-
-    -- we went through every row and col and there no changes necessary,
-    -- so we're done here!
-    if not modified then
-      local took = os.time() - tStart
-      print("Finished calculating distances for level " .. l.num .. " (took " .. took .. ")")
-      return
-    end
-    if iterations % 3 == 0 then
-      -- this thing takes a while, so we need to yield every now and then
-      if os.sleep then
-        os.sleep(0)
-        os.sleep(0)
-        os.sleep(0)
+    local adjs = adjacents(l, point)
+    local d = distance + 1
+    for a=1,#adjs do
+      local adj = adjs[a]
+      local current = distanceAt(l, adj, -1)
+      if current == -1 or current > d then
+        setDistance(l, adj, d)
+        table.insert(queue, 1, adj)
+        queueLen = queueLen + 1
       end
     end
-  end -- while true
+  end
+  return distances
 end
 
 local function furtherThan(l, points, distance)
