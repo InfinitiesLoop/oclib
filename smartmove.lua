@@ -1,5 +1,4 @@
 local smartmove = {}
-local robot
 local c = require("component")
 local ic
 local sides = require("sides")
@@ -20,9 +19,9 @@ function SmartMove:_tryClimb(direction)
   local result
   repeat
     if direction == 1 then
-      result = robot.up()
+      result = self.robot.up()
     else
-      result = robot.down()
+      result = self.robot.down()
     end
     if not result and timeout > 0 then
       event.pull(1, "_smartmove")
@@ -59,9 +58,9 @@ function SmartMove:_tryMove(direction)
   local result, reason
   repeat
     if direction == 1 then
-      result, reason = robot.forward()
+      result, reason = self.robot.forward()
     else
-      result, reason = robot.back()
+      result, reason = self.robot.back()
     end
     if not result then
       print("smartmove: move fail: " .. reason)
@@ -69,9 +68,9 @@ function SmartMove:_tryMove(direction)
     if not result and timeout > 0 then
       if direction == -1 then
         direction = 1
-        robot.turnAround()
+        self.robot.turnAround()
       end
-      robot.swing()
+      self.robot.swing()
       event.pull(1, "_smartmove")
     end
     timeout = timeout - 1
@@ -90,6 +89,10 @@ function SmartMove:_move(direction)
     end
   end
   return result
+end
+
+function SmartMove:summary()
+  return '(' .. self.posX .. ',' .. self.posZ .. ',' .. self.posY .. ') orient ' .. self.orient
 end
 
 function SmartMove:forward()
@@ -129,15 +132,15 @@ function SmartMove:faceXZ(x, z)
 end
 
 function SmartMove:swing(direction)
-  return self:faceDirection(direction) and robot.swing()
+  return self:faceDirection(direction) and self.robot.swing()
 end
 
 function SmartMove:_turn(direction)
   local result
   if direction == 1 then
-    result = robot.turnRight()
+    result = self.robot.turnRight()
   else
-    result = robot.turnLeft()
+    result = self.robot.turnLeft()
   end
   if result then
     if self.orient == 1 then
@@ -160,7 +163,7 @@ function SmartMove:turnLeft()
   return self:_turn(-1)
 end
 function SmartMove:turnAround()
-  local result = robot.turnAround()
+  local result = self.robot.turnAround()
   if result then
     self.orient = -self.orient
   end
@@ -202,6 +205,20 @@ function SmartMove:faceDirection(o)
   end
 
   return true
+end
+
+function SmartMove:facing()
+  local pos = { x = self.posX, z = self.posZ, y = self.posY }
+  if self.orient == -2 then
+    pos.z = pos.z - 1
+  elseif self.orient == 2 then
+    pos.z = pos.z + 1
+  elseif self.orient == 1 then
+    pos.x = pos.x + 1
+  elseif self.orient == -1 then
+    pos.x = pos.x - 1
+  end
+  return pos
 end
 
 function SmartMove:moveToX(x)
@@ -337,7 +354,8 @@ function smartmove.new(o)
   o.moveTimeout = o.moveTimeout or 0
 
   -- things we actually need
-  robot = require("robot")
+
+  o.robot = o.robot or require("robot")
   ic = c.inventory_controller
 
   return o

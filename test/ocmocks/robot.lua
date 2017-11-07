@@ -1,6 +1,31 @@
 local mockInv = require("test/ocmocks/mock_inventory")
 local sides = require("sides")
 local robot = {}
+local placeMap = {}
+
+local function setPlacemap(pos, value)
+  placeMap[pos.y] = placeMap[pos.y] or {}
+  local y = placeMap[pos.y]
+  y[pos.x] = y[pos.x] or {}
+  local x = y[pos.x]
+  x[pos.z] = value
+end
+
+robot.placeMap = placeMap
+
+function robot.drawPlacemap()
+  for y,level in pairs(placeMap) do
+    print("")
+    print("LEVEL " .. y)
+    print("===========================")
+
+    for x,row in pairs(level) do
+      for z,col in pairs(row) do
+        print(x,z,col)
+      end
+    end
+  end
+end
 
 function robot.detect()
   print("robot: detect")
@@ -15,31 +40,38 @@ function robot.detectDown()
   return false, "air"
 end
 function robot.forward()
+  robot.sm:forward()
   print("robot: forward")
   return true
 end
 function robot.back()
+  robot.sm:backward()
   print("robot: back")
   return true
 end
 function robot.turnLeft()
+  robot.sm:turnLeft()
   print("robot: turnLeft")
   return true
 end
 function robot.turnRight()
+  robot.sm:turnRight()
   print("robot: turnRight")
   return true
 end
 function robot.turnAround()
+  robot.sm:turnAround()
   print("robot: turnAround")
   return true
 end
 function robot.up()
+  robot.sm:up()
   print("robot: up")
   --return false
   return true
 end
 function robot.down()
+  robot.sm:down()
   print("robot: down")
   return true
 end
@@ -68,7 +100,8 @@ function robot.place()
   if stack.size <= 0 then
     mockInv.slots[mockInv.selected] = nil
   end
-  print("robot: place " .. stack.name .. "(" .. stack.size .. ")")
+  print("robot: place " .. stack.name .. "(" .. stack.size .. ") at " .. robot.sm:summary())
+  setPlacemap(robot.sm:facing(), 'x')
   return true
 end
 function robot.placeUp()
