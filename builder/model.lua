@@ -80,14 +80,6 @@ local function blocksOf(l)
     return blocks
   elseif blocks == "@github" or blocks == "@internet" or not blocks then
 
-    if l.num == l._model.startPoint[3] then
-      local result = objectStore.loadObject("builder_statuses_startlevel")
-      if result ~= false then
-        l._model._downloadedBlocks = result
-        return result.blocks
-      end
-    end
-
     -- the blocks for this level are loaded from an internet level file
     -- so download the block list
     -- remove it before downloading, for more memory..
@@ -95,6 +87,14 @@ local function blocksOf(l)
     -- yield to help gc?
     if os.sleep then
       for _=1,10 do os.sleep(0) end
+    end
+
+    if l.num == l._model.startPoint[3] then
+      local result = objectStore.loadObject("builder_statuses_startlevel")
+      if result ~= false then
+        l._model._downloadedBlocks = result
+        return result.blocks
+      end
     end
 
     -- download the file...
