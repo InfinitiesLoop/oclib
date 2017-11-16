@@ -1,3 +1,5 @@
+local os = require("os")
+
 local function a(t,...)
   local arg = {...}
   for i=1,#arg do
@@ -149,7 +151,7 @@ local function serialize(obj, indent, asArray, toTable)
   end
 end
 
-local function deserializeFromLinesRec(lines, asArray, untilClose)
+local function deserializeFromLinesRec(lines, asArray, untilClose, readCount)
   local result = {}
 
   local line
@@ -157,6 +159,13 @@ local function deserializeFromLinesRec(lines, asArray, untilClose)
     line = table.remove(lines, 1)
   else
     line = lines()
+    readCount = (readCount or 0) + 1
+    if readCount % 1000 == 0 then
+      -- this is taking a while, we need to yield so OC doesn't kill us!
+      if os.sleep then
+        os.sleep(0)
+      end
+    end
   end
   local isDone = false
   while not isDone and line ~= nil and (not untilClose or line ~= untilClose) do
@@ -175,10 +184,10 @@ local function deserializeFromLinesRec(lines, asArray, untilClose)
         v = v == "true"
       elseif t == "table" then
         -- find all the lines containing this nested table
-        v, isDone = deserializeFromLinesRec(lines, false, indent .. "}")
+        v, isDone = deserializeFromLinesRec(lines, false, indent .. "}", readCount)
       elseif t == "list" then
         -- find all the lines containing this nested list
-        v, isDone = deserializeFromLinesRec(lines, true, indent .. "]")
+        v, isDone = deserializeFromLinesRec(lines, true, indent .. "]", readCount)
       end
       if asArray then result[#result+1] = v else result[k] = v end
     end
@@ -187,6 +196,13 @@ local function deserializeFromLinesRec(lines, asArray, untilClose)
         line = table.remove(lines, 1)
       else
         line = lines()
+        readCount = readCount + 1
+        if readCount % 500 == 0 then
+          -- this is taking a while, we need to yield so OC doesn't kill us!
+          if os.sleep then
+            os.sleep(0)
+          end
+        end
       end
     end
   end

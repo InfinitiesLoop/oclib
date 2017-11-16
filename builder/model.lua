@@ -108,7 +108,9 @@ local function blocksOf(l)
     tmpFile:flush()
     tmpFile:close()
     print("Blocks downloaded, parsing...")
-    os.sleep(0)
+    if os.sleep then
+      os.sleep(0)
+    end
     -- convert the raw string content into the array of lines
     blocks = {}
     tmpFile = io.lines("/tmp/builder_model_tmp")
@@ -117,7 +119,9 @@ local function blocksOf(l)
       n = n + 1
       blocks[#blocks+1] = {string.byte(line, 1, string.len(line))}
       if n % 10 == 0 then
-        os.sleep(0)
+        if os.sleep then
+          os.sleep(0)
+        end
       end
     end
     print("Blocks have been loaded into memory.")
