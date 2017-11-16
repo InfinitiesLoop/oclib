@@ -153,14 +153,15 @@ end
 
 local function deserializeFromLinesRec(lines, asArray, untilClose, readCount)
   local result = {}
+  readCount = readCount or { c = 0 }
 
   local line
   if type(lines) == "table" then
     line = table.remove(lines, 1)
   else
     line = lines()
-    readCount = (readCount or 0) + 1
-    if readCount % 1000 == 0 then
+    readCount.c = readCount.c + 1
+    if readCount.c % 1000 == 0 then
       -- this is taking a while, we need to yield so OC doesn't kill us!
       if os.sleep then
         os.sleep(0)
@@ -196,8 +197,8 @@ local function deserializeFromLinesRec(lines, asArray, untilClose, readCount)
         line = table.remove(lines, 1)
       else
         line = lines()
-        readCount = readCount + 1
-        if readCount % 500 == 0 then
+        readCount.c = readCount.c + 1
+        if readCount.c % 500 == 0 then
           -- this is taking a while, we need to yield so OC doesn't kill us!
           if os.sleep then
             os.sleep(0)
