@@ -2,6 +2,17 @@
 
 `oclib` is a suite of utilities and programs for the Minecraft OpenComputers mod.
 
+**If you want to use this program**
+
+This README needs updating to help people get started. I just haven't done it yet :( But please at least read my answer here, which gives an overview of how to get started:
+https://github.com/InfinitiesLoop/oclib/issues/1
+
+# DEMO
+
+Check out what this program is capable of here!
+
+[![Bastion's Journey](https://img.youtube.com/vi/KV8C10vvvco/0.jpg)](https://www.youtube.com/watch?v=KV8C10vvvco)
+
 ## builder
 
 `oclib` includes a `builder` program that can command an OpenComputers robot to build any arbitrary structure from a model file the describes its layout.
